@@ -7,9 +7,9 @@ class ClientHomeScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF1E1E2C),
+      backgroundColor: const Color(0xFFF7F9FC),
       appBar: AppBar(
-        backgroundColor: const Color(0xFF1E1E2C),
+        backgroundColor: const Color(0xFFFF6B6B),
         elevation: 0,
         title: const Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -45,13 +45,13 @@ class ClientHomeScreen extends StatelessWidget {
           children: [
             // Search Bar
             TextField(
-              style: const TextStyle(color: Colors.white),
+              style: const TextStyle(color: Colors.black87),
               decoration: InputDecoration(
                 hintText: 'Buscar cafeterías, tiendas...',
-                hintStyle: TextStyle(color: Colors.white.withOpacity(0.5)),
-                prefixIcon: const Icon(Icons.search, color: Colors.white54),
+                hintStyle: TextStyle(color: Colors.grey[500]),
+                prefixIcon: const Icon(Icons.search, color: Colors.grey),
                 filled: true,
-                fillColor: const Color(0xFF2C2C3E),
+                fillColor: Colors.white,
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
                   borderSide: BorderSide.none,
@@ -72,7 +72,7 @@ class ClientHomeScreen extends StatelessWidget {
                     context,
                     'Café Eclipse',
                     '2x1 en Cappuccinos',
-                    Colors.orangeAccent,
+                    const Color(0xFFFFD93D),
                     Icons.coffee,
                   ),
                   const SizedBox(width: 12),
@@ -80,7 +80,7 @@ class ClientHomeScreen extends StatelessWidget {
                     context,
                     'Librería Central',
                     '15% dcto. en Libros',
-                    Colors.blueAccent,
+                    const Color(0xFF4ECDC4),
                     Icons.book,
                   ),
                   const SizedBox(width: 12),
@@ -88,7 +88,7 @@ class ClientHomeScreen extends StatelessWidget {
                     context,
                     'Panadería La Rosa',
                     '3x2 en Medialunas',
-                    Colors.pinkAccent,
+                    const Color(0xFFFF6B6B),
                     Icons.bakery_dining,
                   ),
                 ],
@@ -120,7 +120,7 @@ class ClientHomeScreen extends StatelessWidget {
         Text(
           title,
           style: const TextStyle(
-            color: Colors.white,
+            color: Colors.black87,
             fontSize: 18,
             fontWeight: FontWeight.bold,
           ),
@@ -128,7 +128,7 @@ class ClientHomeScreen extends StatelessWidget {
         const Text(
           'Ver todo',
           style: TextStyle(
-            color: Colors.amber,
+            color: Color(0xFFFF6B6B),
             fontSize: 14,
             fontWeight: FontWeight.bold,
           ),
@@ -153,11 +153,18 @@ class ClientHomeScreen extends StatelessWidget {
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
           gradient: LinearGradient(
-            colors: [color.withOpacity(0.8), color.withOpacity(0.4)],
+            colors: [color.withOpacity(0.9), color.withOpacity(0.6)],
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
           ),
           borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(
+              color: color.withOpacity(0.3),
+              blurRadius: 8,
+              offset: const Offset(0, 4),
+            ),
+          ],
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -225,8 +232,15 @@ class ClientHomeScreen extends StatelessWidget {
       child: Container(
         margin: const EdgeInsets.only(bottom: 16),
         decoration: BoxDecoration(
-          color: const Color(0xFF2C2C3E),
+          color: Colors.white,
           borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.05),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
+            ),
+          ],
         ),
         child: Row(
           children: [
@@ -254,19 +268,19 @@ class ClientHomeScreen extends StatelessWidget {
                         Text(
                           'Pyme Local ${index + 1}',
                           style: const TextStyle(
-                            color: Colors.white,
+                            color: Colors.black87,
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
                           ),
                         ),
-                        const Icon(Icons.star, color: Colors.amber, size: 16),
+                        const Icon(Icons.star, color: Color(0xFFFFD93D), size: 16),
                       ],
                     ),
                     const SizedBox(height: 4),
                     Text(
                       'Cafetería • A 1.2 km',
                       style: TextStyle(
-                        color: Colors.white.withOpacity(0.5),
+                        color: Colors.grey[600],
                         fontSize: 12,
                       ),
                     ),
@@ -274,13 +288,13 @@ class ClientHomeScreen extends StatelessWidget {
                     Row(
                       children: [
                         Icon(Icons.location_on,
-                            size: 14, color: Colors.white.withOpacity(0.5)),
+                            size: 14, color: Colors.grey[400]),
                         const SizedBox(width: 4),
                         Expanded(
                           child: Text(
                             'Av. Providencia 1234',
                             style: TextStyle(
-                              color: Colors.white.withOpacity(0.5),
+                              color: Colors.grey[600],
                               fontSize: 12,
                             ),
                             overflow: TextOverflow.ellipsis,

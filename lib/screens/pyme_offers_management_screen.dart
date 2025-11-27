@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import '../models/offer_data.dart';
 
 class PymeOffersManagementScreen extends StatefulWidget {
@@ -40,17 +41,17 @@ class _PymeOffersManagementScreenState
     
     // Valores por defecto para nueva oferta
     IconData selectedIcon = offer?.icon ?? Icons.local_offer;
-    Color selectedColor = offer?.color ?? Colors.blueAccent;
+    Color selectedColor = offer?.color ?? const Color(0xFF4ECDC4);
 
     showDialog(
       context: context,
       builder: (context) => StatefulBuilder(
         builder: (context, setStateDialog) {
           return AlertDialog(
-            backgroundColor: const Color(0xFF2C2C3E),
+            backgroundColor: Colors.white,
             title: Text(
               isEditing ? 'Editar Oferta' : 'Nueva Oferta',
-              style: const TextStyle(color: Colors.white),
+              style: GoogleFonts.poppins(color: Colors.black87, fontWeight: FontWeight.bold),
             ),
             content: SingleChildScrollView(
               child: Column(
@@ -58,28 +59,32 @@ class _PymeOffersManagementScreenState
                 children: [
                   TextField(
                     controller: titleController,
-                    style: const TextStyle(color: Colors.white),
+                    style: const TextStyle(color: Colors.black87),
                     decoration: const InputDecoration(
                       labelText: 'Título',
-                      labelStyle: TextStyle(color: Colors.white70),
+                      labelStyle: TextStyle(color: Colors.grey),
                       enabledBorder: UnderlineInputBorder(
-                          borderSide: BorderSide(color: Colors.white30)),
+                          borderSide: BorderSide(color: Colors.grey)),
+                      focusedBorder: UnderlineInputBorder(
+                          borderSide: BorderSide(color: Color(0xFFFF6B6B))),
                     ),
                   ),
                   const SizedBox(height: 16),
                   TextField(
                     controller: descController,
-                    style: const TextStyle(color: Colors.white),
+                    style: const TextStyle(color: Colors.black87),
                     decoration: const InputDecoration(
                       labelText: 'Descripción',
-                      labelStyle: TextStyle(color: Colors.white70),
+                      labelStyle: TextStyle(color: Colors.grey),
                       enabledBorder: UnderlineInputBorder(
-                          borderSide: BorderSide(color: Colors.white30)),
+                          borderSide: BorderSide(color: Colors.grey)),
+                      focusedBorder: UnderlineInputBorder(
+                          borderSide: BorderSide(color: Color(0xFFFF6B6B))),
                     ),
                   ),
                   const SizedBox(height: 24),
                   const Text('Icono',
-                      style: TextStyle(color: Colors.white70, fontSize: 12)),
+                      style: TextStyle(color: Colors.grey, fontSize: 12)),
                   const SizedBox(height: 8),
                   Wrap(
                     spacing: 12,
@@ -92,10 +97,10 @@ class _PymeOffersManagementScreenState
                       Icons.percent,
                     ].map((icon) {
                       return ChoiceChip(
-                        label: Icon(icon, size: 18, color: Colors.white),
+                        label: Icon(icon, size: 18, color: selectedIcon == icon ? Colors.white : Colors.black87),
                         selected: selectedIcon == icon,
-                        selectedColor: selectedColor.withOpacity(0.5),
-                        backgroundColor: const Color(0xFF1E1E2C),
+                        selectedColor: selectedColor,
+                        backgroundColor: Colors.grey[200],
                         onSelected: (bool selected) {
                           setStateDialog(() {
                             selectedIcon = icon;
@@ -106,16 +111,16 @@ class _PymeOffersManagementScreenState
                   ),
                   const SizedBox(height: 16),
                   const Text('Color',
-                      style: TextStyle(color: Colors.white70, fontSize: 12)),
+                      style: TextStyle(color: Colors.grey, fontSize: 12)),
                   const SizedBox(height: 8),
                   Wrap(
                     spacing: 12,
                     children: [
-                      Colors.blueAccent,
-                      Colors.orangeAccent,
-                      Colors.greenAccent,
+                      const Color(0xFF4ECDC4),
+                      const Color(0xFFFF6B6B),
+                      const Color(0xFFFFD93D),
                       Colors.purpleAccent,
-                      Colors.redAccent,
+                      Colors.blueAccent,
                     ].map((color) {
                       return GestureDetector(
                         onTap: () {
@@ -130,7 +135,7 @@ class _PymeOffersManagementScreenState
                             color: color,
                             shape: BoxShape.circle,
                             border: selectedColor == color
-                                ? Border.all(color: Colors.white, width: 2)
+                                ? Border.all(color: Colors.black87, width: 2)
                                 : null,
                           ),
                         ),
@@ -144,7 +149,7 @@ class _PymeOffersManagementScreenState
               TextButton(
                 onPressed: () => Navigator.pop(context),
                 child: const Text('Cancelar',
-                    style: TextStyle(color: Colors.white70)),
+                    style: TextStyle(color: Colors.grey)),
               ),
               ElevatedButton(
                 style: ElevatedButton.styleFrom(
@@ -181,20 +186,23 @@ class _PymeOffersManagementScreenState
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF1E1E2C),
+      backgroundColor: const Color(0xFFF7F9FC),
       appBar: AppBar(
-        backgroundColor: const Color(0xFF1E1E2C),
+        backgroundColor: Colors.white,
         elevation: 0,
-        title: const Text(
+        title: Text(
           'Gestión de Ofertas',
-          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+          style: GoogleFonts.poppins(
+            color: Colors.black87,
+            fontWeight: FontWeight.bold,
+          ),
         ),
-        iconTheme: const IconThemeData(color: Colors.white),
+        iconTheme: const IconThemeData(color: Colors.black87),
       ),
       floatingActionButton: FloatingActionButton(
-        backgroundColor: Colors.amber,
+        backgroundColor: const Color(0xFFFF6B6B),
         onPressed: () => _showOfferDialog(),
-        child: const Icon(Icons.add, color: Colors.black),
+        child: const Icon(Icons.add, color: Colors.white),
       ),
       body: OfferData.offers.isEmpty
           ? Center(
@@ -202,11 +210,11 @@ class _PymeOffersManagementScreenState
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Icon(Icons.local_offer_outlined,
-                      size: 64, color: Colors.white.withOpacity(0.2)),
+                      size: 64, color: Colors.grey[300]),
                   const SizedBox(height: 16),
                   Text(
                     'No hay ofertas activas',
-                    style: TextStyle(color: Colors.white.withOpacity(0.5)),
+                    style: TextStyle(color: Colors.grey[500]),
                   ),
                 ],
               ),
@@ -227,24 +235,25 @@ class _PymeOffersManagementScreenState
                   ),
                   onDismissed: (direction) => _deleteOffer(offer.id),
                   child: Card(
-                    color: const Color(0xFF2C2C3E),
+                    color: Colors.white,
                     margin: const EdgeInsets.only(bottom: 12),
                     shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12)),
+                    elevation: 2,
                     child: ListTile(
                       contentPadding: const EdgeInsets.all(16),
                       leading: Container(
                         padding: const EdgeInsets.all(12),
                         decoration: BoxDecoration(
-                          color: offer.color.withOpacity(0.2),
+                          color: offer.color.withOpacity(0.1),
                           borderRadius: BorderRadius.circular(12),
                         ),
                         child: Icon(offer.icon, color: offer.color),
                       ),
                       title: Text(
                         offer.title,
-                        style: const TextStyle(
-                          color: Colors.white,
+                        style: GoogleFonts.poppins(
+                          color: Colors.black87,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
@@ -252,11 +261,11 @@ class _PymeOffersManagementScreenState
                         padding: const EdgeInsets.only(top: 4),
                         child: Text(
                           offer.description,
-                          style: const TextStyle(color: Colors.white70),
+                          style: GoogleFonts.poppins(color: Colors.grey[600]),
                         ),
                       ),
                       trailing: IconButton(
-                        icon: const Icon(Icons.edit, color: Colors.white70),
+                        icon: const Icon(Icons.edit, color: Colors.grey),
                         onPressed: () => _showOfferDialog(offer: offer),
                       ),
                     ),

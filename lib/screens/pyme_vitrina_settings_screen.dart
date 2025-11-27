@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import '../models/vitrina_data.dart';
 import 'login_screen.dart';
 
@@ -62,21 +63,27 @@ class _PymeVitrinaSettingsScreenState extends State<PymeVitrinaSettingsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF1E1E2C),
+      backgroundColor: const Color(0xFFF7F9FC),
       appBar: AppBar(
-        backgroundColor: const Color(0xFF1E1E2C),
+        backgroundColor: Colors.white,
         elevation: 0,
-        title: const Text(
+        title: Text(
           'Editar Vitrina',
-          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+          style: GoogleFonts.poppins(
+            color: Colors.black87,
+            fontWeight: FontWeight.bold,
+          ),
         ),
-        iconTheme: const IconThemeData(color: Colors.white),
+        iconTheme: const IconThemeData(color: Colors.black87),
         actions: [
           TextButton(
             onPressed: _saveSettings,
-            child: const Text(
+            child: Text(
               'Guardar',
-              style: TextStyle(color: Colors.amber, fontWeight: FontWeight.bold),
+              style: GoogleFonts.poppins(
+                color: const Color(0xFFFF6B6B),
+                fontWeight: FontWeight.bold,
+              ),
             ),
           ),
         ],
@@ -142,8 +149,8 @@ class _PymeVitrinaSettingsScreenState extends State<PymeVitrinaSettingsScreen> {
       padding: const EdgeInsets.only(bottom: 16.0),
       child: Text(
         title,
-        style: const TextStyle(
-          color: Colors.amber,
+        style: GoogleFonts.poppins(
+          color: const Color(0xFFFF6B6B),
           fontSize: 18,
           fontWeight: FontWeight.bold,
         ),
@@ -156,20 +163,20 @@ class _PymeVitrinaSettingsScreenState extends State<PymeVitrinaSettingsScreen> {
     return TextField(
       controller: controller,
       maxLines: maxLines,
-      style: const TextStyle(color: Colors.white),
+      style: const TextStyle(color: Colors.black87),
       decoration: InputDecoration(
         labelText: label,
-        labelStyle: TextStyle(color: Colors.white.withOpacity(0.6)),
-        prefixIcon: icon != null ? Icon(icon, color: Colors.white54) : null,
+        labelStyle: TextStyle(color: Colors.grey[600]),
+        prefixIcon: icon != null ? Icon(icon, color: Colors.grey) : null,
         filled: true,
-        fillColor: const Color(0xFF2C2C3E),
+        fillColor: Colors.white,
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
           borderSide: BorderSide.none,
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: Colors.amber),
+          borderSide: const BorderSide(color: Color(0xFFFF6B6B)),
         ),
       ),
     );

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'dart:async';
 import '../models/client_data.dart';
 
@@ -82,26 +83,26 @@ class _PymeValidationScannerScreenState
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        backgroundColor: const Color(0xFF2C2C3E),
-        title: const Text('Confirmar Canje', style: TextStyle(color: Colors.white)),
+        backgroundColor: Colors.white,
+        title: Text('Confirmar Canje', style: GoogleFonts.poppins(color: Colors.black87, fontWeight: FontWeight.bold)),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Text(
+            Text(
               '¿Desea aplicar el descuento de \$10.000?',
-              style: TextStyle(color: Colors.white70, fontSize: 16),
+              style: GoogleFonts.poppins(color: Colors.black87, fontSize: 16),
             ),
             const SizedBox(height: 8),
-            const Text(
+            Text(
               'Esta acción consumirá el cupón mensual del cliente.',
-              style: TextStyle(color: Colors.amber, fontSize: 12),
+              style: GoogleFonts.poppins(color: const Color(0xFFFF6B6B), fontSize: 12),
             ),
           ],
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Cancelar', style: TextStyle(color: Colors.white54)),
+            child: const Text('Cancelar', style: TextStyle(color: Colors.grey)),
           ),
           ElevatedButton(
             onPressed: () {
@@ -113,8 +114,8 @@ class _PymeValidationScannerScreenState
               Navigator.pop(context);
               _showResultDialog(true, code, 'Descuento de \$10.000 aplicado correctamente.');
             },
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.amber),
-            child: const Text('Confirmar', style: TextStyle(color: Colors.black)),
+            style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFFF6B6B)),
+            child: const Text('Confirmar', style: TextStyle(color: Colors.white)),
           ),
         ],
       ),
@@ -125,21 +126,21 @@ class _PymeValidationScannerScreenState
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        backgroundColor: const Color(0xFF2C2C3E),
+        backgroundColor: Colors.white,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             Icon(
               success ? Icons.check_circle : Icons.error,
-              color: success ? Colors.greenAccent : Colors.redAccent,
+              color: success ? Colors.green : Colors.redAccent,
               size: 64,
             ),
             const SizedBox(height: 16),
             Text(
               success ? '¡Validación Exitosa!' : 'Error',
-              style: const TextStyle(
-                color: Colors.white,
+              style: GoogleFonts.poppins(
+                color: Colors.black87,
                 fontSize: 20,
                 fontWeight: FontWeight.bold,
               ),
@@ -148,7 +149,7 @@ class _PymeValidationScannerScreenState
             Text(
               message,
               textAlign: TextAlign.center,
-              style: const TextStyle(color: Colors.white70),
+              style: GoogleFonts.poppins(color: Colors.grey[600]),
             ),
           ],
         ),
@@ -160,7 +161,7 @@ class _PymeValidationScannerScreenState
                 _codeController.clear();
               }
             },
-            child: const Text('Aceptar', style: TextStyle(color: Colors.white)),
+            child: const Text('Aceptar', style: TextStyle(color: Colors.black87)),
           ),
         ],
       ),
@@ -170,15 +171,18 @@ class _PymeValidationScannerScreenState
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF1E1E2C),
+      backgroundColor: const Color(0xFFF7F9FC),
       appBar: AppBar(
-        backgroundColor: const Color(0xFF1E1E2C),
+        backgroundColor: Colors.white,
         elevation: 0,
-        title: const Text(
+        title: Text(
           'Validar Cupón Mensual',
-          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+          style: GoogleFonts.poppins(
+            color: Colors.black87,
+            fontWeight: FontWeight.bold,
+          ),
         ),
-        iconTheme: const IconThemeData(color: Colors.white),
+        iconTheme: const IconThemeData(color: Colors.black87),
       ),
       body: SingleChildScrollView(
         child: Padding(
@@ -186,9 +190,9 @@ class _PymeValidationScannerScreenState
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              const Text(
+              Text(
                 'Escanea el QR mensual del cliente',
-                style: TextStyle(color: Colors.white70, fontSize: 16),
+                style: GoogleFonts.poppins(color: Colors.grey[600], fontSize: 16),
               ),
               const SizedBox(height: 24),
               // Scanner UI Simulation
@@ -201,10 +205,10 @@ class _PymeValidationScannerScreenState
                     decoration: BoxDecoration(
                       color: Colors.black,
                       borderRadius: BorderRadius.circular(20),
-                      border: Border.all(color: Colors.white24, width: 1),
+                      border: Border.all(color: Colors.grey[300]!, width: 1),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withOpacity(0.5),
+                          color: Colors.black.withOpacity(0.1),
                           blurRadius: 20,
                           offset: const Offset(0, 10),
                         ),
@@ -233,10 +237,10 @@ class _PymeValidationScannerScreenState
                                 child: Container(
                                   height: 2,
                                   decoration: BoxDecoration(
-                                    color: Colors.amber,
+                                    color: const Color(0xFFFF6B6B),
                                     boxShadow: [
                                       BoxShadow(
-                                        color: Colors.amber.withOpacity(0.5),
+                                        color: const Color(0xFFFF6B6B).withOpacity(0.5),
                                         blurRadius: 10,
                                         spreadRadius: 2,
                                       ),
@@ -289,51 +293,51 @@ class _PymeValidationScannerScreenState
                 },
                 icon: Icon(
                   _isScanning ? Icons.pause : Icons.play_arrow,
-                  color: Colors.amber,
+                  color: const Color(0xFFFF6B6B),
                 ),
                 label: Text(
                   _isScanning ? 'Pausar Escáner' : 'Activar Escáner',
-                  style: const TextStyle(color: Colors.amber),
+                  style: const TextStyle(color: Color(0xFFFF6B6B)),
                 ),
               ),
               const SizedBox(height: 32),
               Row(
                 children: [
-                  const Expanded(
-                    child: Divider(color: Colors.white24),
+                  Expanded(
+                    child: Divider(color: Colors.grey[300]),
                   ),
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 16),
                     child: Text(
                       'O ingresa el código',
-                      style: TextStyle(color: Colors.white.withOpacity(0.5)),
+                      style: TextStyle(color: Colors.grey[500]),
                     ),
                   ),
-                  const Expanded(
-                    child: Divider(color: Colors.white24),
+                  Expanded(
+                    child: Divider(color: Colors.grey[300]),
                   ),
                 ],
               ),
               const SizedBox(height: 32),
               TextField(
                 controller: _codeController,
-                style: const TextStyle(color: Colors.white, fontSize: 18),
+                style: const TextStyle(color: Colors.black87, fontSize: 18),
                 textAlign: TextAlign.center,
                 textCapitalization: TextCapitalization.characters,
                 decoration: InputDecoration(
                   hintText: 'EJ: CUPON-NOV',
-                  hintStyle: TextStyle(color: Colors.white.withOpacity(0.3)),
+                  hintStyle: TextStyle(color: Colors.grey[400]),
                   filled: true,
-                  fillColor: const Color(0xFF2C2C3E),
+                  fillColor: Colors.white,
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
                     borderSide: BorderSide.none,
                   ),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
-                    borderSide: const BorderSide(color: Colors.amber),
+                    borderSide: const BorderSide(color: Color(0xFFFF6B6B)),
                   ),
-                  prefixIcon: const Icon(Icons.keyboard, color: Colors.white54),
+                  prefixIcon: const Icon(Icons.keyboard, color: Colors.grey),
                 ),
               ),
               const SizedBox(height: 16),
@@ -347,8 +351,8 @@ class _PymeValidationScannerScreenState
                     }
                   },
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.amber,
-                    foregroundColor: Colors.black,
+                    backgroundColor: const Color(0xFFFF6B6B),
+                    foregroundColor: Colors.white,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
@@ -367,13 +371,13 @@ class _PymeValidationScannerScreenState
                   onPressed: () {
                     _validateCode('PRO123'); // Simulate successful scan
                   },
-                  icon: const Icon(Icons.qr_code_scanner, color: Colors.amber),
+                  icon: const Icon(Icons.qr_code_scanner, color: Color(0xFFFF6B6B)),
                   label: const Text(
                     'Simular Escaneo Exitoso',
-                    style: TextStyle(color: Colors.amber),
+                    style: TextStyle(color: Color(0xFFFF6B6B)),
                   ),
                   style: OutlinedButton.styleFrom(
-                    side: const BorderSide(color: Colors.amber),
+                    side: const BorderSide(color: Color(0xFFFF6B6B)),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
@@ -390,7 +394,7 @@ class _PymeValidationScannerScreenState
   List<Widget> _buildCornerMarkers() {
     const double size = 40;
     const double thickness = 4;
-    const Color color = Colors.amber;
+    const Color color = Color(0xFFFF6B6B);
 
     return [
       // Top Left

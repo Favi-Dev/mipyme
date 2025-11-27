@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../models/offer_data.dart';
 import '../models/vitrina_data.dart';
+import '../services/product_service.dart';
+import '../models/product.dart';
+import '../services/cart_service.dart';
 
 class ClientPymeDetailScreen extends StatefulWidget {
   const ClientPymeDetailScreen({super.key});
@@ -12,7 +15,22 @@ class ClientPymeDetailScreen extends StatefulWidget {
 
 class _ClientPymeDetailScreenState extends State<ClientPymeDetailScreen> {
   final ScrollController _scrollController = ScrollController();
+  final ProductService _productService = ProductService();
+  final CartService _cartService = CartService();
   bool _isFollowing = false;
+  List<Product> _products = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _loadProducts();
+  }
+
+  void _loadProducts() {
+    setState(() {
+      _products = _productService.getProductsByPyme('pyme1');
+    });
+  }
 
   @override
   void dispose() {
@@ -23,7 +41,7 @@ class _ClientPymeDetailScreenState extends State<ClientPymeDetailScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF1E1E2C),
+      backgroundColor: const Color(0xFFF7F9FC),
       body: Stack(
         children: [
           CustomScrollView(
@@ -35,7 +53,7 @@ class _ClientPymeDetailScreenState extends State<ClientPymeDetailScreen> {
                 floating: false,
                 elevation: 0,
                 scrolledUnderElevation: 0,
-                backgroundColor: const Color(0xFF1E1E2C),
+                backgroundColor: const Color(0xFFF7F9FC),
                 leading: IconButton(
                   icon: const Icon(Icons.arrow_back, color: Colors.white),
                   onPressed: () => Navigator.pop(context),
@@ -44,7 +62,7 @@ class _ClientPymeDetailScreenState extends State<ClientPymeDetailScreen> {
                   IconButton(
                     icon: Icon(
                       _isFollowing ? Icons.favorite : Icons.favorite_border,
-                      color: _isFollowing ? Colors.redAccent : Colors.white,
+                      color: _isFollowing ? const Color(0xFFFF6B6B) : Colors.white,
                     ),
                     onPressed: () {
                       setState(() {
@@ -57,7 +75,7 @@ class _ClientPymeDetailScreenState extends State<ClientPymeDetailScreen> {
                                 ? '¡Ahora sigues a ${VitrinaData.name}!'
                                 : 'Dejaste de seguir a ${VitrinaData.name}',
                           ),
-                          backgroundColor: _isFollowing ? Colors.redAccent : Colors.grey,
+                          backgroundColor: _isFollowing ? const Color(0xFFFF6B6B) : Colors.grey,
                           duration: const Duration(seconds: 2),
                         ),
                       );
@@ -119,14 +137,14 @@ class _ClientPymeDetailScreenState extends State<ClientPymeDetailScreen> {
                         style: GoogleFonts.poppins(
                           fontSize: 20,
                           fontWeight: FontWeight.bold,
-                          color: Colors.white,
+                          color: Colors.black87,
                         ),
                       ),
                       const SizedBox(height: 8),
                       Text(
                         VitrinaData.description,
                         style: GoogleFonts.poppins(
-                          color: Colors.white70,
+                          color: Colors.grey[700],
                           fontSize: 14,
                         ),
                       ),
@@ -138,7 +156,7 @@ class _ClientPymeDetailScreenState extends State<ClientPymeDetailScreen> {
                         style: GoogleFonts.poppins(
                           fontSize: 20,
                           fontWeight: FontWeight.bold,
-                          color: Colors.white,
+                          color: Colors.black87,
                         ),
                       ),
                       const SizedBox(height: 12),
@@ -157,13 +175,38 @@ class _ClientPymeDetailScreenState extends State<ClientPymeDetailScreen> {
                       ),
                       const SizedBox(height: 24),
 
+                      // Products
+                      if (_products.isNotEmpty) ...[
+                        Text(
+                          'Productos',
+                          style: GoogleFonts.poppins(
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.black87,
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        SingleChildScrollView(
+                          scrollDirection: Axis.horizontal,
+                          child: Row(
+                            children: _products.map((product) {
+                              return Padding(
+                                padding: const EdgeInsets.only(right: 12),
+                                child: _buildProductCard(product),
+                              );
+                            }).toList(),
+                          ),
+                        ),
+                        const SizedBox(height: 24),
+                      ],
+
                       // Info
                       Text(
                         'Información',
                         style: GoogleFonts.poppins(
                           fontSize: 20,
                           fontWeight: FontWeight.bold,
-                          color: Colors.white,
+                          color: Colors.black87,
                         ),
                       ),
                       const SizedBox(height: 12),
@@ -220,12 +263,19 @@ class _ClientPymeDetailScreenState extends State<ClientPymeDetailScreen> {
             child: Container(
               padding: const EdgeInsets.all(4),
               decoration: const BoxDecoration(
-                color: Color(0xFF1E1E2C),
+                color: Colors.white,
                 shape: BoxShape.circle,
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black12,
+                    blurRadius: 8,
+                    offset: Offset(0, 4),
+                  ),
+                ],
               ),
               child: const CircleAvatar(
                 radius: 40,
-                backgroundColor: Colors.amber,
+                backgroundColor: Color(0xFFFFD93D),
                 child: Icon(
                   Icons.coffee,
                   size: 40,
@@ -245,11 +295,18 @@ class _ClientPymeDetailScreenState extends State<ClientPymeDetailScreen> {
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         gradient: LinearGradient(
-          colors: [offer.color.withOpacity(0.8), offer.color.withOpacity(0.4)],
+          colors: [offer.color.withOpacity(0.9), offer.color.withOpacity(0.7)],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
         borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: offer.color.withOpacity(0.3),
+            blurRadius: 8,
+            offset: const Offset(0, 4),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -287,7 +344,7 @@ class _ClientPymeDetailScreenState extends State<ClientPymeDetailScreen> {
           const SizedBox(height: 4),
           Text(
             offer.description,
-            style: GoogleFonts.poppins(color: Colors.white70, fontSize: 12),
+            style: GoogleFonts.poppins(color: Colors.white.withOpacity(0.9), fontSize: 12),
           ),
           const SizedBox(height: 12),
           Container(
@@ -317,16 +374,111 @@ class _ClientPymeDetailScreenState extends State<ClientPymeDetailScreen> {
     );
   }
 
+  Widget _buildProductCard(Product product) {
+    return Container(
+      width: 160,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 8,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          ClipRRect(
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
+            child: Image.network(
+              product.imageUrl,
+              height: 120,
+              width: double.infinity,
+              fit: BoxFit.cover,
+              errorBuilder: (_, __, ___) => Container(
+                height: 120,
+                color: Colors.grey[200],
+                child: const Icon(Icons.image_not_supported, color: Colors.grey),
+              ),
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.all(12),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  product.name,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: GoogleFonts.poppins(
+                    fontWeight: FontWeight.w600,
+                    fontSize: 14,
+                    color: Colors.black87,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  '\$${product.price.toStringAsFixed(0)}',
+                  style: GoogleFonts.poppins(
+                    color: const Color(0xFFFF6B6B),
+                    fontWeight: FontWeight.bold,
+                    fontSize: 14,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                SizedBox(
+                  width: double.infinity,
+                  height: 32,
+                  child: ElevatedButton(
+                    onPressed: () {
+                      try {
+                        _cartService.addToCart(product);
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('Agregado al carrito'),
+                            duration: Duration(seconds: 1),
+                            backgroundColor: Color(0xFF4ECDC4),
+                          ),
+                        );
+                      } catch (e) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text(e.toString())),
+                        );
+                      }
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF4ECDC4),
+                      foregroundColor: Colors.white,
+                      padding: EdgeInsets.zero,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                    ),
+                    child: const Text('Agregar'),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildInfoRow(IconData icon, String text) {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Icon(icon, color: Colors.white70, size: 20),
+        Icon(icon, color: Colors.grey[600], size: 20),
         const SizedBox(width: 12),
         Expanded(
           child: Text(
             text,
-            style: GoogleFonts.poppins(color: Colors.white70, fontSize: 14),
+            style: GoogleFonts.poppins(color: Colors.grey[700], fontSize: 14),
           ),
         ),
       ],

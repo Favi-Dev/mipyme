@@ -7,20 +7,21 @@ class AdminDashboardScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF1E1E2C),
+      backgroundColor: const Color(0xFFF7F9FC),
       appBar: AppBar(
-        backgroundColor: Colors.transparent,
+        backgroundColor: Colors.white,
         elevation: 0,
         title: Text(
           'Panel de Administración',
           style: GoogleFonts.poppins(
-            color: Colors.white,
+            color: Colors.black87,
             fontWeight: FontWeight.bold,
           ),
         ),
+        iconTheme: const IconThemeData(color: Colors.black87),
         actions: [
           IconButton(
-            icon: const Icon(Icons.refresh, color: Colors.white),
+            icon: const Icon(Icons.refresh, color: Colors.black87),
             onPressed: () {},
           ),
         ],
@@ -33,7 +34,7 @@ class AdminDashboardScreen extends StatelessWidget {
             Text(
               'Resumen Global',
               style: GoogleFonts.poppins(
-                color: Colors.white70,
+                color: Colors.black87,
                 fontSize: 16,
                 fontWeight: FontWeight.w600,
               ),
@@ -46,7 +47,7 @@ class AdminDashboardScreen extends StatelessWidget {
                     'Usuarios',
                     '1,250',
                     Icons.people,
-                    Colors.blueAccent,
+                    const Color(0xFF4ECDC4),
                   ),
                 ),
                 const SizedBox(width: 16),
@@ -55,7 +56,7 @@ class AdminDashboardScreen extends StatelessWidget {
                     'Pymes',
                     '340',
                     Icons.store,
-                    Colors.orangeAccent,
+                    const Color(0xFFFF6B6B),
                   ),
                 ),
               ],
@@ -68,7 +69,7 @@ class AdminDashboardScreen extends StatelessWidget {
                     'Transacciones',
                     '8,900',
                     Icons.receipt_long,
-                    Colors.greenAccent,
+                    const Color(0xFFFFD93D),
                   ),
                 ),
                 const SizedBox(width: 16),
@@ -86,7 +87,7 @@ class AdminDashboardScreen extends StatelessWidget {
             Text(
               'Actividad Reciente',
               style: GoogleFonts.poppins(
-                color: Colors.white70,
+                color: Colors.black87,
                 fontSize: 16,
                 fontWeight: FontWeight.w600,
               ),
@@ -120,8 +121,15 @@ class AdminDashboardScreen extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: const Color(0xFF2C2C3E),
+        color: Colors.white,
         borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -129,7 +137,7 @@ class AdminDashboardScreen extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
-              color: color.withOpacity(0.2),
+              color: color.withOpacity(0.1),
               borderRadius: BorderRadius.circular(12),
             ),
             child: Icon(icon, color: color, size: 24),
@@ -138,7 +146,7 @@ class AdminDashboardScreen extends StatelessWidget {
           Text(
             value,
             style: GoogleFonts.poppins(
-              color: Colors.white,
+              color: Colors.black87,
               fontSize: 24,
               fontWeight: FontWeight.bold,
             ),
@@ -146,7 +154,7 @@ class AdminDashboardScreen extends StatelessWidget {
           Text(
             title,
             style: GoogleFonts.poppins(
-              color: Colors.white54,
+              color: Colors.grey[600],
               fontSize: 14,
             ),
           ),
@@ -161,8 +169,15 @@ class AdminDashboardScreen extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: const Color(0xFF2C2C3E),
+        color: Colors.white,
         borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 5,
+            offset: const Offset(0, 2),
+          ),
+        ],
       ),
       child: Row(
         children: [
@@ -182,7 +197,7 @@ class AdminDashboardScreen extends StatelessWidget {
                 Text(
                   title,
                   style: GoogleFonts.poppins(
-                    color: Colors.white,
+                    color: Colors.black87,
                     fontSize: 14,
                     fontWeight: FontWeight.w500,
                   ),
@@ -190,7 +205,7 @@ class AdminDashboardScreen extends StatelessWidget {
                 Text(
                   time,
                   style: GoogleFonts.poppins(
-                    color: Colors.white38,
+                    color: Colors.grey[500],
                     fontSize: 12,
                   ),
                 ),

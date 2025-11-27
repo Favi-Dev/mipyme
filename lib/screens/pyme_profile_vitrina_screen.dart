@@ -3,6 +3,9 @@ import '../models/offer_data.dart';
 import '../models/vitrina_data.dart';
 import 'pyme_offers_management_screen.dart';
 import 'pyme_vitrina_settings_screen.dart';
+import '../services/product_service.dart';
+import '../models/product.dart';
+import 'pyme_products_screen.dart';
 
 class PymeProfileVitrinaScreen extends StatefulWidget {
   const PymeProfileVitrinaScreen({super.key});
@@ -14,6 +17,20 @@ class PymeProfileVitrinaScreen extends StatefulWidget {
 
 class _PymeProfileVitrinaScreenState extends State<PymeProfileVitrinaScreen> {
   final ScrollController _scrollController = ScrollController();
+  final ProductService _productService = ProductService();
+  List<Product> _products = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _loadProducts();
+  }
+
+  void _loadProducts() {
+    setState(() {
+      _products = _productService.getProductsByPyme('pyme1');
+    });
+  }
 
   @override
   void dispose() {
@@ -23,11 +40,11 @@ class _PymeProfileVitrinaScreenState extends State<PymeProfileVitrinaScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // Using a dark theme aesthetic for this screen as requested
+    // Using a light theme aesthetic for this screen as requested
     final textTheme = Theme.of(context).textTheme;
 
     return Scaffold(
-      backgroundColor: const Color(0xFF1E1E2C), // Dark background
+      backgroundColor: const Color(0xFFF7F9FC), // Light background
       body: Stack(
         children: [
           CustomScrollView(
@@ -39,7 +56,7 @@ class _PymeProfileVitrinaScreenState extends State<PymeProfileVitrinaScreen> {
                 floating: false,
                 elevation: 0,
                 scrolledUnderElevation: 0,
-                backgroundColor: const Color(0xFF1E1E2C),
+                backgroundColor: const Color(0xFFFF6B6B),
                 actions: [
                   IconButton(
                     icon: const Icon(Icons.settings, color: Colors.white),
@@ -102,12 +119,12 @@ class _PymeProfileVitrinaScreenState extends State<PymeProfileVitrinaScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       // Description Section
-                      _buildSectionTitle('Descripción'),
+                      _buildSectionTitle('Descripción', Colors.black87),
                       const SizedBox(height: 8),
                       Text(
                         VitrinaData.description,
                         style: textTheme.bodyMedium
-                            ?.copyWith(color: Colors.white70),
+                            ?.copyWith(color: Colors.black54),
                       ),
                       const SizedBox(height: 24),
 
@@ -115,9 +132,9 @@ class _PymeProfileVitrinaScreenState extends State<PymeProfileVitrinaScreen> {
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          _buildSectionTitle('Ofertas'),
+                          _buildSectionTitle('Ofertas', Colors.black87),
                           IconButton(
-                            icon: const Icon(Icons.edit, color: Colors.white70),
+                            icon: const Icon(Icons.edit, color: Colors.grey),
                             onPressed: () async {
                               await Navigator.push(
                                 context,
@@ -151,14 +168,51 @@ class _PymeProfileVitrinaScreenState extends State<PymeProfileVitrinaScreen> {
                       ),
                       const SizedBox(height: 24),
 
+                      // Products Section
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          _buildSectionTitle('Productos', Colors.black87),
+                          IconButton(
+                            icon: const Icon(Icons.edit, color: Colors.grey),
+                            onPressed: () async {
+                              await Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) =>
+                                      const PymeProductsScreen(),
+                                ),
+                              );
+                              _loadProducts();
+                            },
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+                      if (_products.isEmpty)
+                        const Text('No hay productos registrados', style: TextStyle(color: Colors.grey))
+                      else
+                        SingleChildScrollView(
+                          scrollDirection: Axis.horizontal,
+                          child: Row(
+                            children: _products.map((product) {
+                              return Padding(
+                                padding: const EdgeInsets.only(right: 12),
+                                child: _buildProductCard(product),
+                              );
+                            }).toList(),
+                          ),
+                        ),
+                      const SizedBox(height: 24),
+
                       // Hours Section
-                      _buildSectionTitle('Horarios'),
+                      _buildSectionTitle('Horarios', Colors.black87),
                       const SizedBox(height: 8),
-                      _buildInfoRow(Icons.access_time, VitrinaData.hours),
+                      _buildInfoRow(Icons.access_time, VitrinaData.hours, Colors.black54),
                       const SizedBox(height: 24),
 
                       // Contact Section
-                      _buildSectionTitle('Contacto'),
+                      _buildSectionTitle('Contacto', Colors.black87),
                       const SizedBox(height: 12),
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceAround,
@@ -171,7 +225,7 @@ class _PymeProfileVitrinaScreenState extends State<PymeProfileVitrinaScreen> {
                                 behavior: SnackBarBehavior.floating,
                               ),
                             );
-                          }),
+                          }, Colors.blue),
                           _buildSocialButton(Icons.camera_alt, 'Instagram', () {
                             ScaffoldMessenger.of(context).showSnackBar(
                               SnackBar(
@@ -181,7 +235,7 @@ class _PymeProfileVitrinaScreenState extends State<PymeProfileVitrinaScreen> {
                                 behavior: SnackBarBehavior.floating,
                               ),
                             );
-                          }),
+                          }, Colors.purple),
                           _buildSocialButton(Icons.message, 'WhatsApp', () {
                             ScaffoldMessenger.of(context).showSnackBar(
                               SnackBar(
@@ -191,16 +245,16 @@ class _PymeProfileVitrinaScreenState extends State<PymeProfileVitrinaScreen> {
                                 behavior: SnackBarBehavior.floating,
                               ),
                             );
-                          }),
+                          }, Colors.green),
                         ],
                       ),
                       const SizedBox(height: 24),
 
                       // Location Section
-                      _buildSectionTitle('Ubicación'),
+                      _buildSectionTitle('Ubicación', Colors.black87),
                       const SizedBox(height: 8),
                       _buildInfoRow(
-                          Icons.location_on, VitrinaData.location),
+                          Icons.location_on, VitrinaData.location, Colors.black54),
                       const SizedBox(height: 40), // Bottom padding
                     ],
                   ),
@@ -227,12 +281,19 @@ class _PymeProfileVitrinaScreenState extends State<PymeProfileVitrinaScreen> {
             child: Container(
               padding: const EdgeInsets.all(4),
               decoration: const BoxDecoration(
-                color: Color(0xFF1E1E2C),
+                color: Colors.white,
                 shape: BoxShape.circle,
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black26,
+                    blurRadius: 8,
+                    offset: Offset(0, 2),
+                  )
+                ]
               ),
               child: const CircleAvatar(
                 radius: 40,
-                backgroundColor: Colors.amber,
+                backgroundColor: Color(0xFFFF6B6B),
                 child: Icon(
                   Icons.coffee,
                   size: 40,
@@ -242,17 +303,6 @@ class _PymeProfileVitrinaScreenState extends State<PymeProfileVitrinaScreen> {
             ),
           ),
         ],
-      ),
-    );
-  }
-
-  Widget _buildSectionTitle(String title) {
-    return Text(
-      title,
-      style: const TextStyle(
-        fontSize: 20,
-        fontWeight: FontWeight.bold,
-        color: Colors.white,
       ),
     );
   }
@@ -268,9 +318,15 @@ class _PymeProfileVitrinaScreenState extends State<PymeProfileVitrinaScreen> {
       width: 200,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: const Color(0xFF2C2C3E),
+        color: Colors.white,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.white10),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -280,7 +336,7 @@ class _PymeProfileVitrinaScreenState extends State<PymeProfileVitrinaScreen> {
           Text(
             title,
             style: const TextStyle(
-              color: Colors.white,
+              color: Colors.black87,
               fontWeight: FontWeight.bold,
               fontSize: 16,
             ),
@@ -288,30 +344,104 @@ class _PymeProfileVitrinaScreenState extends State<PymeProfileVitrinaScreen> {
           const SizedBox(height: 4),
           Text(
             description,
-            style: const TextStyle(color: Colors.white70, fontSize: 14),
+            style: const TextStyle(color: Colors.black54, fontSize: 14),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildInfoRow(IconData icon, String text) {
+  Widget _buildProductCard(Product product) {
+    return Container(
+      width: 160,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 8,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          ClipRRect(
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
+            child: Image.network(
+              product.imageUrl,
+              height: 120,
+              width: double.infinity,
+              fit: BoxFit.cover,
+              errorBuilder: (_, __, ___) => Container(
+                height: 120,
+                color: Colors.grey[200],
+                child: const Icon(Icons.image_not_supported, color: Colors.grey),
+              ),
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.all(12),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  product.name,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w600,
+                    fontSize: 14,
+                    color: Colors.black87,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  '\$${product.price.toStringAsFixed(0)}',
+                  style: const TextStyle(
+                    color: Color(0xFFFF6B6B),
+                    fontWeight: FontWeight.bold,
+                    fontSize: 14,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSectionTitle(String title, Color color) {
+    return Text(
+      title,
+      style: TextStyle(
+        fontSize: 20,
+        fontWeight: FontWeight.bold,
+        color: color,
+      ),
+    );
+  }
+
+  Widget _buildInfoRow(IconData icon, String text, Color color) {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Icon(icon, color: Colors.white70, size: 20),
+        Icon(icon, color: color, size: 20),
         const SizedBox(width: 12),
         Expanded(
           child: Text(
             text,
-            style: const TextStyle(color: Colors.white70, fontSize: 16),
+            style: TextStyle(color: color, fontSize: 16),
           ),
         ),
       ],
     );
   }
 
-  Widget _buildSocialButton(IconData icon, String label, VoidCallback onTap) {
+  Widget _buildSocialButton(IconData icon, String label, VoidCallback onTap, Color color) {
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(50),
@@ -320,16 +450,15 @@ class _PymeProfileVitrinaScreenState extends State<PymeProfileVitrinaScreen> {
           Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: const Color(0xFF2C2C3E),
+              color: color.withOpacity(0.1),
               shape: BoxShape.circle,
-              border: Border.all(color: Colors.white10),
             ),
-            child: Icon(icon, color: Colors.white, size: 24),
+            child: Icon(icon, color: color, size: 24),
           ),
           const SizedBox(height: 8),
           Text(
             label,
-            style: const TextStyle(color: Colors.white70, fontSize: 12),
+            style: const TextStyle(color: Colors.black54, fontSize: 12),
           ),
         ],
       ),

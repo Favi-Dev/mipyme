@@ -9,7 +9,7 @@ class RoleSelectionScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF1E1E2C),
+      backgroundColor: const Color(0xFFF7F9FC),
       body: Center(
         child: SingleChildScrollView(
           child: Padding(
@@ -17,20 +17,20 @@ class RoleSelectionScreen extends StatelessWidget {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-              const Icon(Icons.coffee, size: 80, color: Colors.amber),
+              const Icon(Icons.coffee, size: 80, color: Color(0xFFFF6B6B)),
               const SizedBox(height: 24),
               const Text(
-                'Soy Pro Pyme',
+                'SoyPlus',
                 style: TextStyle(
-                  color: Colors.white,
+                  color: Colors.black87,
                   fontSize: 32,
                   fontWeight: FontWeight.bold,
                 ),
               ),
               const SizedBox(height: 8),
-              const Text(
+              Text(
                 'Selecciona tu perfil para ingresar',
-                style: TextStyle(color: Colors.white70, fontSize: 16),
+                style: TextStyle(color: Colors.grey[600], fontSize: 16),
               ),
               const SizedBox(height: 48),
               _buildRoleButton(
@@ -38,7 +38,7 @@ class RoleSelectionScreen extends StatelessWidget {
                 'Cliente',
                 'Busco ofertas y pymes',
                 Icons.person,
-                Colors.amber,
+                const Color(0xFFFF6B6B),
                 const ClientAppShell(),
               ),
               const SizedBox(height: 16),
@@ -47,7 +47,7 @@ class RoleSelectionScreen extends StatelessWidget {
                 'Pyme',
                 'Gestiono mi negocio',
                 Icons.storefront,
-                Colors.deepPurpleAccent,
+                const Color(0xFF4ECDC4),
                 const PymeAppShell(),
               ),
               const SizedBox(height: 16),
@@ -56,7 +56,7 @@ class RoleSelectionScreen extends StatelessWidget {
                 'Administrador',
                 'Gestión de plataforma',
                 Icons.admin_panel_settings,
-                Colors.cyanAccent,
+                const Color(0xFFFFD93D),
                 const AdminAppShell(),
               ),
             ],
@@ -70,8 +70,9 @@ class RoleSelectionScreen extends StatelessWidget {
   Widget _buildRoleButton(BuildContext context, String title, String subtitle,
       IconData icon, Color color, Widget destination) {
     return Material(
-      color: const Color(0xFF2C2C3E),
+      color: Colors.white,
       borderRadius: BorderRadius.circular(16),
+      elevation: 2,
       child: InkWell(
         onTap: () {
           Navigator.pushReplacement(
@@ -87,7 +88,7 @@ class RoleSelectionScreen extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: color.withOpacity(0.2),
+                  color: color.withOpacity(0.1),
                   shape: BoxShape.circle,
                 ),
                 child: Icon(icon, color: color, size: 28),
@@ -100,7 +101,7 @@ class RoleSelectionScreen extends StatelessWidget {
                     Text(
                       title,
                       style: const TextStyle(
-                        color: Colors.white,
+                        color: Colors.black87,
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
                       ),
@@ -108,7 +109,7 @@ class RoleSelectionScreen extends StatelessWidget {
                     Text(
                       subtitle,
                       style: TextStyle(
-                        color: Colors.white.withOpacity(0.5),
+                        color: Colors.grey[600],
                         fontSize: 14,
                       ),
                     ),
@@ -116,7 +117,7 @@ class RoleSelectionScreen extends StatelessWidget {
                 ),
               ),
               Icon(Icons.arrow_forward_ios,
-                  color: Colors.white.withOpacity(0.3), size: 16),
+                  color: Colors.grey[300], size: 16),
             ],
           ),
         ),

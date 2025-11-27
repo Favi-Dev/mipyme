@@ -79,11 +79,11 @@ class ClientMapScreen extends StatelessWidget {
                     margin: const EdgeInsets.only(right: 16),
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
-                      color: const Color(0xFF2C2C3E),
+                      color: Colors.white,
                       borderRadius: BorderRadius.circular(16),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withOpacity(0.3),
+                          color: Colors.black.withOpacity(0.1),
                           blurRadius: 10,
                           offset: const Offset(0, 5),
                         ),
@@ -109,7 +109,7 @@ class ClientMapScreen extends StatelessWidget {
                               Text(
                                 'Pyme Local ${index + 1}',
                                 style: const TextStyle(
-                                  color: Colors.white,
+                                  color: Colors.black87,
                                   fontWeight: FontWeight.bold,
                                   fontSize: 16,
                                 ),
@@ -118,20 +118,21 @@ class ClientMapScreen extends StatelessWidget {
                               const Text(
                                 'Abierto hasta 20:00',
                                 style: TextStyle(
-                                  color: Colors.greenAccent,
+                                  color: Color(0xFF4ECDC4),
                                   fontSize: 12,
+                                  fontWeight: FontWeight.bold,
                                 ),
                               ),
                               const SizedBox(height: 4),
                               Row(
                                 children: [
                                   const Icon(Icons.star,
-                                      color: Colors.amber, size: 14),
+                                      color: Color(0xFFFFD93D), size: 14),
                                   const SizedBox(width: 4),
                                   Text(
                                     '4.8 (120)',
                                     style: TextStyle(
-                                      color: Colors.white.withOpacity(0.7),
+                                      color: Colors.grey[600],
                                       fontSize: 12,
                                     ),
                                   ),

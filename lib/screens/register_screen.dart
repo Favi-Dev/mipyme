@@ -57,12 +57,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF1E1E2C),
+      backgroundColor: const Color(0xFFF7F9FC),
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.white),
+          icon: const Icon(Icons.arrow_back, color: Colors.black87),
           onPressed: () => Navigator.pop(context),
         ),
       ),
@@ -75,16 +75,16 @@ class _RegisterScreenState extends State<RegisterScreen> {
               Text(
                 'Crear Cuenta',
                 style: GoogleFonts.poppins(
-                  color: Colors.white,
+                  color: Colors.black87,
                   fontSize: 32,
                   fontWeight: FontWeight.bold,
                 ),
               ),
               const SizedBox(height: 8),
               Text(
-                'Únete a la comunidad Soy Pro Pyme',
+                'Únete a la comunidad SoyPlus',
                 style: GoogleFonts.poppins(
-                  color: Colors.white70,
+                  color: Colors.grey[600],
                   fontSize: 16,
                 ),
               ),
@@ -112,25 +112,25 @@ class _RegisterScreenState extends State<RegisterScreen> {
               const SizedBox(height: 24),
               TextField(
                 controller: _nameController,
-                style: const TextStyle(color: Colors.white),
+                style: const TextStyle(color: Colors.black87),
                 decoration: _inputDecoration('Nombre Completo', Icons.person_outline),
               ),
               const SizedBox(height: 16),
               TextField(
                 controller: _emailController,
-                style: const TextStyle(color: Colors.white),
+                style: const TextStyle(color: Colors.black87),
                 decoration: _inputDecoration('Correo Electrónico', Icons.email_outlined),
               ),
               const SizedBox(height: 16),
               TextField(
                 controller: _passwordController,
                 obscureText: _obscurePassword,
-                style: const TextStyle(color: Colors.white),
+                style: const TextStyle(color: Colors.black87),
                 decoration: _inputDecoration('Contraseña', Icons.lock_outline).copyWith(
                   suffixIcon: IconButton(
                     icon: Icon(
                       _obscurePassword ? Icons.visibility : Icons.visibility_off,
-                      color: Colors.white54,
+                      color: Colors.grey[500],
                     ),
                     onPressed: () {
                       setState(() {
@@ -144,7 +144,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
               TextField(
                 controller: _confirmPasswordController,
                 obscureText: _obscurePassword,
-                style: const TextStyle(color: Colors.white),
+                style: const TextStyle(color: Colors.black87),
                 decoration: _inputDecoration('Confirmar Contraseña', Icons.lock_outline),
               ),
               const SizedBox(height: 32),
@@ -154,8 +154,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 child: ElevatedButton(
                   onPressed: _isLoading ? null : _register,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.amber,
-                    foregroundColor: Colors.black,
+                    backgroundColor: const Color(0xFFFF6B6B),
+                    foregroundColor: Colors.white,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
@@ -166,7 +166,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                           height: 24,
                           child: CircularProgressIndicator(
                             strokeWidth: 2,
-                            color: Colors.black,
+                            color: Colors.white,
                           ),
                         )
                       : Text(
@@ -192,24 +192,32 @@ class _RegisterScreenState extends State<RegisterScreen> {
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 16),
         decoration: BoxDecoration(
-          color: isSelected ? Colors.amber : const Color(0xFF2C2C3E),
+          color: isSelected ? const Color(0xFFFF6B6B) : Colors.white,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
-            color: isSelected ? Colors.amber : Colors.white24,
+            color: isSelected ? const Color(0xFFFF6B6B) : Colors.grey[300]!,
           ),
+          boxShadow: [
+            if (!isSelected)
+              BoxShadow(
+                color: Colors.grey.withOpacity(0.1),
+                blurRadius: 4,
+                offset: const Offset(0, 2),
+              ),
+          ],
         ),
         child: Column(
           children: [
             Icon(
               icon,
-              color: isSelected ? Colors.black : Colors.white,
+              color: isSelected ? Colors.white : Colors.grey[600],
               size: 32,
             ),
             const SizedBox(height: 8),
             Text(
               label,
               style: GoogleFonts.poppins(
-                color: isSelected ? Colors.black : Colors.white,
+                color: isSelected ? Colors.white : Colors.grey[600],
                 fontWeight: FontWeight.bold,
               ),
             ),
@@ -222,18 +230,18 @@ class _RegisterScreenState extends State<RegisterScreen> {
   InputDecoration _inputDecoration(String label, IconData icon) {
     return InputDecoration(
       labelText: label,
-      labelStyle: const TextStyle(color: Colors.white70),
-      prefixIcon: Icon(icon, color: Colors.amber),
+      labelStyle: TextStyle(color: Colors.grey[600]),
+      prefixIcon: Icon(icon, color: const Color(0xFFFF6B6B)),
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(color: Colors.white24),
+        borderSide: BorderSide(color: Colors.grey[300]!),
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(color: Colors.amber),
+        borderSide: const BorderSide(color: Color(0xFFFF6B6B)),
       ),
       filled: true,
-      fillColor: const Color(0xFF2C2C3E),
+      fillColor: Colors.white,
     );
   }
 }

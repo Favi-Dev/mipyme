@@ -62,19 +62,19 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF1E1E2C),
+      backgroundColor: const Color(0xFFF7F9FC),
       body: Center(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(24.0),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Icon(Icons.coffee, size: 80, color: Colors.amber),
+              const Icon(Icons.coffee, size: 80, color: Color(0xFFFF6B6B)),
               const SizedBox(height: 24),
               Text(
-                'Soy Pro Pyme',
+                'SoyPlus',
                 style: GoogleFonts.poppins(
-                  color: Colors.white,
+                  color: Colors.black87,
                   fontSize: 32,
                   fontWeight: FontWeight.bold,
                 ),
@@ -83,43 +83,43 @@ class _LoginScreenState extends State<LoginScreen> {
               Text(
                 'Bienvenido de nuevo',
                 style: GoogleFonts.poppins(
-                  color: Colors.white70,
+                  color: Colors.grey[600],
                   fontSize: 16,
                 ),
               ),
               const SizedBox(height: 48),
               TextField(
                 controller: _emailController,
-                style: const TextStyle(color: Colors.white),
+                style: const TextStyle(color: Colors.black87),
                 decoration: InputDecoration(
                   labelText: 'Correo Electrónico',
-                  labelStyle: const TextStyle(color: Colors.white70),
-                  prefixIcon: const Icon(Icons.email, color: Colors.amber),
+                  labelStyle: TextStyle(color: Colors.grey[600]),
+                  prefixIcon: const Icon(Icons.email, color: Color(0xFFFF6B6B)),
                   enabledBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
-                    borderSide: const BorderSide(color: Colors.white24),
+                    borderSide: BorderSide(color: Colors.grey[300]!),
                   ),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
-                    borderSide: const BorderSide(color: Colors.amber),
+                    borderSide: const BorderSide(color: Color(0xFFFF6B6B)),
                   ),
                   filled: true,
-                  fillColor: const Color(0xFF2C2C3E),
+                  fillColor: Colors.white,
                 ),
               ),
               const SizedBox(height: 16),
               TextField(
                 controller: _passwordController,
                 obscureText: _obscurePassword,
-                style: const TextStyle(color: Colors.white),
+                style: const TextStyle(color: Colors.black87),
                 decoration: InputDecoration(
                   labelText: 'Contraseña',
-                  labelStyle: const TextStyle(color: Colors.white70),
-                  prefixIcon: const Icon(Icons.lock, color: Colors.amber),
+                  labelStyle: TextStyle(color: Colors.grey[600]),
+                  prefixIcon: const Icon(Icons.lock, color: Color(0xFFFF6B6B)),
                   suffixIcon: IconButton(
                     icon: Icon(
                       _obscurePassword ? Icons.visibility : Icons.visibility_off,
-                      color: Colors.white54,
+                      color: Colors.grey[500],
                     ),
                     onPressed: () {
                       setState(() {
@@ -129,14 +129,14 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                   enabledBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
-                    borderSide: const BorderSide(color: Colors.white24),
+                    borderSide: BorderSide(color: Colors.grey[300]!),
                   ),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
-                    borderSide: const BorderSide(color: Colors.amber),
+                    borderSide: const BorderSide(color: Color(0xFFFF6B6B)),
                   ),
                   filled: true,
-                  fillColor: const Color(0xFF2C2C3E),
+                  fillColor: Colors.white,
                 ),
               ),
               const SizedBox(height: 24),
@@ -146,8 +146,8 @@ class _LoginScreenState extends State<LoginScreen> {
                 child: ElevatedButton(
                   onPressed: _isLoading ? null : _login,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.amber,
-                    foregroundColor: Colors.black,
+                    backgroundColor: const Color(0xFFFF6B6B),
+                    foregroundColor: Colors.white,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
@@ -158,7 +158,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           height: 24,
                           child: CircularProgressIndicator(
                             strokeWidth: 2,
-                            color: Colors.black,
+                            color: Colors.white,
                           ),
                         )
                       : Text(
@@ -176,7 +176,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 children: [
                   Text(
                     '¿No tienes cuenta? ',
-                    style: GoogleFonts.poppins(color: Colors.white70),
+                    style: GoogleFonts.poppins(color: Colors.grey[600]),
                   ),
                   TextButton(
                     onPressed: () {
@@ -189,7 +189,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     child: Text(
                       'Regístrate',
                       style: GoogleFonts.poppins(
-                        color: Colors.amber,
+                        color: const Color(0xFFFF6B6B),
                         fontWeight: FontWeight.bold,
                       ),
                     ),
@@ -201,7 +201,7 @@ class _LoginScreenState extends State<LoginScreen> {
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.05),
+                  color: Colors.grey[200],
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Column(
@@ -209,23 +209,23 @@ class _LoginScreenState extends State<LoginScreen> {
                     Text(
                       'Credenciales de Prueba:',
                       style: GoogleFonts.poppins(
-                          color: Colors.white54, fontSize: 12),
+                          color: Colors.grey[600], fontSize: 12),
                     ),
                     const SizedBox(height: 4),
                     Text(
                       'Admin: admin@soypyme.cl / admin123',
                       style: GoogleFonts.poppins(
-                          color: Colors.white38, fontSize: 10),
+                          color: Colors.grey[500], fontSize: 10),
                     ),
                     Text(
                       'Pyme: pyme@negocio.cl / pyme123',
                       style: GoogleFonts.poppins(
-                          color: Colors.white38, fontSize: 10),
+                          color: Colors.grey[500], fontSize: 10),
                     ),
                     Text(
                       'Cliente: usuario@mail.com / user123',
                       style: GoogleFonts.poppins(
-                          color: Colors.white38, fontSize: 10),
+                          color: Colors.grey[500], fontSize: 10),
                     ),
                   ],
                 ),

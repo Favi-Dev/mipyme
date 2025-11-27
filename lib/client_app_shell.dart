@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'screens/client_home_screen.dart';
-import 'screens/client_map_screen.dart';
+import 'screens/client_marketplace_screen.dart';
+import 'screens/client_cart_screen.dart';
 import 'screens/client_qr_screen.dart';
 import 'screens/client_profile_screen.dart';
 
@@ -16,7 +17,8 @@ class _ClientAppShellState extends State<ClientAppShell> {
 
   final List<Widget> _screens = [
     const ClientHomeScreen(),
-    const ClientMapScreen(),
+    const ClientMarketplaceScreen(),
+    const ClientCartScreen(),
     const ClientQrScreen(),
     const ClientProfileScreen(),
   ];
@@ -30,18 +32,19 @@ class _ClientAppShellState extends State<ClientAppShell> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF1E1E2C),
+      // Removed hardcoded background color to use Theme
       body: _screens[_selectedIndex],
       bottomNavigationBar: BottomNavigationBar(
         type: BottomNavigationBarType.fixed,
-        backgroundColor: const Color(0xFF1E1E2C),
-        selectedItemColor: const Color(0xFFE94560),
-        unselectedItemColor: Colors.white54,
+        backgroundColor: Colors.white, // Light background for nav
+        selectedItemColor: const Color(0xFFFF6B6B), // Playful Red
+        unselectedItemColor: Colors.grey,
         currentIndex: _selectedIndex,
         onTap: _onItemTapped,
         items: const [
           BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Inicio'),
-          BottomNavigationBarItem(icon: Icon(Icons.map), label: 'Mapa'),
+          BottomNavigationBarItem(icon: Icon(Icons.store), label: 'Mercado'),
+          BottomNavigationBarItem(icon: Icon(Icons.shopping_cart), label: 'Carrito'),
           BottomNavigationBarItem(icon: Icon(Icons.qr_code), label: 'Mi QR'),
           BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Perfil'),
         ],

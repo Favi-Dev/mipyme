@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'screens/pyme_metrics_screen.dart';
 import 'screens/pyme_validation_scanner_screen.dart';
-import 'screens/pyme_offers_management_screen.dart';
+import 'screens/pyme_products_screen.dart';
 import 'screens/pyme_profile_vitrina_screen.dart';
 
 class PymeAppShell extends StatefulWidget {
@@ -16,7 +16,7 @@ class _PymeAppShellState extends State<PymeAppShell> {
 
   List<Widget> get _screens => const [
     PymeProfileVitrinaScreen(),
-    PymeOffersManagementScreen(),
+    PymeProductsScreen(),
     PymeValidationScannerScreen(),
     PymeMetricsScreen(),
   ];
@@ -32,18 +32,18 @@ class _PymeAppShellState extends State<PymeAppShell> {
     return Scaffold(
       body: _screens[_selectedIndex],
       bottomNavigationBar: BottomNavigationBar(
-        type: BottomNavigationBarType.fixed, // Needed for 4+ items
-        backgroundColor: const Color(0xFF1E1E2C),
-        selectedItemColor: Colors.amber,
-        unselectedItemColor: Colors.white54,
+        type: BottomNavigationBarType.fixed,
+        backgroundColor: Colors.white,
+        selectedItemColor: const Color(0xFFFF6B6B),
+        unselectedItemColor: Colors.grey,
         items: const <BottomNavigationBarItem>[
           BottomNavigationBarItem(
             icon: Icon(Icons.storefront),
             label: 'Mi Vitrina',
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.local_offer),
-            label: 'Ofertas',
+            icon: Icon(Icons.inventory_2),
+            label: 'Productos',
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.qr_code_scanner),

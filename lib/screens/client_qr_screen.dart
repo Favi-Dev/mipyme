@@ -8,23 +8,30 @@ class ClientQrScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF1E1E2C),
+      backgroundColor: const Color(0xFFF7F9FC),
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
         title: Text(
           'Mi Cupón Mensual',
           style: GoogleFonts.poppins(
-            color: Colors.white,
+            color: Colors.black87,
             fontWeight: FontWeight.bold,
           ),
         ),
         centerTitle: true,
       ),
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
+      body: LayoutBuilder(
+        builder: (context, constraints) {
+          return SingleChildScrollView(
+            child: ConstrainedBox(
+              constraints: BoxConstraints(minHeight: constraints.maxHeight),
+              child: Center(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 24),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
             Container(
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
@@ -32,7 +39,7 @@ class ClientQrScreen extends StatelessWidget {
                 borderRadius: BorderRadius.circular(20),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.3),
+                    color: Colors.black.withOpacity(0.1),
                     blurRadius: 20,
                     offset: const Offset(0, 10),
                   ),
@@ -52,7 +59,7 @@ class ClientQrScreen extends StatelessWidget {
                     style: GoogleFonts.poppins(
                       fontSize: 40,
                       fontWeight: FontWeight.bold,
-                      color: ClientData.isMonthlyCouponRedeemed ? Colors.grey : const Color(0xFFE94560),
+                      color: ClientData.isMonthlyCouponRedeemed ? Colors.grey : const Color(0xFFFF6B6B),
                     ),
                   ),
                   const SizedBox(height: 20),
@@ -63,11 +70,11 @@ class ClientQrScreen extends StatelessWidget {
                       Container(
                         width: 250,
                         height: 250,
-                        color: Colors.black,
+                        color: Colors.white,
                         child: Center(
                           child: Icon(
                             Icons.qr_code_2,
-                            color: ClientData.isMonthlyCouponRedeemed ? Colors.white24 : Colors.white,
+                            color: ClientData.isMonthlyCouponRedeemed ? Colors.grey[300] : Colors.black,
                             size: 150,
                           ),
                         ),
@@ -76,7 +83,7 @@ class ClientQrScreen extends StatelessWidget {
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
                           decoration: BoxDecoration(
-                            color: Colors.redAccent.withOpacity(0.9),
+                            color: const Color(0xFFFF6B6B).withOpacity(0.9),
                             borderRadius: BorderRadius.circular(8),
                             border: Border.all(color: Colors.white, width: 2),
                           ),
@@ -101,7 +108,7 @@ class ClientQrScreen extends StatelessWidget {
                     style: GoogleFonts.poppins(
                       fontSize: 20,
                       fontWeight: FontWeight.bold,
-                      color: ClientData.isMonthlyCouponRedeemed ? Colors.grey : Colors.black,
+                      color: ClientData.isMonthlyCouponRedeemed ? Colors.grey : Colors.black87,
                       decoration: ClientData.isMonthlyCouponRedeemed ? TextDecoration.lineThrough : null,
                       letterSpacing: 2,
                     ),
@@ -123,27 +130,32 @@ class ClientQrScreen extends StatelessWidget {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
               decoration: BoxDecoration(
-                color: const Color(0xFFE94560).withOpacity(0.1),
+                color: const Color(0xFFFF6B6B).withOpacity(0.1),
                 borderRadius: BorderRadius.circular(30),
-                border: Border.all(color: const Color(0xFFE94560)),
+                border: Border.all(color: const Color(0xFFFF6B6B)),
               ),
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const Icon(Icons.calendar_today, color: Color(0xFFE94560)),
+                  const Icon(Icons.calendar_today, color: Color(0xFFFF6B6B)),
                   const SizedBox(width: 10),
                   Text(
                     'Válido hasta 30 Nov',
                     style: GoogleFonts.poppins(
-                      color: const Color(0xFFE94560),
+                      color: const Color(0xFFFF6B6B),
                       fontWeight: FontWeight.bold,
                     ),
                   ),
                 ],
               ),
             ),
-          ],
-        ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          );
+        },
       ),
     );
   }

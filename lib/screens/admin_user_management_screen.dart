@@ -7,33 +7,42 @@ class AdminUserManagementScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF1E1E2C),
+      backgroundColor: const Color(0xFFF7F9FC),
       appBar: AppBar(
-        backgroundColor: Colors.transparent,
+        backgroundColor: Colors.white,
         elevation: 0,
         title: Text(
           'Gestión de Usuarios',
           style: GoogleFonts.poppins(
-            color: Colors.white,
+            color: Colors.black87,
             fontWeight: FontWeight.bold,
           ),
         ),
+        iconTheme: const IconThemeData(color: Colors.black87),
       ),
       body: Column(
         children: [
           Padding(
             padding: const EdgeInsets.all(16.0),
             child: TextField(
-              style: const TextStyle(color: Colors.white),
+              style: const TextStyle(color: Colors.black87),
               decoration: InputDecoration(
                 hintText: 'Buscar usuario...',
-                hintStyle: TextStyle(color: Colors.white.withOpacity(0.5)),
-                prefixIcon: const Icon(Icons.search, color: Colors.white54),
+                hintStyle: TextStyle(color: Colors.grey[500]),
+                prefixIcon: const Icon(Icons.search, color: Colors.grey),
                 filled: true,
-                fillColor: const Color(0xFF2C2C3E),
+                fillColor: Colors.white,
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
                   borderSide: BorderSide.none,
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide.none,
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: const BorderSide(color: Color(0xFFFF6B6B)),
                 ),
               ),
             ),
@@ -55,12 +64,19 @@ class AdminUserManagementScreen extends StatelessWidget {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       decoration: BoxDecoration(
-        color: const Color(0xFF2C2C3E),
+        color: Colors.white,
         borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 5,
+            offset: const Offset(0, 2),
+          ),
+        ],
       ),
       child: ListTile(
         leading: CircleAvatar(
-          backgroundColor: Colors.blueAccent,
+          backgroundColor: const Color(0xFF4ECDC4),
           child: Text(
             'U${index + 1}',
             style: const TextStyle(color: Colors.white),
@@ -68,14 +84,14 @@ class AdminUserManagementScreen extends StatelessWidget {
         ),
         title: Text(
           'Usuario ${index + 1}',
-          style: GoogleFonts.poppins(color: Colors.white),
+          style: GoogleFonts.poppins(color: Colors.black87),
         ),
         subtitle: Text(
           'usuario${index + 1}@email.com',
-          style: GoogleFonts.poppins(color: Colors.white54, fontSize: 12),
+          style: GoogleFonts.poppins(color: Colors.grey[600], fontSize: 12),
         ),
         trailing: PopupMenuButton(
-          icon: const Icon(Icons.more_vert, color: Colors.white54),
+          icon: const Icon(Icons.more_vert, color: Colors.grey),
           itemBuilder: (context) => [
             const PopupMenuItem(
               value: 'ban',
