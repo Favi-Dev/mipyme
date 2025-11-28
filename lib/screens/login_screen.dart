@@ -71,17 +71,27 @@ class _LoginScreenState extends State<LoginScreen> {
             children: [
               const Icon(Icons.coffee, size: 80, color: Color(0xFFFF6B6B)),
               const SizedBox(height: 24),
-              Text(
-                'SoyPlus',
-                style: GoogleFonts.poppins(
-                  color: Colors.black87,
-                  fontSize: 32,
-                  fontWeight: FontWeight.bold,
+              RichText(
+                text: TextSpan(
+                  style: GoogleFonts.poppins(
+                    fontSize: 32,
+                    fontWeight: FontWeight.bold,
+                  ),
+                  children: [
+                    const TextSpan(
+                      text: 'Soy',
+                      style: TextStyle(color: Colors.black87),
+                    ),
+                    const TextSpan(
+                      text: 'Plus',
+                      style: TextStyle(color: Color(0xFFFF6B6B)),
+                    ),
+                  ],
                 ),
               ),
               const SizedBox(height: 8),
               Text(
-                'Bienvenido de nuevo',
+                'Únete a SoyPlus',
                 style: GoogleFonts.poppins(
                   color: Colors.grey[600],
                   fontSize: 16,
@@ -212,11 +222,6 @@ class _LoginScreenState extends State<LoginScreen> {
                           color: Colors.grey[600], fontSize: 12),
                     ),
                     const SizedBox(height: 4),
-                    Text(
-                      'Admin: admin@soypyme.cl / admin123',
-                      style: GoogleFonts.poppins(
-                          color: Colors.grey[500], fontSize: 10),
-                    ),
                     Text(
                       'Pyme: pyme@negocio.cl / pyme123',
                       style: GoogleFonts.poppins(
