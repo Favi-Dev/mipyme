@@ -6,6 +6,7 @@ import 'pyme_vitrina_settings_screen.dart';
 import '../services/product_service.dart';
 import '../models/product.dart';
 import 'pyme_products_screen.dart';
+import '../widgets/supporter_counter.dart';
 
 class PymeProfileVitrinaScreen extends StatefulWidget {
   const PymeProfileVitrinaScreen({super.key});
@@ -119,7 +120,13 @@ class _PymeProfileVitrinaScreenState extends State<PymeProfileVitrinaScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       // Description Section
-                      _buildSectionTitle('Descripción', Colors.black87),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          _buildSectionTitle('Descripción', Colors.black87),
+                          SupporterCounter(count: VitrinaData.supporterCount),
+                        ],
+                      ),
                       const SizedBox(height: 8),
                       Text(
                         VitrinaData.description,

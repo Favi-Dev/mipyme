@@ -1,10 +1,11 @@
 class VitrinaData {
-  static String name = 'Café Eclipse';
-  static String description = 'Descubre el rincón perfecto para tus sentidos. Granos selectos, tostados a la perfección, listos para tu ritual diario. Un ambiente acogedor para trabajar o relajarse.';
-  static String coverImageUrl = 'https://picsum.photos/id/1018/800/400';
-  static String hours = 'Lun-Vie: 8:00 - 20:00\nSáb-Dom: 9:00 - 19:00';
-  static String location = 'Av Los Aromos 123, Providencia';
-  static String webUrl = 'www.cafeeclipse.cl';
-  static String instagramHandle = '@cafeeclipse';
-  static String whatsappNumber = '+56912345678';
+  static String name = 'Zapatería Los Robles';
+  static String description = 'Calzado artesanal de cuero legítimo, hecho a mano con tradición y estilo. Encuentra botas, zapatos formales y casuales para toda ocasión. Reparación y cuidado del calzado.';
+  static String coverImageUrl = 'https://images.unsplash.com/photo-1549298916-b41d501d3772?auto=format&fit=crop&w=800&q=80';
+  static String hours = 'Lun-Vie: 10:00 - 19:00\nSáb: 10:00 - 14:00';
+  static String location = 'Calle Los Robles 456, Providencia';
+  static String webUrl = 'www.zapaterialosrobles.cl';
+  static String instagramHandle = '@zapaterialosrobles';
+  static String whatsappNumber = '+56987654321';
+  static int supporterCount = 342; // Mock counter for "S+" supporters
 }

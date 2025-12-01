@@ -2,6 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'login_screen.dart';
 import 'client_payment_methods_screen.dart';
+import '../widgets/supporter_counter.dart';
+import 'client_qr_screen.dart';
+import 'client_history_screen.dart';
+import 'client_settings_screen.dart';
+import 'client_support_screen.dart';
+import 'client_addresses_screen.dart';
 
 class ClientProfileScreen extends StatelessWidget {
   const ClientProfileScreen({super.key});
@@ -64,13 +70,27 @@ class ClientProfileScreen extends StatelessWidget {
               context,
               icon: Icons.confirmation_number,
               title: 'Mi Cupón',
-              onTap: () {},
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const ClientQrScreen(),
+                  ),
+                );
+              },
             ),
             _buildProfileOption(
               context,
               icon: Icons.history,
-              title: 'Historial de Visitas',
-              onTap: () {},
+              title: 'Historial de Compras',
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const ClientHistoryScreen(),
+                  ),
+                );
+              },
             ),
             _buildProfileOption(
               context,
@@ -87,15 +107,107 @@ class ClientProfileScreen extends StatelessWidget {
             ),
             _buildProfileOption(
               context,
+              icon: Icons.location_on,
+              title: 'Mis Direcciones',
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const ClientAddressesScreen(),
+                  ),
+                );
+              },
+            ),
+            _buildProfileOption(
+              context,
               icon: Icons.settings,
               title: 'Configuración',
-              onTap: () {},
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const ClientSettingsScreen(),
+                  ),
+                );
+              },
             ),
             _buildProfileOption(
               context,
               icon: Icons.help,
               title: 'Ayuda y Soporte',
-              onTap: () {},
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const ClientSupportScreen(),
+                  ),
+                );
+              },
+            ),
+            const SizedBox(height: 30),
+            
+            // Supported Pymes Section
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Pymes que apoyas',
+                    style: GoogleFonts.poppins(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black87,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(16),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.05),
+                          blurRadius: 10,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
+                    ),
+                    child: Row(
+                      children: [
+                        const CircleAvatar(
+                          backgroundImage: NetworkImage('https://picsum.photos/id/1018/200/200'),
+                          radius: 24,
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Café Eclipse',
+                                style: GoogleFonts.poppins(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 16,
+                                ),
+                              ),
+                              Text(
+                                '3 cupones canjeados',
+                                style: GoogleFonts.poppins(
+                                  color: Colors.grey[600],
+                                  fontSize: 12,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SupporterCounter(count: 128, isSmall: true),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
             ),
             const SizedBox(height: 20),
             _buildProfileOption(

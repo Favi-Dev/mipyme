@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../services/auth_service.dart';
+import '../services/product_service.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -11,12 +12,16 @@ class RegisterScreen extends StatefulWidget {
 
 class _RegisterScreenState extends State<RegisterScreen> {
   final _nameController = TextEditingController();
+  final _companyNameController = TextEditingController();
+  final _businessNameController = TextEditingController();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
+  
   bool _isLoading = false;
   bool _obscurePassword = true;
   UserRole _selectedRole = UserRole.client;
+  String? _selectedCategory;
 
   void _register() async {
     if (_passwordController.text != _confirmPasswordController.text) {
@@ -26,8 +31,30 @@ class _RegisterScreenState extends State<RegisterScreen> {
       return;
     }
 
+    if (_selectedRole == UserRole.pyme) {
+      if (_companyNameController.text.isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Por favor ingrese el Nombre de la Empresa')),
+        );
+        return;
+      }
+      if (_businessNameController.text.isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Por favor ingrese la Razón Social')),
+        );
+        return;
+      }
+      if (_selectedCategory == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Por favor seleccione una categoría')),
+        );
+        return;
+      }
+    }
+
     setState(() => _isLoading = true);
 
+    // In a real app, pass businessName and category to the backend
     final success = await AuthService.register(
       _emailController.text,
       _passwordController.text,
@@ -113,8 +140,41 @@ class _RegisterScreenState extends State<RegisterScreen> {
               TextField(
                 controller: _nameController,
                 style: const TextStyle(color: Colors.black87),
-                decoration: _inputDecoration('Nombre Completo', Icons.person_outline),
+                decoration: _inputDecoration(
+                  _selectedRole == UserRole.pyme ? 'Nombre del Representante' : 'Nombre Completo',
+                  Icons.person_outline,
+                ),
               ),
+              if (_selectedRole == UserRole.pyme) ...[
+                const SizedBox(height: 16),
+                TextField(
+                  controller: _companyNameController,
+                  style: const TextStyle(color: Colors.black87),
+                  decoration: _inputDecoration('Nombre de la Empresa', Icons.store),
+                ),
+                const SizedBox(height: 16),
+                TextField(
+                  controller: _businessNameController,
+                  style: const TextStyle(color: Colors.black87),
+                  decoration: _inputDecoration('Razón Social', Icons.business),
+                ),
+                const SizedBox(height: 16),
+                DropdownButtonFormField<String>(
+                  value: _selectedCategory,
+                  decoration: _inputDecoration('Categoría', Icons.category),
+                  items: ProductService.categories.map((String category) {
+                    return DropdownMenuItem<String>(
+                      value: category,
+                      child: Text(category),
+                    );
+                  }).toList(),
+                  onChanged: (String? newValue) {
+                    setState(() {
+                      _selectedCategory = newValue;
+                    });
+                  },
+                ),
+              ],
               const SizedBox(height: 16),
               TextField(
                 controller: _emailController,

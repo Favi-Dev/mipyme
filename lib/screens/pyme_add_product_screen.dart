@@ -15,7 +15,7 @@ class _PymeAddProductScreenState extends State<PymeAddProductScreen> {
   final _codeController = TextEditingController();
   final _priceController = TextEditingController();
   final _stockController = TextEditingController();
-  String? _selectedCategory;
+  // Category is now determined by the Pyme's profile, not selected per product
   final _imageController = TextEditingController();
   final _descController = TextEditingController();
 
@@ -45,7 +45,8 @@ class _PymeAddProductScreenState extends State<PymeAddProductScreen> {
             : _imageController.text,
         code: _codeController.text,
         stock: int.parse(_stockController.text),
-        category: _selectedCategory!,
+        // TODO: Get category from Pyme profile. Using default for now.
+        category: 'Alimentos y gastronomía', 
       );
 
       _productService.addProduct(newProduct);
@@ -104,24 +105,6 @@ class _PymeAddProductScreenState extends State<PymeAddProductScreen> {
                     ),
                   ),
                 ],
-              ),
-              const SizedBox(height: 12),
-              DropdownButtonFormField<String>(
-                value: _selectedCategory,
-                decoration: const InputDecoration(labelText: 'Categoría'),
-                items: ProductService.categories.map((String category) {
-                  return DropdownMenuItem<String>(
-                    value: category,
-                    child: Text(category),
-                  );
-                }).toList(),
-                onChanged: (String? newValue) {
-                  setState(() {
-                    _selectedCategory = newValue;
-                  });
-                },
-                validator: (value) =>
-                    value == null || value.isEmpty ? 'Seleccione una categoría' : null,
               ),
               const SizedBox(height: 12),
               TextFormField(

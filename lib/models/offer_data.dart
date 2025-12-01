@@ -22,14 +22,14 @@ class OfferData {
     Offer(
       id: '1',
       title: 'Exclusivo App Soy Pro',
-      description: '2x1 en cualquier bebida',
+      description: '20% dcto. en Botas de Cuero',
       icon: Icons.star,
       color: Colors.blueAccent,
     ),
     Offer(
       id: '2',
       title: 'Promo del Mes',
-      description: '20% dcto. en granos',
+      description: 'Limpieza de calzado gratis',
       icon: Icons.local_offer,
       color: Colors.orangeAccent,
     ),

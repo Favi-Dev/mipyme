@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:provider/provider.dart';
 import '../models/offer_data.dart';
 import '../models/vitrina_data.dart';
 import '../services/product_service.dart';
 import '../models/product.dart';
 import '../services/cart_service.dart';
+import '../widgets/supporter_counter.dart';
 
 class ClientPymeDetailScreen extends StatefulWidget {
   const ClientPymeDetailScreen({super.key});
@@ -16,7 +18,6 @@ class ClientPymeDetailScreen extends StatefulWidget {
 class _ClientPymeDetailScreenState extends State<ClientPymeDetailScreen> {
   final ScrollController _scrollController = ScrollController();
   final ProductService _productService = ProductService();
-  final CartService _cartService = CartService();
   bool _isFollowing = false;
   List<Product> _products = [];
 
@@ -132,13 +133,19 @@ class _ClientPymeDetailScreenState extends State<ClientPymeDetailScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       // Description
-                      Text(
-                        'Descripción',
-                        style: GoogleFonts.poppins(
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.black87,
-                        ),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            'Descripción',
+                            style: GoogleFonts.poppins(
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.black87,
+                            ),
+                          ),
+                          SupporterCounter(count: VitrinaData.supporterCount),
+                        ],
                       ),
                       const SizedBox(height: 8),
                       Text(
@@ -275,9 +282,9 @@ class _ClientPymeDetailScreenState extends State<ClientPymeDetailScreen> {
               ),
               child: const CircleAvatar(
                 radius: 40,
-                backgroundColor: Color(0xFFFFD93D),
+                backgroundColor: Color(0xFF8D6E63),
                 child: Icon(
-                  Icons.coffee,
+                  Icons.shopping_bag,
                   size: 40,
                   color: Colors.white,
                 ),
@@ -436,7 +443,7 @@ class _ClientPymeDetailScreenState extends State<ClientPymeDetailScreen> {
                   child: ElevatedButton(
                     onPressed: () {
                       try {
-                        _cartService.addToCart(product);
+                        context.read<CartService>().addToCart(product);
                         ScaffoldMessenger.of(context).showSnackBar(
                           const SnackBar(
                             content: Text('Agregado al carrito'),

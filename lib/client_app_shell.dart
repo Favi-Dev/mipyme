@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'services/cart_service.dart';
 import 'screens/client_home_screen.dart';
 import 'screens/client_marketplace_screen.dart';
 import 'screens/client_cart_screen.dart';
@@ -41,12 +43,23 @@ class _ClientAppShellState extends State<ClientAppShell> {
         unselectedItemColor: Colors.grey,
         currentIndex: _selectedIndex,
         onTap: _onItemTapped,
-        items: const [
-          BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Inicio'),
-          BottomNavigationBarItem(icon: Icon(Icons.store), label: 'Mercado'),
-          BottomNavigationBarItem(icon: Icon(Icons.shopping_cart), label: 'Carrito'),
-          BottomNavigationBarItem(icon: Icon(Icons.qr_code), label: 'Mi QR'),
-          BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Perfil'),
+        items: [
+          const BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Inicio'),
+          const BottomNavigationBarItem(icon: Icon(Icons.store), label: 'Mercado'),
+          BottomNavigationBarItem(
+            icon: Consumer<CartService>(
+              builder: (context, cart, child) {
+                return Badge(
+                  label: Text('${cart.itemCount}'),
+                  isLabelVisible: cart.itemCount > 0,
+                  child: const Icon(Icons.shopping_cart),
+                );
+              },
+            ),
+            label: 'Carrito',
+          ),
+          const BottomNavigationBarItem(icon: Icon(Icons.qr_code), label: 'Mi QR'),
+          const BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Perfil'),
         ],
       ),
     );

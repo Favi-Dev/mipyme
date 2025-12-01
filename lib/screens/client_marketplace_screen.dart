@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../services/product_service.dart';
 import '../services/cart_service.dart';
 import '../models/product.dart';
@@ -12,7 +13,6 @@ class ClientMarketplaceScreen extends StatefulWidget {
 
 class _ClientMarketplaceScreenState extends State<ClientMarketplaceScreen> {
   final ProductService _productService = ProductService();
-  final CartService _cartService = CartService();
   
   List<Product> _allProducts = [];
   List<Product> _filteredProducts = [];
@@ -177,7 +177,7 @@ class _ClientMarketplaceScreenState extends State<ClientMarketplaceScreen> {
                     ),
                     onPressed: () {
                       try {
-                        _cartService.addToCart(product);
+                        context.read<CartService>().addToCart(product);
                         ScaffoldMessenger.of(context).showSnackBar(
                           const SnackBar(
                             content: Text('Agregado al carrito'),
