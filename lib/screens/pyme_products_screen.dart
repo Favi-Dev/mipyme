@@ -66,17 +66,46 @@ class _PymeProductsScreenState extends State<PymeProductsScreen> {
             ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () async {
-          await Navigator.push(
-            context,
-            MaterialPageRoute(
-                builder: (context) => const PymeAddProductScreen()),
+          // Show dialog to choose Product or Service
+          final bool? isService = await showDialog<bool>(
+            context: context,
+            builder: (context) => AlertDialog(
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+              title: Text('¿Qué deseas agregar?', style: GoogleFonts.poppins(fontWeight: FontWeight.bold)),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  ListTile(
+                    leading: const Icon(Icons.inventory_2, color: Color(0xFFFF6B6B)),
+                    title: Text('Producto', style: GoogleFonts.poppins(fontWeight: FontWeight.w600)),
+                    subtitle: Text('Artículo físico con stock', style: GoogleFonts.poppins(fontSize: 12)),
+                    onTap: () => Navigator.pop(context, false),
+                  ),
+                  const Divider(),
+                  ListTile(
+                    leading: const Icon(Icons.calendar_today, color: Color(0xFFFF6B6B)),
+                    title: Text('Servicio', style: GoogleFonts.poppins(fontWeight: FontWeight.w600)),
+                    subtitle: Text('Actividad con reserva de hora', style: GoogleFonts.poppins(fontSize: 12)),
+                    onTap: () => Navigator.pop(context, true),
+                  ),
+                ],
+              ),
+            ),
           );
-          _loadProducts();
+
+          if (isService != null) {
+            await Navigator.push(
+              context,
+              MaterialPageRoute(
+                  builder: (context) => PymeAddProductScreen(isService: isService)),
+            );
+            _loadProducts();
+          }
         },
         backgroundColor: const Color(0xFFFF6B6B),
         icon: const Icon(Icons.add, color: Colors.white),
         label: Text(
-          'Nuevo Producto',
+          'Nuevo Item',
           style: GoogleFonts.poppins(
               fontWeight: FontWeight.bold, color: Colors.white),
         ),

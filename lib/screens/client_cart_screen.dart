@@ -234,6 +234,23 @@ class _ClientCartScreenState extends State<ClientCartScreen> {
                     fontSize: 14,
                   ),
                 ),
+                if (item.scheduledTime != null)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 4),
+                    child: Row(
+                      children: [
+                        Icon(Icons.calendar_today, size: 12, color: Colors.grey[600]),
+                        const SizedBox(width: 4),
+                        Text(
+                          '${item.scheduledTime!.day}/${item.scheduledTime!.month} ${item.scheduledTime!.hour}:${item.scheduledTime!.minute.toString().padLeft(2, '0')}',
+                          style: GoogleFonts.poppins(
+                            fontSize: 12,
+                            color: Colors.grey[600],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
               ],
             ),
           ),
@@ -247,7 +264,7 @@ class _ClientCartScreenState extends State<ClientCartScreen> {
               children: [
                 _buildQuantityButton(
                   icon: Icons.remove,
-                  onTap: () => cartService.removeFromCart(item.product),
+                  onTap: () => cartService.removeFromCart(item.product, scheduledTime: item.scheduledTime),
                 ),
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 8),
@@ -263,7 +280,7 @@ class _ClientCartScreenState extends State<ClientCartScreen> {
                   icon: Icons.add,
                   onTap: () {
                     try {
-                      cartService.addToCart(item.product);
+                      cartService.addToCart(item.product, scheduledTime: item.scheduledTime);
                     } catch (e) {
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(content: Text(e.toString())),
@@ -382,13 +399,30 @@ class _ClientCartScreenState extends State<ClientCartScreen> {
                   flex: 2,
                   child: ElevatedButton(
                     onPressed: () {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text('Pasarela de pago no implementada aún.',
-                              style: GoogleFonts.poppins()),
-                          backgroundColor: Colors.orange,
-                        ),
+                      if (cartService.items.isEmpty) return;
+                      
+                      // Simulate payment processing
+                      showDialog(
+                        context: context,
+                        barrierDismissible: false,
+                        builder: (context) => const Center(child: CircularProgressIndicator(color: Color(0xFFFF6B6B))),
                       );
+
+                      Future.delayed(const Duration(seconds: 2), () {
+                        if (!context.mounted) return;
+                        Navigator.pop(context); // Close loader
+                        cartService.checkout();
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text('¡Pago exitoso! Tu reserva ha sido confirmada.',
+                                style: GoogleFonts.poppins()),
+                            backgroundColor: Colors.green,
+                          ),
+                        );
+                        if (context.mounted) {
+                          Navigator.pop(context); // Go back to home or previous screen
+                        }
+                      });
                     },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: const Color(0xFFFF6B6B),

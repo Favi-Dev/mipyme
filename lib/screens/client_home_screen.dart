@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import '../models/vitrina_data.dart';
+import '../services/product_service.dart';
 import 'client_pyme_detail_screen.dart';
 
 class ClientHomeScreen extends StatelessWidget {
@@ -122,7 +124,7 @@ class ClientHomeScreen extends StatelessWidget {
             const SizedBox(height: 24),
 
             // Categories
-            _buildCategories(),
+            _buildCategories(context),
             const SizedBox(height: 24),
 
             // Featured Offers
@@ -141,27 +143,27 @@ class ClientHomeScreen extends StatelessWidget {
                     'Calzado',
                     const Color(0xFF8D6E63),
                     Icons.shopping_bag,
-                    'https://images.unsplash.com/photo-1549298916-b41d501d3772?auto=format&fit=crop&w=500&q=60',
+                    'assets/images/logo el roble calzados.jpg',
                   ),
                   const SizedBox(width: 16),
                   _buildOfferCard(
                     context,
-                    'Clínica Dental Sonrisas',
-                    'Limpieza 2x1',
+                    'Farmayuda',
+                    'Descuentos en Recetas',
                     'Salud',
                     const Color(0xFF4ECDC4),
                     Icons.medical_services,
-                    'https://images.unsplash.com/photo-1606811841689-23dfddce3e95?auto=format&fit=crop&w=500&q=60',
+                    'assets/images/logo farmayuda.jpg',
                   ),
                   const SizedBox(width: 16),
                   _buildOfferCard(
                     context,
-                    'Transportes Veloz',
-                    '10% dcto. Mudanzas',
-                    'Logística',
+                    'Fundación Los Robles',
+                    'Campaña de Reciclaje',
+                    'Fundación',
                     const Color(0xFFFF6B6B),
-                    Icons.local_shipping,
-                    'https://images.unsplash.com/photo-1586864387967-d02ef85d93e8?auto=format&fit=crop&w=500&q=60',
+                    Icons.volunteer_activism,
+                    'assets/images/Logo los robles.jpg',
                   ),
                 ],
               ),
@@ -181,38 +183,52 @@ class ClientHomeScreen extends StatelessWidget {
   Widget _buildNearbyPymesList() {
     final List<Map<String, dynamic>> pymes = [
       {
-        'name': 'Salón Glamour',
-        'category': 'Salud y Belleza',
+        'name': 'Metamorfosis',
+        'category': 'Reciclaje Textil',
+        'category_key': 'Metamorfosis',
+        'rating': '5.0',
+        'distance': '0.3 km',
+        'image': 'https://images.unsplash.com/photo-1523381210434-271e8be1f52b?auto=format&fit=crop&w=800&q=80',
+        'tags': ['Reciclaje', 'Sustentable', 'Moda'],
+        'isOpen': true,
+      },
+      {
+        'name': 'Farmayuda',
+        'category': 'Salud y Bienestar',
+        'category_key': 'Salud, belleza y bienestar',
         'rating': '4.9',
         'distance': '0.5 km',
-        'image': 'https://images.unsplash.com/photo-1560066984-138dadb4c035?auto=format&fit=crop&w=500&q=60',
-        'tags': ['Peluquería', 'Manicure'],
+        'image': 'https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?auto=format&fit=crop&w=800&q=80',
+        'tags': ['Farmacia', 'Medicamentos'],
         'isOpen': true,
       },
       {
         'name': 'Zapatería Los Robles',
         'category': 'Comercio/Retail',
+        'category_key': 'Comercio/retail',
         'rating': '4.9',
         'distance': '0.8 km',
-        'image': 'https://images.unsplash.com/photo-1549298916-b41d501d3772?auto=format&fit=crop&w=500&q=60',
+        'image': 'https://images.unsplash.com/photo-1549298916-b41d501d3772?auto=format&fit=crop&w=800&q=80',
         'tags': ['Calzado', 'Cuero', 'Reparación'],
         'isOpen': true,
       },
       {
-        'name': 'Confecciones Mary',
-        'category': 'Oficios y Manufactura',
-        'rating': '4.8',
-        'distance': '1.5 km',
-        'image': 'https://images.unsplash.com/photo-1528578577235-b963df6db908?auto=format&fit=crop&w=500&q=60',
-        'tags': ['Costura', 'Arreglos'],
+        'name': 'Fundación Los Robles',
+        'category': 'Educación y Cultura',
+        'category_key': 'Educación y cultura',
+        'rating': '5.0',
+        'distance': '1.2 km',
+        'image': 'https://images.unsplash.com/photo-1532996122724-e3c354a0b15b?auto=format&fit=crop&w=800&q=80',
+        'tags': ['Reciclaje', 'Comunidad'],
         'isOpen': true,
       },
       {
         'name': 'Abogados & Asoc.',
         'category': 'Servicios Profesionales',
+        'category_key': 'Servicios profesionales',
         'rating': '4.7',
         'distance': '2.0 km',
-        'image': 'https://images.unsplash.com/photo-1556761175-5973dc0f32e7?auto=format&fit=crop&w=500&q=60',
+        'image': 'https://images.unsplash.com/photo-1589829085413-56de8ae18c73?auto=format&fit=crop&w=800&q=80',
         'tags': ['Legal', 'Asesoría'],
         'isOpen': false,
       },
@@ -228,16 +244,16 @@ class ClientHomeScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildCategories() {
+  Widget _buildCategories(BuildContext context) {
     final categories = [
-      {'icon': Icons.grid_view_rounded, 'label': 'Todo'},
-      {'icon': Icons.store_mall_directory, 'label': 'Comercio/Retail'},
-      {'icon': Icons.restaurant_menu, 'label': 'Alimentos y Gastronomía'},
-      {'icon': Icons.business_center, 'label': 'Servicios Profesionales'},
-      {'icon': Icons.spa, 'label': 'Salud, Belleza y Bienestar'},
-      {'icon': Icons.construction, 'label': 'Oficios y Manufactura'},
-      {'icon': Icons.school, 'label': 'Educación y Cultura'},
-      {'icon': Icons.local_shipping, 'label': 'Transporte y Logística'},
+      {'icon': Icons.grid_view_rounded, 'label': 'Todo', 'key': 'Todo'},
+      {'icon': Icons.store_mall_directory, 'label': 'Retail', 'key': 'Comercio/retail'},
+      {'icon': Icons.restaurant_menu, 'label': 'Comida', 'key': 'Alimentos y gastronomía'},
+      {'icon': Icons.business_center, 'label': 'Servicios', 'key': 'Servicios profesionales'},
+      {'icon': Icons.spa, 'label': 'Salud', 'key': 'Salud, belleza y bienestar'},
+      {'icon': Icons.construction, 'label': 'Oficios', 'key': 'Oficios y manufactura'},
+      {'icon': Icons.school, 'label': 'Educación', 'key': 'Educación y cultura'},
+      {'icon': Icons.local_shipping, 'label': 'Logística', 'key': 'Transporte y logística'},
     ];
 
     return SizedBox(
@@ -248,36 +264,50 @@ class ClientHomeScreen extends StatelessWidget {
         itemCount: categories.length,
         itemBuilder: (context, index) {
           final isSelected = index == 0;
-          return Padding(
-            padding: const EdgeInsets.only(right: 12),
-            child: Column(
-              children: [
-                Container(
-                  width: 60,
-                  height: 60,
-                  decoration: BoxDecoration(
-                    color: isSelected ? const Color(0xFFFF6B6B) : Colors.white,
-                    borderRadius: BorderRadius.circular(18),
-                    boxShadow: [
-                      BoxShadow(
-                        color: isSelected
-                            ? const Color(0xFFFF6B6B).withOpacity(0.3)
-                            : Colors.black.withOpacity(0.05),
-                        blurRadius: 10,
-                        offset: const Offset(0, 4),
-                      ),
-                    ],
+          return GestureDetector(
+            onTap: () {
+              if (index != 0) {
+                // Update global mock data to simulate selecting a Pyme of this category
+                VitrinaData.setCategory(categories[index]['key'] as String);
+                ProductService().loadMockProductsForCategory(categories[index]['key'] as String);
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const ClientPymeDetailScreen(),
                   ),
-                  child: Icon(
-                    categories[index]['icon'] as IconData,
-                    color: isSelected ? Colors.white : Colors.grey[600],
-                    size: 28,
+                );
+              }
+            },
+            child: Padding(
+              padding: const EdgeInsets.only(right: 12),
+              child: Column(
+                children: [
+                  Container(
+                    width: 60,
+                    height: 60,
+                    decoration: BoxDecoration(
+                      color: isSelected ? const Color(0xFFFF6B6B) : Colors.white,
+                      borderRadius: BorderRadius.circular(18),
+                      boxShadow: [
+                        BoxShadow(
+                          color: isSelected
+                              ? const Color(0xFFFF6B6B).withOpacity(0.3)
+                              : Colors.black.withOpacity(0.05),
+                          blurRadius: 10,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
+                    ),
+                    child: Icon(
+                      categories[index]['icon'] as IconData,
+                      color: isSelected ? Colors.white : Colors.grey[600],
+                      size: 28,
+                    ),
                   ),
-                ),
-                const SizedBox(height: 8),
-                SizedBox(
-                  width: 80,
-                  child: Text(
+                  const SizedBox(height: 8),
+                  SizedBox(
+                    width: 80,
+                    child: Text(
                     categories[index]['label'] as String,
                     textAlign: TextAlign.center,
                     maxLines: 2,
@@ -292,6 +322,7 @@ class ClientHomeScreen extends StatelessWidget {
                 ),
               ],
             ),
+          ),
           );
         },
       ),
@@ -348,7 +379,9 @@ class ClientHomeScreen extends StatelessWidget {
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(20),
           image: DecorationImage(
-            image: NetworkImage(imageUrl),
+            image: imageUrl.startsWith('http')
+                ? NetworkImage(imageUrl)
+                : AssetImage(imageUrl) as ImageProvider,
             fit: BoxFit.cover,
             colorFilter: ColorFilter.mode(
               Colors.black.withOpacity(0.3),
@@ -449,6 +482,10 @@ class ClientHomeScreen extends StatelessWidget {
   Widget _buildPymeCard(BuildContext context, Map<String, dynamic> pyme) {
     return GestureDetector(
       onTap: () {
+        if (pyme.containsKey('category_key')) {
+          VitrinaData.setCategory(pyme['category_key']);
+          ProductService().loadMockProductsForCategory(pyme['category_key']);
+        }
         Navigator.push(
           context,
           MaterialPageRoute(
@@ -475,12 +512,19 @@ class ClientHomeScreen extends StatelessWidget {
               children: [
                 ClipRRect(
                   borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-                  child: Image.network(
-                    pyme['image'],
-                    height: 150,
-                    width: double.infinity,
-                    fit: BoxFit.cover,
-                  ),
+                  child: pyme['image'].startsWith('http')
+                      ? Image.network(
+                          pyme['image'],
+                          height: 150,
+                          width: double.infinity,
+                          fit: BoxFit.cover,
+                        )
+                      : Image.asset(
+                          pyme['image'],
+                          height: 150,
+                          width: double.infinity,
+                          fit: BoxFit.cover,
+                        ),
                 ),
                 Positioned(
                   top: 12,

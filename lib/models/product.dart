@@ -8,6 +8,7 @@ class Product {
   final String code;
   final int stock;
   final String category;
+  final Map<String, dynamic> customAttributes;
 
   Product({
     required this.id,
@@ -19,5 +20,16 @@ class Product {
     required this.code,
     required this.stock,
     required this.category,
+    this.customAttributes = const {},
   });
+
+  bool get isService {
+    const serviceCategories = [
+      'Servicios profesionales',
+      // 'Salud, belleza y bienestar', // Now a Pharmacy (Retail)
+      'Educación y cultura',
+      'Transporte y logística', 
+    ];
+    return serviceCategories.contains(category);
+  }
 }

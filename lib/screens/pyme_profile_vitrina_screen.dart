@@ -33,6 +33,20 @@ class _PymeProfileVitrinaScreenState extends State<PymeProfileVitrinaScreen> {
     });
   }
 
+  Widget _buildCategoryTile(String category) {
+    return ListTile(
+      title: Text(category),
+      onTap: () {
+        setState(() {
+          VitrinaData.setCategory(category);
+          _productService.loadMockProductsForCategory(category);
+          _loadProducts();
+        });
+        Navigator.pop(context); // Close drawer
+      },
+    );
+  }
+
   @override
   void dispose() {
     _scrollController.dispose();
@@ -46,6 +60,24 @@ class _PymeProfileVitrinaScreenState extends State<PymeProfileVitrinaScreen> {
 
     return Scaffold(
       backgroundColor: const Color(0xFFF7F9FC), // Light background
+      drawer: Drawer(
+        child: ListView(
+          padding: EdgeInsets.zero,
+          children: [
+            const DrawerHeader(
+              decoration: BoxDecoration(color: Color(0xFFFF6B6B)),
+              child: Text('Cambiar Categoría (Demo)', style: TextStyle(color: Colors.white, fontSize: 24)),
+            ),
+            _buildCategoryTile('Comercio/retail'),
+            _buildCategoryTile('Alimentos y gastronomía'),
+            _buildCategoryTile('Servicios profesionales'),
+            _buildCategoryTile('Salud, belleza y bienestar'),
+            _buildCategoryTile('Oficios y manufactura'),
+            _buildCategoryTile('Educación y cultura'),
+            _buildCategoryTile('Transporte y logística'),
+          ],
+        ),
+      ),
       body: Stack(
         children: [
           CustomScrollView(
@@ -92,10 +124,15 @@ class _PymeProfileVitrinaScreenState extends State<PymeProfileVitrinaScreen> {
                   background: Stack(
                     fit: StackFit.expand,
                     children: [
-                      Image.network(
-                        VitrinaData.coverImageUrl,
-                        fit: BoxFit.cover,
-                      ),
+                      VitrinaData.coverImageUrl.startsWith('http')
+                          ? Image.network(
+                              VitrinaData.coverImageUrl,
+                              fit: BoxFit.cover,
+                            )
+                          : Image.asset(
+                              VitrinaData.coverImageUrl,
+                              fit: BoxFit.cover,
+                            ),
                       // Gradient overlay for better text visibility
                       const DecoratedBox(
                         decoration: BoxDecoration(
@@ -298,14 +335,12 @@ class _PymeProfileVitrinaScreenState extends State<PymeProfileVitrinaScreen> {
                   )
                 ]
               ),
-              child: const CircleAvatar(
+              child: CircleAvatar(
                 radius: 40,
-                backgroundColor: Color(0xFFFF6B6B),
-                child: Icon(
-                  Icons.coffee,
-                  size: 40,
-                  color: Colors.white,
-                ),
+                backgroundColor: Colors.white,
+                backgroundImage: VitrinaData.logoUrl.startsWith('http')
+                    ? NetworkImage(VitrinaData.logoUrl)
+                    : AssetImage(VitrinaData.logoUrl) as ImageProvider,
               ),
             ),
           ),

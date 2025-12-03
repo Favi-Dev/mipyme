@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import '../models/cart_item.dart';
 import '../models/product.dart';
+import 'reservation_service.dart';
 
 class CartService extends ChangeNotifier {
   static final CartService _instance = CartService._internal();
@@ -26,27 +27,48 @@ class CartService extends ChangeNotifier {
     return _items.first.product.pymeId;
   }
 
-  void addToCart(Product product) {
+  void addToCart(Product product, {DateTime? scheduledTime}) {
     // Check if product is from the same store
     if (_items.isNotEmpty && _items.first.product.pymeId != product.pymeId) {
       throw Exception('Solo puedes agregar productos de una misma tienda.');
     }
 
-    final index = _items.indexWhere((item) => item.product.id == product.id);
+    // Find item with same product ID AND same scheduled time (if any)
+    final index = _items.indexWhere((item) => 
+      item.product.id == product.id && item.scheduledTime == scheduledTime
+    );
+
     if (index != -1) {
+      if (scheduledTime != null) {
+        throw Exception('Ya tienes este horario reservado en tu carrito.');
+      }
       _items[index].quantity++;
     } else {
-      _items.add(CartItem(product: product));
+      if (scheduledTime != null) {
+        // Try to book the slot globally
+        try {
+          ReservationService().bookSlot(product.pymeId, product.id, 'currentUser', scheduledTime);
+        } catch (e) {
+          rethrow; // Propagate error (e.g. "Slot taken")
+        }
+      }
+      _items.add(CartItem(product: product, scheduledTime: scheduledTime));
     }
     notifyListeners();
   }
 
-  void removeFromCart(Product product) {
-    final index = _items.indexWhere((item) => item.product.id == product.id);
+  void removeFromCart(Product product, {DateTime? scheduledTime}) {
+    final index = _items.indexWhere((item) => 
+      item.product.id == product.id && item.scheduledTime == scheduledTime
+    );
     if (index != -1) {
       if (_items[index].quantity > 1) {
         _items[index].quantity--;
       } else {
+        // If removing the item completely, release the reservation if it exists
+        if (scheduledTime != null) {
+          ReservationService().cancelReservation(product.id, scheduledTime);
+        }
         _items.removeAt(index);
       }
       // If cart becomes empty, reset coupon
@@ -59,6 +81,21 @@ class CartService extends ChangeNotifier {
   }
 
   void clearCart() {
+    // Release all reservations (User abandoned cart)
+    for (var item in _items) {
+      if (item.scheduledTime != null) {
+        ReservationService().cancelReservation(item.product.id, item.scheduledTime!);
+      }
+    }
+    _items.clear();
+    _couponDiscount = 0;
+    _appliedCouponCode = null;
+    notifyListeners();
+  }
+
+  void checkout() {
+    // Confirm purchase. Reservations remain 'confirmed' (or 'pending' -> 'confirmed').
+    // We do NOT cancel them.
     _items.clear();
     _couponDiscount = 0;
     _appliedCouponCode = null;

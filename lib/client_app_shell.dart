@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'services/cart_service.dart';
 import 'screens/client_home_screen.dart';
-import 'screens/client_marketplace_screen.dart';
+import 'screens/client_map_screen.dart';
 import 'screens/client_cart_screen.dart';
 import 'screens/client_qr_screen.dart';
 import 'screens/client_profile_screen.dart';
@@ -19,7 +19,7 @@ class _ClientAppShellState extends State<ClientAppShell> {
 
   final List<Widget> _screens = [
     const ClientHomeScreen(),
-    const ClientMarketplaceScreen(),
+    const ClientMapScreen(),
     const ClientCartScreen(),
     const ClientQrScreen(),
     const ClientProfileScreen(),
@@ -45,7 +45,7 @@ class _ClientAppShellState extends State<ClientAppShell> {
         onTap: _onItemTapped,
         items: [
           const BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Inicio'),
-          const BottomNavigationBarItem(icon: Icon(Icons.store), label: 'Mercado'),
+          const BottomNavigationBarItem(icon: Icon(Icons.map), label: 'Mapa'),
           BottomNavigationBarItem(
             icon: Consumer<CartService>(
               builder: (context, cart, child) {

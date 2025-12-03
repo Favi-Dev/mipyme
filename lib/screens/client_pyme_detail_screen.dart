@@ -106,10 +106,15 @@ class _ClientPymeDetailScreenState extends State<ClientPymeDetailScreen> {
                   background: Stack(
                     fit: StackFit.expand,
                     children: [
-                      Image.network(
-                        VitrinaData.coverImageUrl,
-                        fit: BoxFit.cover,
-                      ),
+                      VitrinaData.coverImageUrl.startsWith('http')
+                          ? Image.network(
+                              VitrinaData.coverImageUrl,
+                              fit: BoxFit.cover,
+                            )
+                          : Image.asset(
+                              VitrinaData.coverImageUrl,
+                              fit: BoxFit.cover,
+                            ),
                       const DecoratedBox(
                         decoration: BoxDecoration(
                           gradient: LinearGradient(
@@ -280,14 +285,12 @@ class _ClientPymeDetailScreenState extends State<ClientPymeDetailScreen> {
                   ),
                 ],
               ),
-              child: const CircleAvatar(
+              child: CircleAvatar(
                 radius: 40,
-                backgroundColor: Color(0xFF8D6E63),
-                child: Icon(
-                  Icons.shopping_bag,
-                  size: 40,
-                  color: Colors.white,
-                ),
+                backgroundColor: Colors.white,
+                backgroundImage: VitrinaData.logoUrl.startsWith('http')
+                    ? NetworkImage(VitrinaData.logoUrl)
+                    : AssetImage(VitrinaData.logoUrl) as ImageProvider,
               ),
             ),
           ),
@@ -441,31 +444,129 @@ class _ClientPymeDetailScreenState extends State<ClientPymeDetailScreen> {
                   width: double.infinity,
                   height: 32,
                   child: ElevatedButton(
-                    onPressed: () {
+                    onPressed: () async {
                       try {
-                        context.read<CartService>().addToCart(product);
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('Agregado al carrito'),
-                            duration: Duration(seconds: 1),
-                            backgroundColor: Color(0xFF4ECDC4),
-                          ),
-                        );
+                        if (product.isService) {
+                          DateTime? pickedDate;
+                          
+                          // Check if it's a specific event
+                          if (product.customAttributes['is_event'] == 'true' && 
+                              product.customAttributes['event_date'] != null) {
+                            
+                            final eventDate = DateTime.parse(product.customAttributes['event_date']);
+                            
+                            // Show confirmation dialog instead of date picker
+                            final confirm = await showDialog<bool>(
+                              context: context,
+                              builder: (context) => AlertDialog(
+                                title: Text('Operativo Especial', style: GoogleFonts.poppins(fontWeight: FontWeight.bold)),
+                                content: Text(
+                                  'Este servicio es un evento único para el día:\n\n${eventDate.day}/${eventDate.month}/${eventDate.year}\n\n¿Deseas seleccionar una hora para este día?',
+                                  style: GoogleFonts.poppins()
+                                ),
+                                actions: [
+                                  TextButton(
+                                    onPressed: () => Navigator.pop(context, false),
+                                    child: Text('Cancelar', style: GoogleFonts.poppins(color: Colors.grey)),
+                                  ),
+                                  ElevatedButton(
+                                    onPressed: () => Navigator.pop(context, true),
+                                    style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFFF6B6B)),
+                                    child: Text('Continuar', style: GoogleFonts.poppins(color: Colors.white)),
+                                  ),
+                                ],
+                              ),
+                            );
+                            
+                            if (confirm == true) {
+                              pickedDate = eventDate;
+                            }
+                          } else {
+                            // Standard service booking
+                            pickedDate = await showDatePicker(
+                              context: context,
+                              initialDate: DateTime.now(),
+                              firstDate: DateTime.now(),
+                              lastDate: DateTime.now().add(const Duration(days: 30)),
+                              builder: (context, child) {
+                                return Theme(
+                                  data: Theme.of(context).copyWith(
+                                    colorScheme: const ColorScheme.light(
+                                      primary: Color(0xFFFF6B6B),
+                                    ),
+                                  ),
+                                  child: child!,
+                                );
+                              },
+                            );
+                          }
+                          
+                          if (pickedDate != null && mounted) {
+                            final TimeOfDay? pickedTime = await showTimePicker(
+                              context: context,
+                              initialTime: TimeOfDay.now(),
+                              builder: (context, child) {
+                                return Theme(
+                                  data: Theme.of(context).copyWith(
+                                    colorScheme: const ColorScheme.light(
+                                      primary: Color(0xFFFF6B6B),
+                                    ),
+                                  ),
+                                  child: child!,
+                                );
+                              },
+                            );
+
+                            if (pickedTime != null && mounted) {
+                              final scheduledTime = DateTime(
+                                pickedDate.year,
+                                pickedDate.month,
+                                pickedDate.day,
+                                pickedTime.hour,
+                                pickedTime.minute,
+                              );
+                              
+                              context.read<CartService>().addToCart(product, scheduledTime: scheduledTime);
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text('Reserva agendada para el ${scheduledTime.day}/${scheduledTime.month} a las ${scheduledTime.hour}:${scheduledTime.minute.toString().padLeft(2, '0')}'),
+                                  duration: const Duration(seconds: 2),
+                                  backgroundColor: const Color(0xFF4ECDC4),
+                                ),
+                              );
+                            }
+                          }
+                        } else {
+                          context.read<CartService>().addToCart(product);
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('Agregado al carrito'),
+                              duration: Duration(seconds: 1),
+                              backgroundColor: Color(0xFF4ECDC4),
+                            ),
+                          );
+                        }
                       } catch (e) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(content: Text(e.toString())),
-                        );
+                        if (mounted) {
+                          String errorMessage = e.toString().replaceAll('Exception: ', '');
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(errorMessage, style: GoogleFonts.poppins()),
+                              backgroundColor: Colors.redAccent,
+                            ),
+                          );
+                        }
                       }
                     },
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF4ECDC4),
+                      backgroundColor: product.isService ? const Color(0xFFFF6B6B) : const Color(0xFF4ECDC4),
                       foregroundColor: Colors.white,
                       padding: EdgeInsets.zero,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(8),
                       ),
                     ),
-                    child: const Text('Agregar'),
+                    child: Text(product.isService ? 'Reservar' : 'Agregar'),
                   ),
                 ),
               ],
