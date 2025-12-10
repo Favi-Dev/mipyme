@@ -7,6 +7,12 @@ class VitrinaData {
 
   static void setCategory(String newCategory) {
     category = newCategory;
+    // Reset donation data
+    donationGoal = 0;
+    currentDonations = 0;
+    donationAlias = '';
+    donationCbu = '';
+
     switch (newCategory) {
       case 'Comercio/retail':
         name = 'Zapatería Los Robles';
@@ -43,6 +49,11 @@ class VitrinaData {
         description = 'Fundación sin fines de lucro, que busca impulsar el reciclaje y el apoyo a bancos de trabajo para adultos mayores';
         coverImageUrl = 'https://images.unsplash.com/photo-1532996122724-e3c354a0b15b?auto=format&fit=crop&w=800&q=80';
         logoUrl = 'assets/images/Logo los robles.jpg';
+        // Donation data
+        donationGoal = 5000000;
+        currentDonations = 1250000;
+        donationAlias = 'fundacion.losrobles.donar';
+        donationCbu = '0000003100000000000000';
         break;
       case 'Transporte y logística':
         name = 'Fletes Rápidos Santiago';
@@ -65,4 +76,11 @@ class VitrinaData {
   static String instagramHandle = '@zapaterialosrobles';
   static String whatsappNumber = '+56987654321';
   static int supporterCount = 342; // Mock counter for "S+" supporters
+
+  // Donation fields
+  static double donationGoal = 0;
+  static double currentDonations = 0;
+  static String donationAlias = '';
+  static String donationCbu = '';
+  static bool get isFoundation => category == 'Educación y cultura' || name.toLowerCase().contains('fundación');
 }

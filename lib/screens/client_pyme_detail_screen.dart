@@ -33,6 +33,174 @@ class _ClientPymeDetailScreenState extends State<ClientPymeDetailScreen> {
     });
   }
 
+  void _showDonationModal() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => Container(
+        height: MediaQuery.of(context).size.height * 0.7,
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        ),
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Center(
+              child: Container(
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: Colors.grey[300],
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+            ),
+            const SizedBox(height: 24),
+            Text(
+              'Donar a ${VitrinaData.name}',
+              style: GoogleFonts.poppins(
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Tu aporte ayuda a continuar con nuestra labor.',
+              style: GoogleFonts.poppins(
+                color: Colors.grey[600],
+              ),
+            ),
+            const SizedBox(height: 32),
+            Text(
+              'Meta de recaudación',
+              style: GoogleFonts.poppins(
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            const SizedBox(height: 8),
+            LinearProgressIndicator(
+              value: VitrinaData.currentDonations / VitrinaData.donationGoal,
+              backgroundColor: Colors.grey[200],
+              color: const Color(0xFFFF6B6B),
+              minHeight: 10,
+              borderRadius: BorderRadius.circular(5),
+            ),
+            const SizedBox(height: 8),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  '\$${VitrinaData.currentDonations.toStringAsFixed(0)}',
+                  style: GoogleFonts.poppins(
+                    fontWeight: FontWeight.bold,
+                    color: const Color(0xFFFF6B6B),
+                  ),
+                ),
+                Text(
+                  'Meta: \$${VitrinaData.donationGoal.toStringAsFixed(0)}',
+                  style: GoogleFonts.poppins(color: Colors.grey[600]),
+                ),
+              ],
+            ),
+            const SizedBox(height: 32),
+            Text(
+              'Datos de Transferencia',
+              style: GoogleFonts.poppins(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 16),
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: Colors.grey[50],
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: Colors.grey[200]!),
+              ),
+              child: Column(
+                children: [
+                  _buildCopyableRow('Alias', VitrinaData.donationAlias),
+                  const Divider(height: 24),
+                  _buildCopyableRow('CBU', VitrinaData.donationCbu),
+                ],
+              ),
+            ),
+            const Spacer(),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: () {
+                  Navigator.pop(context);
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('¡Gracias por tu intención de donar!'),
+                      backgroundColor: Colors.green,
+                    ),
+                  );
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFFFF6B6B),
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+                child: Text(
+                  'Ya realicé la transferencia',
+                  style: GoogleFonts.poppins(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildCopyableRow(String label, String value) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              label,
+              style: GoogleFonts.poppins(
+                color: Colors.grey[600],
+                fontSize: 12,
+              ),
+            ),
+            Text(
+              value,
+              style: GoogleFonts.poppins(
+                fontWeight: FontWeight.w600,
+                fontSize: 16,
+              ),
+            ),
+          ],
+        ),
+        IconButton(
+          icon: const Icon(Icons.copy, color: Color(0xFFFF6B6B)),
+          onPressed: () {
+            // Clipboard logic would go here
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text('$label copiado al portapapeles')),
+            );
+          },
+        ),
+      ],
+    );
+  }
+
   @override
   void dispose() {
     _scrollController.dispose();
@@ -160,6 +328,30 @@ class _ClientPymeDetailScreenState extends State<ClientPymeDetailScreen> {
                           fontSize: 14,
                         ),
                       ),
+                      if (VitrinaData.isFoundation) ...[
+                        const SizedBox(height: 16),
+                        SizedBox(
+                          width: double.infinity,
+                          child: ElevatedButton.icon(
+                            onPressed: _showDonationModal,
+                            icon: const Icon(Icons.volunteer_activism, color: Colors.white),
+                            label: Text(
+                              'Donar a esta Fundación',
+                              style: GoogleFonts.poppins(
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white,
+                              ),
+                            ),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: const Color(0xFFFF6B6B),
+                              padding: const EdgeInsets.symmetric(vertical: 12),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
                       const SizedBox(height: 24),
 
                       // Offers
