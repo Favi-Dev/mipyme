@@ -38,129 +38,261 @@ class _ClientPymeDetailScreenState extends State<ClientPymeDetailScreen> {
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (context) => Container(
-        height: MediaQuery.of(context).size.height * 0.7,
-        decoration: const BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-        ),
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Center(
-              child: Container(
-                width: 40,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: Colors.grey[300],
-                  borderRadius: BorderRadius.circular(2),
-                ),
+      builder: (context) => StatefulBuilder(
+        builder: (context, setState) {
+          bool isMonthly = false;
+          int selectedAmount = 3000;
+          final List<int> amounts = [1000, 3000, 5000, 10000];
+
+          return DraggableScrollableSheet(
+            initialChildSize: 0.85,
+            minChildSize: 0.5,
+            maxChildSize: 0.95,
+            builder: (_, controller) => Container(
+              decoration: const BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
               ),
-            ),
-            const SizedBox(height: 24),
-            Text(
-              'Donar a ${VitrinaData.name}',
-              style: GoogleFonts.poppins(
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'Tu aporte ayuda a continuar con nuestra labor.',
-              style: GoogleFonts.poppins(
-                color: Colors.grey[600],
-              ),
-            ),
-            const SizedBox(height: 32),
-            Text(
-              'Meta de recaudación',
-              style: GoogleFonts.poppins(
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-            const SizedBox(height: 8),
-            LinearProgressIndicator(
-              value: VitrinaData.currentDonations / VitrinaData.donationGoal,
-              backgroundColor: Colors.grey[200],
-              color: const Color(0xFFFF6B6B),
-              minHeight: 10,
-              borderRadius: BorderRadius.circular(5),
-            ),
-            const SizedBox(height: 8),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  '\$${VitrinaData.currentDonations.toStringAsFixed(0)}',
-                  style: GoogleFonts.poppins(
-                    fontWeight: FontWeight.bold,
-                    color: const Color(0xFFFF6B6B),
-                  ),
-                ),
-                Text(
-                  'Meta: \$${VitrinaData.donationGoal.toStringAsFixed(0)}',
-                  style: GoogleFonts.poppins(color: Colors.grey[600]),
-                ),
-              ],
-            ),
-            const SizedBox(height: 32),
-            Text(
-              'Datos de Transferencia',
-              style: GoogleFonts.poppins(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            const SizedBox(height: 16),
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: Colors.grey[50],
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: Colors.grey[200]!),
-              ),
-              child: Column(
+              padding: const EdgeInsets.all(24),
+              child: ListView(
+                controller: controller,
                 children: [
-                  _buildCopyableRow('Alias', VitrinaData.donationAlias),
-                  const Divider(height: 24),
-                  _buildCopyableRow('CBU', VitrinaData.donationCbu),
+                  Center(
+                    child: Container(
+                      width: 40,
+                      height: 4,
+                      decoration: BoxDecoration(
+                        color: Colors.grey[300],
+                        borderRadius: BorderRadius.circular(2),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                  Text(
+                    'Donar a ${VitrinaData.name}',
+                    style: GoogleFonts.poppins(
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Tu aporte ayuda a continuar con nuestra labor.',
+                    style: GoogleFonts.poppins(
+                      color: Colors.grey[600],
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                  
+                  // Frequency Toggle
+                  Container(
+                    padding: const EdgeInsets.all(4),
+                    decoration: BoxDecoration(
+                      color: Colors.grey[100],
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: GestureDetector(
+                            onTap: () => setState(() => isMonthly = false),
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(vertical: 12),
+                              decoration: BoxDecoration(
+                                color: !isMonthly ? Colors.white : Colors.transparent,
+                                borderRadius: BorderRadius.circular(10),
+                                boxShadow: !isMonthly ? [
+                                  BoxShadow(
+                                    color: Colors.black.withOpacity(0.05),
+                                    blurRadius: 4,
+                                  )
+                                ] : null,
+                              ),
+                              child: Text(
+                                'Única vez',
+                                textAlign: TextAlign.center,
+                                style: GoogleFonts.poppins(
+                                  fontWeight: FontWeight.w600,
+                                  color: !isMonthly ? Colors.black87 : Colors.grey[600],
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                        Expanded(
+                          child: GestureDetector(
+                            onTap: () => setState(() => isMonthly = true),
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(vertical: 12),
+                              decoration: BoxDecoration(
+                                color: isMonthly ? Colors.white : Colors.transparent,
+                                borderRadius: BorderRadius.circular(10),
+                                boxShadow: isMonthly ? [
+                                  BoxShadow(
+                                    color: Colors.black.withOpacity(0.05),
+                                    blurRadius: 4,
+                                  )
+                                ] : null,
+                              ),
+                              child: Text(
+                                'Mensual',
+                                textAlign: TextAlign.center,
+                                style: GoogleFonts.poppins(
+                                  fontWeight: FontWeight.w600,
+                                  color: isMonthly ? const Color(0xFFFF6B6B) : Colors.grey[600],
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+
+                  // Amount Selection
+                  Text(
+                    'Selecciona un monto',
+                    style: GoogleFonts.poppins(
+                      fontWeight: FontWeight.w600,
+                      fontSize: 16,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  Wrap(
+                    spacing: 12,
+                    runSpacing: 12,
+                    children: [
+                      ...amounts.map((amount) => ChoiceChip(
+                        label: Text('\$${amount.toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (Match m) => '${m[1]}.')}'),
+                        selected: selectedAmount == amount,
+                        onSelected: (selected) {
+                          if (selected) setState(() => selectedAmount = amount);
+                        },
+                        selectedColor: const Color(0xFFFF6B6B),
+                        labelStyle: TextStyle(
+                          color: selectedAmount == amount ? Colors.white : Colors.black87,
+                          fontWeight: FontWeight.w600,
+                        ),
+                        backgroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                          side: BorderSide(
+                            color: selectedAmount == amount ? const Color(0xFFFF6B6B) : Colors.grey[300]!,
+                          ),
+                        ),
+                      )),
+                      ChoiceChip(
+                        label: const Text('Otro monto'),
+                        selected: false,
+                        onSelected: (_) {},
+                        backgroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                          side: BorderSide(color: Colors.grey[300]!),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 32),
+
+                  // Progress
+                  Text(
+                    'Meta de recaudación',
+                    style: GoogleFonts.poppins(
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  LinearProgressIndicator(
+                    value: VitrinaData.currentDonations / VitrinaData.donationGoal,
+                    backgroundColor: Colors.grey[200],
+                    color: const Color(0xFFFF6B6B),
+                    minHeight: 10,
+                    borderRadius: BorderRadius.circular(5),
+                  ),
+                  const SizedBox(height: 8),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        '\$${VitrinaData.currentDonations.toStringAsFixed(0)}',
+                        style: GoogleFonts.poppins(
+                          fontWeight: FontWeight.bold,
+                          color: const Color(0xFFFF6B6B),
+                        ),
+                      ),
+                      Text(
+                        'Meta: \$${VitrinaData.donationGoal.toStringAsFixed(0)}',
+                        style: GoogleFonts.poppins(color: Colors.grey[600]),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 32),
+
+                  // Transfer Info
+                  Text(
+                    'Datos de Transferencia',
+                    style: GoogleFonts.poppins(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: Colors.grey[50],
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: Colors.grey[200]!),
+                    ),
+                    child: Column(
+                      children: [
+                        _buildCopyableRow('Alias', VitrinaData.donationAlias),
+                        const Divider(height: 24),
+                        _buildCopyableRow('CBU', VitrinaData.donationCbu),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 32),
+                  
+                  // Action Button
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      onPressed: () {
+                        Navigator.pop(context);
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(isMonthly 
+                              ? '¡Gracias por suscribirte con \$${selectedAmount}/mes!' 
+                              : '¡Gracias por tu donación de \$${selectedAmount}!'),
+                            backgroundColor: Colors.green,
+                          ),
+                        );
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFFFF6B6B),
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      child: Text(
+                        isMonthly ? 'Suscribirse Mensualmente' : 'Realizar Donación',
+                        style: GoogleFonts.poppins(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ),
+                  ),
                 ],
               ),
             ),
-            const Spacer(),
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                onPressed: () {
-                  Navigator.pop(context);
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('¡Gracias por tu intención de donar!'),
-                      backgroundColor: Colors.green,
-                    ),
-                  );
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFFFF6B6B),
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-                child: Text(
-                  'Ya realicé la transferencia',
-                  style: GoogleFonts.poppins(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
-                  ),
-                ),
-              ),
-            ),
-          ],
-        ),
+          );
+        },
       ),
     );
   }

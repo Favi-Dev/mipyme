@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'pyme_app_shell.dart';
 import 'client_app_shell.dart';
 import 'admin_app_shell.dart';
+import 'models/vitrina_data.dart';
 
 class RoleSelectionScreen extends StatelessWidget {
   const RoleSelectionScreen({super.key});
@@ -49,6 +50,21 @@ class RoleSelectionScreen extends StatelessWidget {
                 Icons.storefront,
                 const Color(0xFF4ECDC4),
                 const PymeAppShell(),
+                onTap: () {
+                  VitrinaData.setCategory('Comercio/retail');
+                },
+              ),
+              const SizedBox(height: 16),
+              _buildRoleButton(
+                context,
+                'Fundación',
+                'Gestiono mi fundación',
+                Icons.volunteer_activism,
+                const Color(0xFF6C5CE7),
+                const PymeAppShell(),
+                onTap: () {
+                  VitrinaData.setCategory('Educación y cultura');
+                },
               ),
               const SizedBox(height: 16),
               _buildRoleButton(
@@ -68,13 +84,16 @@ class RoleSelectionScreen extends StatelessWidget {
   }
 
   Widget _buildRoleButton(BuildContext context, String title, String subtitle,
-      IconData icon, Color color, Widget destination) {
+      IconData icon, Color color, Widget destination, {VoidCallback? onTap}) {
     return Material(
       color: Colors.white,
       borderRadius: BorderRadius.circular(16),
       elevation: 2,
       child: InkWell(
         onTap: () {
+          if (onTap != null) {
+            onTap();
+          }
           Navigator.pushReplacement(
             context,
             MaterialPageRoute(builder: (context) => destination),
