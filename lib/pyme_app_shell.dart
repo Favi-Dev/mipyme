@@ -34,7 +34,7 @@ class _PymeAppShellState extends State<PymeAppShell> {
       bottomNavigationBar: BottomNavigationBar(
         type: BottomNavigationBarType.fixed,
         backgroundColor: Colors.white,
-        selectedItemColor: const Color(0xFFFF6B6B),
+        selectedItemColor: const Color(0xFF0056D2),
         unselectedItemColor: Colors.grey,
         items: const <BottomNavigationBarItem>[
           BottomNavigationBarItem(

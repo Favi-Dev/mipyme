@@ -95,7 +95,7 @@ class _PymeValidationScannerScreenState
             const SizedBox(height: 8),
             Text(
               'Esta acción consumirá el cupón mensual del cliente.',
-              style: GoogleFonts.poppins(color: const Color(0xFFFF6B6B), fontSize: 12),
+              style: GoogleFonts.poppins(color: const Color(0xFF0056D2), fontSize: 12),
             ),
           ],
         ),
@@ -114,7 +114,7 @@ class _PymeValidationScannerScreenState
               Navigator.pop(context);
               _showResultDialog(true, code, 'Descuento de \$10.000 aplicado correctamente.');
             },
-            style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFFF6B6B)),
+            style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF0056D2)),
             child: const Text('Confirmar', style: TextStyle(color: Colors.white)),
           ),
         ],
@@ -237,10 +237,10 @@ class _PymeValidationScannerScreenState
                                 child: Container(
                                   height: 2,
                                   decoration: BoxDecoration(
-                                    color: const Color(0xFFFF6B6B),
+                                    color: const Color(0xFF0056D2),
                                     boxShadow: [
                                       BoxShadow(
-                                        color: const Color(0xFFFF6B6B).withOpacity(0.5),
+                                        color: const Color(0xFF0056D2).withOpacity(0.5),
                                         blurRadius: 10,
                                         spreadRadius: 2,
                                       ),
@@ -293,11 +293,11 @@ class _PymeValidationScannerScreenState
                 },
                 icon: Icon(
                   _isScanning ? Icons.pause : Icons.play_arrow,
-                  color: const Color(0xFFFF6B6B),
+                  color: const Color(0xFF0056D2),
                 ),
                 label: Text(
                   _isScanning ? 'Pausar Escáner' : 'Activar Escáner',
-                  style: const TextStyle(color: Color(0xFFFF6B6B)),
+                  style: const TextStyle(color: Color(0xFF0056D2)),
                 ),
               ),
               const SizedBox(height: 32),
@@ -335,7 +335,7 @@ class _PymeValidationScannerScreenState
                   ),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
-                    borderSide: const BorderSide(color: Color(0xFFFF6B6B)),
+                    borderSide: const BorderSide(color: Color(0xFF0056D2)),
                   ),
                   prefixIcon: const Icon(Icons.keyboard, color: Colors.grey),
                 ),
@@ -351,7 +351,7 @@ class _PymeValidationScannerScreenState
                     }
                   },
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFFFF6B6B),
+                    backgroundColor: const Color(0xFF0056D2),
                     foregroundColor: Colors.white,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
@@ -371,13 +371,13 @@ class _PymeValidationScannerScreenState
                   onPressed: () {
                     _validateCode('PRO123'); // Simulate successful scan
                   },
-                  icon: const Icon(Icons.qr_code_scanner, color: Color(0xFFFF6B6B)),
+                  icon: const Icon(Icons.qr_code_scanner, color: Color(0xFF0056D2)),
                   label: const Text(
                     'Simular Escaneo Exitoso',
-                    style: TextStyle(color: Color(0xFFFF6B6B)),
+                    style: TextStyle(color: Color(0xFF0056D2)),
                   ),
                   style: OutlinedButton.styleFrom(
-                    side: const BorderSide(color: Color(0xFFFF6B6B)),
+                    side: const BorderSide(color: Color(0xFF0056D2)),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
@@ -394,7 +394,7 @@ class _PymeValidationScannerScreenState
   List<Widget> _buildCornerMarkers() {
     const double size = 40;
     const double thickness = 4;
-    const Color color = Color(0xFFFF6B6B);
+    const Color color = Color(0xFF0056D2);
 
     return [
       // Top Left

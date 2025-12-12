@@ -31,7 +31,7 @@ class _ClientMapScreenState extends State<ClientMapScreen> {
       'category_key': 'Salud, belleza y bienestar',
       'lat': 0.6,
       'lng': 0.7,
-      'color': const Color(0xFF4ECDC4),
+      'color': const Color(0xFFE63946),
       'icon': Icons.medical_services,
       'image': 'assets/images/logo farmayuda.jpg',
     },
@@ -42,7 +42,7 @@ class _ClientMapScreenState extends State<ClientMapScreen> {
       'category_key': 'Educación y cultura',
       'lat': 0.25,
       'lng': 0.6,
-      'color': const Color(0xFFFF6B6B),
+      'color': const Color(0xFF0056D2),
       'icon': Icons.volunteer_activism,
       'image': 'assets/images/Logo los robles.jpg',
     },
@@ -151,7 +151,7 @@ class _ClientMapScreenState extends State<ClientMapScreen> {
               child: TextField(
                 decoration: InputDecoration(
                   hintText: 'Buscar en el mapa...',
-                  prefixIcon: const Icon(Icons.search, color: Color(0xFFFF6B6B)),
+                  prefixIcon: const Icon(Icons.search, color: Color(0xFF0056D2)),
                   border: InputBorder.none,
                   contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
                 ),
@@ -221,7 +221,7 @@ class _ClientMapScreenState extends State<ClientMapScreen> {
           // Center map or current location action
         },
         backgroundColor: Colors.white,
-        child: const Icon(Icons.my_location, color: Color(0xFFFF6B6B)),
+        child: const Icon(Icons.my_location, color: Color(0xFF0056D2)),
       ),
     );
   }
@@ -288,7 +288,7 @@ class _ClientMapScreenState extends State<ClientMapScreen> {
                         _navigateToPymeDetail(context, pin);
                       },
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFFFF6B6B),
+                        backgroundColor: const Color(0xFF0056D2),
                         foregroundColor: Colors.white,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12),

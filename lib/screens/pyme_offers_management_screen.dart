@@ -41,7 +41,7 @@ class _PymeOffersManagementScreenState
     
     // Valores por defecto para nueva oferta
     IconData selectedIcon = offer?.icon ?? Icons.local_offer;
-    Color selectedColor = offer?.color ?? const Color(0xFF4ECDC4);
+    Color selectedColor = offer?.color ?? const Color(0xFFE63946);
 
     showDialog(
       context: context,
@@ -66,7 +66,7 @@ class _PymeOffersManagementScreenState
                       enabledBorder: UnderlineInputBorder(
                           borderSide: BorderSide(color: Colors.grey)),
                       focusedBorder: UnderlineInputBorder(
-                          borderSide: BorderSide(color: Color(0xFFFF6B6B))),
+                          borderSide: BorderSide(color: Color(0xFF0056D2))),
                     ),
                   ),
                   const SizedBox(height: 16),
@@ -79,7 +79,7 @@ class _PymeOffersManagementScreenState
                       enabledBorder: UnderlineInputBorder(
                           borderSide: BorderSide(color: Colors.grey)),
                       focusedBorder: UnderlineInputBorder(
-                          borderSide: BorderSide(color: Color(0xFFFF6B6B))),
+                          borderSide: BorderSide(color: Color(0xFF0056D2))),
                     ),
                   ),
                   const SizedBox(height: 24),
@@ -116,9 +116,9 @@ class _PymeOffersManagementScreenState
                   Wrap(
                     spacing: 12,
                     children: [
-                      const Color(0xFF4ECDC4),
-                      const Color(0xFFFF6B6B),
-                      const Color(0xFFFFD93D),
+                      const Color(0xFFE63946),
+                      const Color(0xFF0056D2),
+                      const Color(0xFF333333),
                       Colors.purpleAccent,
                       Colors.blueAccent,
                     ].map((color) {
@@ -200,7 +200,7 @@ class _PymeOffersManagementScreenState
         iconTheme: const IconThemeData(color: Colors.black87),
       ),
       floatingActionButton: FloatingActionButton(
-        backgroundColor: const Color(0xFFFF6B6B),
+        backgroundColor: const Color(0xFF0056D2),
         onPressed: () => _showOfferDialog(),
         child: const Icon(Icons.add, color: Colors.white),
       ),

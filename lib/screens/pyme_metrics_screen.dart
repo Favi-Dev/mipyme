@@ -33,7 +33,7 @@ class _PymeMetricsScreenState extends State<PymeMetricsScreen> {
               child: DropdownButton<String>(
                 dropdownColor: Colors.white,
                 value: _selectedTimeRange,
-                icon: const Icon(Icons.keyboard_arrow_down, color: Color(0xFFFFD93D)),
+                icon: const Icon(Icons.keyboard_arrow_down, color: Color(0xFF333333)),
                 style: GoogleFonts.poppins(color: Colors.black87, fontSize: 14),
                 onChanged: (String? newValue) {
                   setState(() {
@@ -109,7 +109,7 @@ class _PymeMetricsScreenState extends State<PymeMetricsScreen> {
                   trend: '-0.1',
                   isPositive: false,
                   icon: Icons.star,
-                  color: const Color(0xFFFFD93D),
+                  color: const Color(0xFF333333),
                 ),
               ],
             ),
@@ -153,13 +153,13 @@ class _PymeMetricsScreenState extends State<PymeMetricsScreen> {
                     mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                     crossAxisAlignment: CrossAxisAlignment.end,
                     children: [
-                      _buildBar('Lun', 0.4, const Color(0xFF4ECDC4)),
-                      _buildBar('Mar', 0.6, const Color(0xFF4ECDC4)),
-                      _buildBar('Mié', 0.3, const Color(0xFF4ECDC4)),
-                      _buildBar('Jue', 0.8, const Color(0xFFFFD93D)),
-                      _buildBar('Vie', 0.9, const Color(0xFF4ECDC4)),
-                      _buildBar('Sáb', 0.7, const Color(0xFF4ECDC4)),
-                      _buildBar('Dom', 0.5, const Color(0xFF4ECDC4)),
+                      _buildBar('Lun', 0.4, const Color(0xFFE63946)),
+                      _buildBar('Mar', 0.6, const Color(0xFFE63946)),
+                      _buildBar('Mié', 0.3, const Color(0xFFE63946)),
+                      _buildBar('Jue', 0.8, const Color(0xFF333333)),
+                      _buildBar('Vie', 0.9, const Color(0xFFE63946)),
+                      _buildBar('Sáb', 0.7, const Color(0xFFE63946)),
+                      _buildBar('Dom', 0.5, const Color(0xFFE63946)),
                     ],
                   ),
                 ],
@@ -190,7 +190,7 @@ class _PymeMetricsScreenState extends State<PymeMetricsScreen> {
                 ),
                 _buildActivityItem(
                   icon: Icons.star_border,
-                  color: const Color(0xFFFFD93D),
+                  color: const Color(0xFF333333),
                   title: 'Nueva reseña recibida',
                   subtitle: '5 estrellas de Juan P. - Hace 2 horas',
                 ),

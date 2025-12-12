@@ -21,7 +21,7 @@ class SupporterCounter extends StatelessWidget {
           style: GoogleFonts.poppins(
             fontWeight: FontWeight.bold,
             fontSize: isSmall ? 14 : 18,
-            color: const Color(0xFFFF6B6B),
+            color: const Color(0xFF0056D2),
           ),
         ),
         const SizedBox(width: 4),
@@ -30,7 +30,7 @@ class SupporterCounter extends StatelessWidget {
           children: [
             Icon(
               Icons.favorite,
-              color: const Color(0xFFFF6B6B),
+              color: const Color(0xFF0056D2),
               size: isSmall ? 32 : 40,
             ),
             Text(

@@ -36,7 +36,7 @@ class _ClientCartScreenState extends State<ClientCartScreen> {
                 ),
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
-                  borderSide: const BorderSide(color: Color(0xFFFF6B6B)),
+                  borderSide: const BorderSide(color: Color(0xFF0056D2)),
                 ),
               ),
             ),
@@ -82,7 +82,7 @@ class _ClientCartScreenState extends State<ClientCartScreen> {
               }
             },
             style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFFFF6B6B),
+              backgroundColor: const Color(0xFF0056D2),
               shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12)),
             ),
@@ -101,7 +101,7 @@ class _ClientCartScreenState extends State<ClientCartScreen> {
     return Scaffold(
       backgroundColor: const Color(0xFFF7F9FC),
       appBar: AppBar(
-        backgroundColor: const Color(0xFFFF6B6B),
+        backgroundColor: const Color(0xFF0056D2),
         elevation: 0,
         centerTitle: true,
         title: Text(
@@ -229,7 +229,7 @@ class _ClientCartScreenState extends State<ClientCartScreen> {
                 Text(
                   '\$${item.product.price.toStringAsFixed(0)}',
                   style: GoogleFonts.poppins(
-                    color: const Color(0xFFFF6B6B),
+                    color: const Color(0xFF0056D2),
                     fontWeight: FontWeight.w600,
                     fontSize: 14,
                   ),
@@ -307,7 +307,7 @@ class _ClientCartScreenState extends State<ClientCartScreen> {
         child: Icon(
           icon,
           size: 16,
-          color: isAdd ? const Color(0xFFFF6B6B) : Colors.grey[600],
+          color: isAdd ? const Color(0xFF0056D2) : Colors.grey[600],
         ),
       ),
     );
@@ -371,7 +371,7 @@ class _ClientCartScreenState extends State<ClientCartScreen> {
                   style: GoogleFonts.poppins(
                     fontSize: 24,
                     fontWeight: FontWeight.bold,
-                    color: const Color(0xFFFF6B6B),
+                    color: const Color(0xFF0056D2),
                   ),
                 ),
               ],
@@ -405,7 +405,7 @@ class _ClientCartScreenState extends State<ClientCartScreen> {
                       showDialog(
                         context: context,
                         barrierDismissible: false,
-                        builder: (context) => const Center(child: CircularProgressIndicator(color: Color(0xFFFF6B6B))),
+                        builder: (context) => const Center(child: CircularProgressIndicator(color: Color(0xFF0056D2))),
                       );
 
                       Future.delayed(const Duration(seconds: 2), () {
@@ -425,7 +425,7 @@ class _ClientCartScreenState extends State<ClientCartScreen> {
                       });
                     },
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFFFF6B6B),
+                      backgroundColor: const Color(0xFF0056D2),
                       foregroundColor: Colors.white,
                       padding: const EdgeInsets.symmetric(vertical: 16),
                       elevation: 0,

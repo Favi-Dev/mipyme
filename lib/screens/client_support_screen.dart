@@ -19,7 +19,7 @@ class ClientSupportScreen extends StatelessWidget {
       appBar: AppBar(
         title: Text('Ayuda y Soporte', style: GoogleFonts.poppins(fontWeight: FontWeight.bold)),
         elevation: 0,
-        backgroundColor: const Color(0xFFFF6B6B),
+        backgroundColor: const Color(0xFF0056D2),
         foregroundColor: Colors.white,
       ),
       body: Padding(
@@ -27,7 +27,7 @@ class ClientSupportScreen extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            const Icon(Icons.support_agent, size: 80, color: Color(0xFFFF6B6B)),
+            const Icon(Icons.support_agent, size: 80, color: Color(0xFF0056D2)),
             const SizedBox(height: 24),
             Text(
               '¿Necesitas ayuda?',
@@ -84,7 +84,7 @@ class ClientSupportScreen extends StatelessWidget {
                 color: const Color(0xFFFFF0F0),
                 borderRadius: BorderRadius.circular(12),
               ),
-              child: Icon(icon, color: const Color(0xFFFF6B6B), size: 28),
+              child: Icon(icon, color: const Color(0xFF0056D2), size: 28),
             ),
             const SizedBox(width: 16),
             Expanded(

@@ -214,7 +214,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 child: ElevatedButton(
                   onPressed: _isLoading ? null : _register,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFFFF6B6B),
+                    backgroundColor: const Color(0xFF0056D2),
                     foregroundColor: Colors.white,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
@@ -252,10 +252,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 16),
         decoration: BoxDecoration(
-          color: isSelected ? const Color(0xFFFF6B6B) : Colors.white,
+          color: isSelected ? const Color(0xFF0056D2) : Colors.white,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
-            color: isSelected ? const Color(0xFFFF6B6B) : Colors.grey[300]!,
+            color: isSelected ? const Color(0xFF0056D2) : Colors.grey[300]!,
           ),
           boxShadow: [
             if (!isSelected)
@@ -291,14 +291,14 @@ class _RegisterScreenState extends State<RegisterScreen> {
     return InputDecoration(
       labelText: label,
       labelStyle: TextStyle(color: Colors.grey[600]),
-      prefixIcon: Icon(icon, color: const Color(0xFFFF6B6B)),
+      prefixIcon: Icon(icon, color: const Color(0xFF0056D2)),
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
         borderSide: BorderSide(color: Colors.grey[300]!),
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(color: Color(0xFFFF6B6B)),
+        borderSide: const BorderSide(color: Color(0xFF0056D2)),
       ),
       filled: true,
       fillColor: Colors.white,

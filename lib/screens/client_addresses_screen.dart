@@ -12,7 +12,7 @@ class ClientAddressesScreen extends StatelessWidget {
         title: Text('Mis Direcciones',
             style: GoogleFonts.poppins(fontWeight: FontWeight.bold)),
         elevation: 0,
-        backgroundColor: const Color(0xFFFF6B6B),
+        backgroundColor: const Color(0xFF0056D2),
         foregroundColor: Colors.white,
       ),
       body: ListView(
@@ -47,7 +47,7 @@ class ClientAddressesScreen extends StatelessWidget {
                 style: GoogleFonts.poppins(fontWeight: FontWeight.bold),
               ),
               style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFFFF6B6B),
+                backgroundColor: const Color(0xFF0056D2),
                 foregroundColor: Colors.white,
                 padding: const EdgeInsets.symmetric(vertical: 16),
                 shape: RoundedRectangleBorder(
@@ -82,7 +82,7 @@ class ClientAddressesScreen extends StatelessWidget {
           ),
         ],
         border: isDefault
-            ? Border.all(color: const Color(0xFFFF6B6B), width: 1.5)
+            ? Border.all(color: const Color(0xFF0056D2), width: 1.5)
             : null,
       ),
       child: Row(
@@ -91,13 +91,13 @@ class ClientAddressesScreen extends StatelessWidget {
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
               color: isDefault
-                  ? const Color(0xFFFF6B6B).withOpacity(0.1)
+                  ? const Color(0xFF0056D2).withOpacity(0.1)
                   : Colors.grey[100],
               shape: BoxShape.circle,
             ),
             child: Icon(
               icon,
-              color: isDefault ? const Color(0xFFFF6B6B) : Colors.grey[600],
+              color: isDefault ? const Color(0xFF0056D2) : Colors.grey[600],
             ),
           ),
           const SizedBox(width: 16),
@@ -121,7 +121,7 @@ class ClientAddressesScreen extends StatelessWidget {
                         padding: const EdgeInsets.symmetric(
                             horizontal: 8, vertical: 2),
                         decoration: BoxDecoration(
-                          color: const Color(0xFFFF6B6B),
+                          color: const Color(0xFF0056D2),
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: Text(

@@ -163,7 +163,7 @@ class _ClientMarketplaceScreenState extends State<ClientMarketplaceScreen> {
                 Text(
                   '\$${product.price.toStringAsFixed(0)}',
                   style: const TextStyle(
-                    color: Color(0xFFFF6B6B),
+                    color: Color(0xFF0056D2),
                     fontWeight: FontWeight.bold,
                   ),
                 ),

@@ -139,7 +139,7 @@ class _ClientPymeDetailScreenState extends State<ClientPymeDetailScreen> {
                                 textAlign: TextAlign.center,
                                 style: GoogleFonts.poppins(
                                   fontWeight: FontWeight.w600,
-                                  color: isMonthly ? const Color(0xFFFF6B6B) : Colors.grey[600],
+                                  color: isMonthly ? const Color(0xFF0056D2) : Colors.grey[600],
                                 ),
                               ),
                             ),
@@ -169,7 +169,7 @@ class _ClientPymeDetailScreenState extends State<ClientPymeDetailScreen> {
                         onSelected: (selected) {
                           if (selected) setState(() => selectedAmount = amount);
                         },
-                        selectedColor: const Color(0xFFFF6B6B),
+                        selectedColor: const Color(0xFF0056D2),
                         labelStyle: TextStyle(
                           color: selectedAmount == amount ? Colors.white : Colors.black87,
                           fontWeight: FontWeight.w600,
@@ -178,7 +178,7 @@ class _ClientPymeDetailScreenState extends State<ClientPymeDetailScreen> {
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(8),
                           side: BorderSide(
-                            color: selectedAmount == amount ? const Color(0xFFFF6B6B) : Colors.grey[300]!,
+                            color: selectedAmount == amount ? const Color(0xFF0056D2) : Colors.grey[300]!,
                           ),
                         ),
                       )),
@@ -207,7 +207,7 @@ class _ClientPymeDetailScreenState extends State<ClientPymeDetailScreen> {
                   LinearProgressIndicator(
                     value: VitrinaData.currentDonations / VitrinaData.donationGoal,
                     backgroundColor: Colors.grey[200],
-                    color: const Color(0xFFFF6B6B),
+                    color: const Color(0xFFFFD700), // Gold for progress
                     minHeight: 10,
                     borderRadius: BorderRadius.circular(5),
                   ),
@@ -219,7 +219,7 @@ class _ClientPymeDetailScreenState extends State<ClientPymeDetailScreen> {
                         '\$${VitrinaData.currentDonations.toStringAsFixed(0)}',
                         style: GoogleFonts.poppins(
                           fontWeight: FontWeight.bold,
-                          color: const Color(0xFFFF6B6B),
+                          color: const Color(0xFFFFD700), // Gold
                         ),
                       ),
                       Text(
@@ -272,7 +272,7 @@ class _ClientPymeDetailScreenState extends State<ClientPymeDetailScreen> {
                         );
                       },
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFFFF6B6B),
+                        backgroundColor: const Color(0xFFE63946), // Action Red for Donation
                         padding: const EdgeInsets.symmetric(vertical: 16),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12),
@@ -321,7 +321,7 @@ class _ClientPymeDetailScreenState extends State<ClientPymeDetailScreen> {
           ],
         ),
         IconButton(
-          icon: const Icon(Icons.copy, color: Color(0xFFFF6B6B)),
+          icon: const Icon(Icons.copy, color: Color(0xFF0056D2)),
           onPressed: () {
             // Clipboard logic would go here
             ScaffoldMessenger.of(context).showSnackBar(
@@ -363,7 +363,7 @@ class _ClientPymeDetailScreenState extends State<ClientPymeDetailScreen> {
                   IconButton(
                     icon: Icon(
                       _isFollowing ? Icons.favorite : Icons.favorite_border,
-                      color: _isFollowing ? const Color(0xFFFF6B6B) : Colors.white,
+                      color: _isFollowing ? const Color(0xFF0056D2) : Colors.white,
                     ),
                     onPressed: () {
                       setState(() {
@@ -376,7 +376,7 @@ class _ClientPymeDetailScreenState extends State<ClientPymeDetailScreen> {
                                 ? '¡Ahora sigues a ${VitrinaData.name}!'
                                 : 'Dejaste de seguir a ${VitrinaData.name}',
                           ),
-                          backgroundColor: _isFollowing ? const Color(0xFFFF6B6B) : Colors.grey,
+                          backgroundColor: _isFollowing ? const Color(0xFF0056D2) : Colors.grey,
                           duration: const Duration(seconds: 2),
                         ),
                       );
@@ -475,7 +475,7 @@ class _ClientPymeDetailScreenState extends State<ClientPymeDetailScreen> {
                               ),
                             ),
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: const Color(0xFFFF6B6B),
+                              backgroundColor: const Color(0xFFE63946), // Action Red for Donation
                               padding: const EdgeInsets.symmetric(vertical: 12),
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(12),
@@ -758,7 +758,7 @@ class _ClientPymeDetailScreenState extends State<ClientPymeDetailScreen> {
                 Text(
                   '\$${product.price.toStringAsFixed(0)}',
                   style: GoogleFonts.poppins(
-                    color: const Color(0xFFFF6B6B),
+                    color: const Color(0xFF0056D2),
                     fontWeight: FontWeight.bold,
                     fontSize: 14,
                   ),
@@ -795,7 +795,7 @@ class _ClientPymeDetailScreenState extends State<ClientPymeDetailScreen> {
                                   ),
                                   ElevatedButton(
                                     onPressed: () => Navigator.pop(context, true),
-                                    style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFFF6B6B)),
+                                    style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF0056D2)),
                                     child: Text('Continuar', style: GoogleFonts.poppins(color: Colors.white)),
                                   ),
                                 ],
@@ -816,7 +816,7 @@ class _ClientPymeDetailScreenState extends State<ClientPymeDetailScreen> {
                                 return Theme(
                                   data: Theme.of(context).copyWith(
                                     colorScheme: const ColorScheme.light(
-                                      primary: Color(0xFFFF6B6B),
+                                      primary: Color(0xFF0056D2),
                                     ),
                                   ),
                                   child: child!,
@@ -833,7 +833,7 @@ class _ClientPymeDetailScreenState extends State<ClientPymeDetailScreen> {
                                 return Theme(
                                   data: Theme.of(context).copyWith(
                                     colorScheme: const ColorScheme.light(
-                                      primary: Color(0xFFFF6B6B),
+                                      primary: Color(0xFF0056D2),
                                     ),
                                   ),
                                   child: child!,
@@ -855,7 +855,7 @@ class _ClientPymeDetailScreenState extends State<ClientPymeDetailScreen> {
                                 SnackBar(
                                   content: Text('Reserva agendada para el ${scheduledTime.day}/${scheduledTime.month} a las ${scheduledTime.hour}:${scheduledTime.minute.toString().padLeft(2, '0')}'),
                                   duration: const Duration(seconds: 2),
-                                  backgroundColor: const Color(0xFF4ECDC4),
+                                  backgroundColor: const Color(0xFFE63946),
                                 ),
                               );
                             }
@@ -866,7 +866,7 @@ class _ClientPymeDetailScreenState extends State<ClientPymeDetailScreen> {
                             const SnackBar(
                               content: Text('Agregado al carrito'),
                               duration: Duration(seconds: 1),
-                              backgroundColor: Color(0xFF4ECDC4),
+                              backgroundColor: Color(0xFFE63946),
                             ),
                           );
                         }
@@ -883,7 +883,7 @@ class _ClientPymeDetailScreenState extends State<ClientPymeDetailScreen> {
                       }
                     },
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: product.isService ? const Color(0xFFFF6B6B) : const Color(0xFF4ECDC4),
+                      backgroundColor: product.isService ? const Color(0xFF0056D2) : const Color(0xFFE63946),
                       foregroundColor: Colors.white,
                       padding: EdgeInsets.zero,
                       shape: RoundedRectangleBorder(

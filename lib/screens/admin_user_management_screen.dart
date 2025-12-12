@@ -42,7 +42,7 @@ class AdminUserManagementScreen extends StatelessWidget {
                 ),
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
-                  borderSide: const BorderSide(color: Color(0xFFFF6B6B)),
+                  borderSide: const BorderSide(color: Color(0xFF0056D2)),
                 ),
               ),
             ),
@@ -76,7 +76,7 @@ class AdminUserManagementScreen extends StatelessWidget {
       ),
       child: ListTile(
         leading: CircleAvatar(
-          backgroundColor: const Color(0xFF4ECDC4),
+          backgroundColor: const Color(0xFFE63946),
           child: Text(
             'U${index + 1}',
             style: const TextStyle(color: Colors.white),

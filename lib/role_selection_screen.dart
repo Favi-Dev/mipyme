@@ -18,7 +18,7 @@ class RoleSelectionScreen extends StatelessWidget {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-              const Icon(Icons.coffee, size: 80, color: Color(0xFFFF6B6B)),
+              const Icon(Icons.coffee, size: 80, color: Color(0xFF0056D2)),
               const SizedBox(height: 24),
               const Text(
                 'SoyPlus',
@@ -39,7 +39,7 @@ class RoleSelectionScreen extends StatelessWidget {
                 'Cliente',
                 'Busco ofertas y pymes',
                 Icons.person,
-                const Color(0xFFFF6B6B),
+                const Color(0xFF0056D2),
                 const ClientAppShell(),
               ),
               const SizedBox(height: 16),
@@ -48,7 +48,7 @@ class RoleSelectionScreen extends StatelessWidget {
                 'Pyme',
                 'Gestiono mi negocio',
                 Icons.storefront,
-                const Color(0xFF4ECDC4),
+                const Color(0xFFE63946),
                 const PymeAppShell(),
                 onTap: () {
                   VitrinaData.setCategory('Comercio/retail');
@@ -60,7 +60,7 @@ class RoleSelectionScreen extends StatelessWidget {
                 'Fundación',
                 'Gestiono mi fundación',
                 Icons.volunteer_activism,
-                const Color(0xFF6C5CE7),
+                const Color(0xFFFFD700),
                 const PymeAppShell(),
                 onTap: () {
                   VitrinaData.setCategory('Educación y cultura');
@@ -72,7 +72,7 @@ class RoleSelectionScreen extends StatelessWidget {
                 'Administrador',
                 'Gestión de plataforma',
                 Icons.admin_panel_settings,
-                const Color(0xFFFFD93D),
+                const Color(0xFF333333),
                 const AdminAppShell(),
               ),
             ],

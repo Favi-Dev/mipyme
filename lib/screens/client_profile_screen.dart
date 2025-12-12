@@ -29,7 +29,7 @@ class ClientProfileScreen extends StatelessWidget {
                     height: 100,
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
-                      border: Border.all(color: const Color(0xFFFF6B6B), width: 3),
+                      border: Border.all(color: const Color(0xFF0056D2), width: 3),
                       image: const DecorationImage(
                         image: NetworkImage('https://i.pravatar.cc/300'),
                         fit: BoxFit.cover,
@@ -49,7 +49,7 @@ class ClientProfileScreen extends StatelessWidget {
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFFF6B6B),
+                      color: const Color(0xFF0056D2),
                       borderRadius: BorderRadius.circular(20),
                     ),
                     child: Text(

@@ -11,7 +11,7 @@ class ClientHomeScreen extends StatelessWidget {
     return Scaffold(
       backgroundColor: const Color(0xFFF7F9FC),
       appBar: AppBar(
-        backgroundColor: const Color(0xFFFF6B6B),
+        backgroundColor: const Color(0xFF0056D2),
         elevation: 0,
         toolbarHeight: 70,
         title: Row(
@@ -93,7 +93,7 @@ class ClientHomeScreen extends StatelessWidget {
                         hintText: '¿Qué buscas hoy?',
                         hintStyle: TextStyle(color: Colors.grey[400]),
                         prefixIcon:
-                            const Icon(Icons.search, color: Color(0xFFFF6B6B)),
+                            const Icon(Icons.search, color: Color(0xFF0056D2)),
                         border: InputBorder.none,
                         contentPadding: const EdgeInsets.symmetric(
                             horizontal: 20, vertical: 15),
@@ -104,11 +104,11 @@ class ClientHomeScreen extends StatelessWidget {
                 const SizedBox(width: 12),
                 Container(
                   decoration: BoxDecoration(
-                    color: const Color(0xFFFF6B6B),
+                    color: const Color(0xFF0056D2),
                     borderRadius: BorderRadius.circular(16),
                     boxShadow: [
                       BoxShadow(
-                        color: const Color(0xFFFF6B6B).withOpacity(0.3),
+                        color: const Color(0xFF0056D2).withOpacity(0.3),
                         blurRadius: 8,
                         offset: const Offset(0, 4),
                       ),
@@ -151,7 +151,7 @@ class ClientHomeScreen extends StatelessWidget {
                     'Farmayuda',
                     'Descuentos en Recetas',
                     'Salud',
-                    const Color(0xFF4ECDC4),
+                    const Color(0xFFE63946),
                     Icons.medical_services,
                     'assets/images/logo farmayuda.jpg',
                   ),
@@ -161,7 +161,7 @@ class ClientHomeScreen extends StatelessWidget {
                     'Fundación Los Robles',
                     'Campaña de Reciclaje',
                     'Fundación',
-                    const Color(0xFFFF6B6B),
+                    const Color(0xFF0056D2),
                     Icons.volunteer_activism,
                     'assets/images/Logo los robles.jpg',
                   ),
@@ -286,12 +286,12 @@ class ClientHomeScreen extends StatelessWidget {
                     width: 60,
                     height: 60,
                     decoration: BoxDecoration(
-                      color: isSelected ? const Color(0xFFFF6B6B) : Colors.white,
+                      color: isSelected ? const Color(0xFF0056D2) : Colors.white,
                       borderRadius: BorderRadius.circular(18),
                       boxShadow: [
                         BoxShadow(
                           color: isSelected
-                              ? const Color(0xFFFF6B6B).withOpacity(0.3)
+                              ? const Color(0xFF0056D2).withOpacity(0.3)
                               : Colors.black.withOpacity(0.05),
                           blurRadius: 10,
                           offset: const Offset(0, 4),
@@ -313,7 +313,7 @@ class ClientHomeScreen extends StatelessWidget {
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(
-                      color: isSelected ? const Color(0xFFFF6B6B) : Colors.grey[600],
+                      color: isSelected ? const Color(0xFF0056D2) : Colors.grey[600],
                       fontSize: 11,
                       fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
                       height: 1.1,
@@ -353,7 +353,7 @@ class ClientHomeScreen extends StatelessWidget {
             child: const Text(
               'Ver todo',
               style: TextStyle(
-                color: Color(0xFFFF6B6B),
+                color: Color(0xFF0056D2),
                 fontSize: 14,
                 fontWeight: FontWeight.w600,
               ),
@@ -543,7 +543,7 @@ class ClientHomeScreen extends StatelessWidget {
                     ),
                     child: const Icon(
                       Icons.favorite_border,
-                      color: Color(0xFFFF6B6B),
+                      color: Color(0xFF0056D2),
                       size: 20,
                     ),
                   ),
@@ -597,13 +597,13 @@ class ClientHomeScreen extends StatelessWidget {
                         padding: const EdgeInsets.symmetric(
                             horizontal: 8, vertical: 4),
                         decoration: BoxDecoration(
-                          color: const Color(0xFFFFD93D).withOpacity(0.2),
+                          color: const Color(0xFF333333).withOpacity(0.2),
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: Row(
                           children: [
                             const Icon(Icons.star,
-                                color: Color(0xFFFFD93D), size: 14),
+                                color: Color(0xFF333333), size: 14),
                             const SizedBox(width: 4),
                             Text(
                               pyme['rating'],
@@ -651,7 +651,7 @@ class ClientHomeScreen extends StatelessWidget {
                             padding: const EdgeInsets.only(right: 8),
                             child: _buildTag(tag),
                           )),
-                      _buildTag('S+ Partner', color: const Color(0xFFFF6B6B)),
+                      _buildTag('S+ Partner', color: const Color(0xFF0056D2)),
                     ],
                   ),
                 ],

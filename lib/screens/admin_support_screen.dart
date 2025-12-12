@@ -22,7 +22,7 @@ class AdminSupportScreen extends StatelessWidget {
         iconTheme: const IconThemeData(color: Colors.black87),
         actions: [
           IconButton(
-            icon: const Icon(Icons.logout, color: Color(0xFFFF6B6B)),
+            icon: const Icon(Icons.logout, color: Color(0xFF0056D2)),
             onPressed: () {
                Navigator.of(context).pushAndRemoveUntil(
                   MaterialPageRoute(builder: (context) => const LoginScreen()),
@@ -50,7 +50,7 @@ class AdminSupportScreen extends StatelessWidget {
               ],
               border: Border(
                 left: BorderSide(
-                  color: index % 3 == 0 ? const Color(0xFFFF6B6B) : (index % 3 == 1 ? const Color(0xFFFFD93D) : const Color(0xFF4ECDC4)),
+                  color: index % 3 == 0 ? const Color(0xFF0056D2) : (index % 3 == 1 ? const Color(0xFF333333) : const Color(0xFFE63946)),
                   width: 4,
                 ),
               ),
@@ -67,7 +67,7 @@ class AdminSupportScreen extends StatelessWidget {
               trailing: Text(
                 index % 3 == 0 ? 'Alta' : (index % 3 == 1 ? 'Media' : 'Baja'),
                 style: GoogleFonts.poppins(
-                  color: index % 3 == 0 ? const Color(0xFFFF6B6B) : (index % 3 == 1 ? Colors.orange : const Color(0xFF4ECDC4)),
+                  color: index % 3 == 0 ? const Color(0xFF0056D2) : (index % 3 == 1 ? Colors.orange : const Color(0xFFE63946)),
                   fontWeight: FontWeight.bold,
                 ),
               ),

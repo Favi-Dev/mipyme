@@ -59,7 +59,7 @@ class ClientQrScreen extends StatelessWidget {
                     style: GoogleFonts.poppins(
                       fontSize: 40,
                       fontWeight: FontWeight.bold,
-                      color: ClientData.isMonthlyCouponRedeemed ? Colors.grey : const Color(0xFFFF6B6B),
+                      color: ClientData.isMonthlyCouponRedeemed ? Colors.grey : const Color(0xFF0056D2),
                     ),
                   ),
                   const SizedBox(height: 20),
@@ -83,7 +83,7 @@ class ClientQrScreen extends StatelessWidget {
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
                           decoration: BoxDecoration(
-                            color: const Color(0xFFFF6B6B).withOpacity(0.9),
+                            color: const Color(0xFF0056D2).withOpacity(0.9),
                             borderRadius: BorderRadius.circular(8),
                             border: Border.all(color: Colors.white, width: 2),
                           ),
@@ -130,19 +130,19 @@ class ClientQrScreen extends StatelessWidget {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
               decoration: BoxDecoration(
-                color: const Color(0xFFFF6B6B).withOpacity(0.1),
+                color: const Color(0xFF0056D2).withOpacity(0.1),
                 borderRadius: BorderRadius.circular(30),
-                border: Border.all(color: const Color(0xFFFF6B6B)),
+                border: Border.all(color: const Color(0xFF0056D2)),
               ),
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const Icon(Icons.calendar_today, color: Color(0xFFFF6B6B)),
+                  const Icon(Icons.calendar_today, color: Color(0xFF0056D2)),
                   const SizedBox(width: 10),
                   Text(
                     'Válido hasta 30 Nov',
                     style: GoogleFonts.poppins(
-                      color: const Color(0xFFFF6B6B),
+                      color: const Color(0xFF0056D2),
                       fontWeight: FontWeight.bold,
                     ),
                   ),

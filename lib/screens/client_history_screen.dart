@@ -11,7 +11,7 @@ class ClientHistoryScreen extends StatelessWidget {
       appBar: AppBar(
         title: Text('Historial de Compras', style: GoogleFonts.poppins(fontWeight: FontWeight.bold)),
         elevation: 0,
-        backgroundColor: const Color(0xFFFF6B6B),
+        backgroundColor: const Color(0xFF0056D2),
         foregroundColor: Colors.white,
       ),
       body: ListView(
@@ -66,7 +66,7 @@ class ClientHistoryScreen extends StatelessWidget {
               color: const Color(0xFFF7F9FC),
               borderRadius: BorderRadius.circular(12),
             ),
-            child: const Icon(Icons.shopping_bag_outlined, color: Color(0xFFFF6B6B)),
+            child: const Icon(Icons.shopping_bag_outlined, color: Color(0xFF0056D2)),
           ),
           const SizedBox(width: 16),
           Expanded(
@@ -93,7 +93,7 @@ class ClientHistoryScreen extends StatelessWidget {
             children: [
               Text(
                 '\$${price.toString()}',
-                style: GoogleFonts.poppins(fontWeight: FontWeight.bold, fontSize: 16, color: const Color(0xFFFF6B6B)),
+                style: GoogleFonts.poppins(fontWeight: FontWeight.bold, fontSize: 16, color: const Color(0xFF0056D2)),
               ),
               const SizedBox(height: 4),
               Container(

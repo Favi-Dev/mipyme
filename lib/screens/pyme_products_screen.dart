@@ -76,14 +76,14 @@ class _PymeProductsScreenState extends State<PymeProductsScreen> {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   ListTile(
-                    leading: const Icon(Icons.inventory_2, color: Color(0xFFFF6B6B)),
+                    leading: const Icon(Icons.inventory_2, color: Color(0xFF0056D2)),
                     title: Text('Producto', style: GoogleFonts.poppins(fontWeight: FontWeight.w600)),
                     subtitle: Text('Artículo físico con stock', style: GoogleFonts.poppins(fontSize: 12)),
                     onTap: () => Navigator.pop(context, false),
                   ),
                   const Divider(),
                   ListTile(
-                    leading: const Icon(Icons.calendar_today, color: Color(0xFFFF6B6B)),
+                    leading: const Icon(Icons.calendar_today, color: Color(0xFF0056D2)),
                     title: Text('Servicio', style: GoogleFonts.poppins(fontWeight: FontWeight.w600)),
                     subtitle: Text('Actividad con reserva de hora', style: GoogleFonts.poppins(fontSize: 12)),
                     onTap: () => Navigator.pop(context, true),
@@ -102,7 +102,7 @@ class _PymeProductsScreenState extends State<PymeProductsScreen> {
             _loadProducts();
           }
         },
-        backgroundColor: const Color(0xFFFF6B6B),
+        backgroundColor: const Color(0xFF0056D2),
         icon: const Icon(Icons.add, color: Colors.white),
         label: Text(
           'Nuevo Item',
@@ -219,7 +219,7 @@ class _PymeProductsScreenState extends State<PymeProductsScreen> {
                           Text(
                             '\$${product.price.toStringAsFixed(0)}',
                             style: GoogleFonts.poppins(
-                              color: const Color(0xFFFF6B6B),
+                              color: const Color(0xFF0056D2),
                               fontSize: 18,
                               fontWeight: FontWeight.bold,
                             ),

@@ -81,7 +81,7 @@ class _PymeVitrinaSettingsScreenState extends State<PymeVitrinaSettingsScreen> {
             child: Text(
               'Guardar',
               style: GoogleFonts.poppins(
-                color: const Color(0xFFFF6B6B),
+                color: const Color(0xFF0056D2),
                 fontWeight: FontWeight.bold,
               ),
             ),
@@ -150,7 +150,7 @@ class _PymeVitrinaSettingsScreenState extends State<PymeVitrinaSettingsScreen> {
       child: Text(
         title,
         style: GoogleFonts.poppins(
-          color: const Color(0xFFFF6B6B),
+          color: const Color(0xFF0056D2),
           fontSize: 18,
           fontWeight: FontWeight.bold,
         ),
@@ -176,7 +176,7 @@ class _PymeVitrinaSettingsScreenState extends State<PymeVitrinaSettingsScreen> {
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: Color(0xFFFF6B6B)),
+          borderSide: const BorderSide(color: Color(0xFF0056D2)),
         ),
       ),
     );

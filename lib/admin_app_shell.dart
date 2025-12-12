@@ -35,7 +35,7 @@ class _AdminAppShellState extends State<AdminAppShell> {
       bottomNavigationBar: BottomNavigationBar(
         type: BottomNavigationBarType.fixed,
         backgroundColor: Colors.white,
-        selectedItemColor: const Color(0xFFFF6B6B),
+        selectedItemColor: const Color(0xFF0056D2),
         unselectedItemColor: Colors.grey,
         currentIndex: _selectedIndex,
         onTap: _onItemTapped,

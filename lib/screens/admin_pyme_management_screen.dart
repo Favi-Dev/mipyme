@@ -22,8 +22,8 @@ class AdminPymeManagementScreen extends StatelessWidget {
           ),
           iconTheme: const IconThemeData(color: Colors.black87),
           bottom: const TabBar(
-            indicatorColor: Color(0xFFFF6B6B),
-            labelColor: Color(0xFFFF6B6B),
+            indicatorColor: Color(0xFF0056D2),
+            labelColor: Color(0xFF0056D2),
             unselectedLabelColor: Colors.grey,
             tabs: [
               Tab(text: 'Activas'),
@@ -87,16 +87,16 @@ class AdminPymeManagementScreen extends StatelessWidget {
           style: GoogleFonts.poppins(color: Colors.grey[600], fontSize: 12),
         ),
         trailing: active
-            ? const Icon(Icons.check_circle, color: Color(0xFF4ECDC4))
+            ? const Icon(Icons.check_circle, color: Color(0xFFE63946))
             : Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   IconButton(
-                    icon: const Icon(Icons.check, color: Color(0xFF4ECDC4)),
+                    icon: const Icon(Icons.check, color: Color(0xFFE63946)),
                     onPressed: () {},
                   ),
                   IconButton(
-                    icon: const Icon(Icons.close, color: Color(0xFFFF6B6B)),
+                    icon: const Icon(Icons.close, color: Color(0xFF0056D2)),
                     onPressed: () {},
                   ),
                 ],

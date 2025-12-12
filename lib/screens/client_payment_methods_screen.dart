@@ -94,7 +94,7 @@ class _ClientPaymentMethodsScreenState extends State<ClientPaymentMethodsScreen>
                   );
                 },
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFFFF6B6B),
+                  backgroundColor: const Color(0xFF0056D2),
                   foregroundColor: Colors.white,
                   padding: const EdgeInsets.symmetric(vertical: 16),
                 ),
@@ -113,7 +113,7 @@ class _ClientPaymentMethodsScreenState extends State<ClientPaymentMethodsScreen>
     return Scaffold(
       appBar: AppBar(
         title: const Text('Métodos de Pago'),
-        backgroundColor: const Color(0xFFFF6B6B),
+        backgroundColor: const Color(0xFF0056D2),
         foregroundColor: Colors.white,
       ),
       body: ListView(
@@ -132,8 +132,8 @@ class _ClientPaymentMethodsScreenState extends State<ClientPaymentMethodsScreen>
             label: const Text('Agregar Método de Pago'),
             style: OutlinedButton.styleFrom(
               padding: const EdgeInsets.symmetric(vertical: 16),
-              side: const BorderSide(color: Color(0xFFFF6B6B)),
-              foregroundColor: const Color(0xFFFF6B6B),
+              side: const BorderSide(color: Color(0xFF0056D2)),
+              foregroundColor: const Color(0xFF0056D2),
             ),
           ),
         ],
@@ -149,7 +149,7 @@ class _ClientPaymentMethodsScreenState extends State<ClientPaymentMethodsScreen>
       child: ListTile(
         leading: Icon(
           Icons.credit_card,
-          color: method['isDefault'] ? const Color(0xFFFF6B6B) : Colors.grey,
+          color: method['isDefault'] ? const Color(0xFF0056D2) : Colors.grey,
           size: 32,
         ),
         title: Text(method['type']),
@@ -157,7 +157,7 @@ class _ClientPaymentMethodsScreenState extends State<ClientPaymentMethodsScreen>
         trailing: method['isDefault']
             ? const Chip(
                 label: Text('Principal', style: TextStyle(color: Colors.white, fontSize: 10)),
-                backgroundColor: Color(0xFF4ECDC4),
+                backgroundColor: Color(0xFFE63946),
               )
             : PopupMenuButton(
                 itemBuilder: (context) => [

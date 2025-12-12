@@ -39,7 +39,7 @@ class _ClientAppShellState extends State<ClientAppShell> {
       bottomNavigationBar: BottomNavigationBar(
         type: BottomNavigationBarType.fixed,
         backgroundColor: Colors.white, // Light background for nav
-        selectedItemColor: const Color(0xFFFF6B6B), // Playful Red
+        selectedItemColor: const Color(0xFF0056D2), // Playful Red
         unselectedItemColor: Colors.grey,
         currentIndex: _selectedIndex,
         onTap: _onItemTapped,

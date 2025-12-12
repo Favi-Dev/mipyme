@@ -69,7 +69,7 @@ class _LoginScreenState extends State<LoginScreen> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Icon(Icons.coffee, size: 80, color: Color(0xFFFF6B6B)),
+              const Icon(Icons.coffee, size: 80, color: Color(0xFF0056D2)),
               const SizedBox(height: 24),
               RichText(
                 text: TextSpan(
@@ -84,7 +84,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                     const TextSpan(
                       text: 'Plus',
-                      style: TextStyle(color: Color(0xFFFF6B6B)),
+                      style: TextStyle(color: Color(0xFF0056D2)),
                     ),
                   ],
                 ),
@@ -104,14 +104,14 @@ class _LoginScreenState extends State<LoginScreen> {
                 decoration: InputDecoration(
                   labelText: 'Correo Electrónico',
                   labelStyle: TextStyle(color: Colors.grey[600]),
-                  prefixIcon: const Icon(Icons.email, color: Color(0xFFFF6B6B)),
+                  prefixIcon: const Icon(Icons.email, color: Color(0xFF0056D2)),
                   enabledBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
                     borderSide: BorderSide(color: Colors.grey[300]!),
                   ),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
-                    borderSide: const BorderSide(color: Color(0xFFFF6B6B)),
+                    borderSide: const BorderSide(color: Color(0xFF0056D2)),
                   ),
                   filled: true,
                   fillColor: Colors.white,
@@ -125,7 +125,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 decoration: InputDecoration(
                   labelText: 'Contraseña',
                   labelStyle: TextStyle(color: Colors.grey[600]),
-                  prefixIcon: const Icon(Icons.lock, color: Color(0xFFFF6B6B)),
+                  prefixIcon: const Icon(Icons.lock, color: Color(0xFF0056D2)),
                   suffixIcon: IconButton(
                     icon: Icon(
                       _obscurePassword ? Icons.visibility : Icons.visibility_off,
@@ -143,7 +143,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
-                    borderSide: const BorderSide(color: Color(0xFFFF6B6B)),
+                    borderSide: const BorderSide(color: Color(0xFF0056D2)),
                   ),
                   filled: true,
                   fillColor: Colors.white,
@@ -156,7 +156,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 child: ElevatedButton(
                   onPressed: _isLoading ? null : _login,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFFFF6B6B),
+                    backgroundColor: const Color(0xFF0056D2),
                     foregroundColor: Colors.white,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
@@ -199,7 +199,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     child: Text(
                       'Regístrate',
                       style: GoogleFonts.poppins(
-                        color: const Color(0xFFFF6B6B),
+                        color: const Color(0xFF0056D2),
                         fontWeight: FontWeight.bold,
                       ),
                     ),

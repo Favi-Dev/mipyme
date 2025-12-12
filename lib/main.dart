@@ -21,21 +21,22 @@ class MyApp extends StatelessWidget {
         title: 'SoyPlus',
         theme: ThemeData(
           colorScheme: ColorScheme.fromSeed(
-            seedColor: const Color(0xFFFF6B6B), // Playful Coral/Red
-            secondary: const Color(0xFF4ECDC4), // Playful Teal
-            tertiary: const Color(0xFFFFD93D), // Playful Yellow
-            background: const Color(0xFFF7F9FC), // Light background
+            seedColor: const Color(0xFF0056D2), // Hero Blue
+            primary: const Color(0xFF0056D2),
+            secondary: const Color(0xFFE63946), // Action Red
+            tertiary: const Color(0xFFFFD700), // Golden
+            background: const Color(0xFFF0F4F8), // Cool background
             surface: Colors.white,
           ),
           useMaterial3: true,
-          scaffoldBackgroundColor: const Color(0xFFF7F9FC),
+          scaffoldBackgroundColor: const Color(0xFFF0F4F8),
           appBarTheme: const AppBarTheme(
-            backgroundColor: Color(0xFFFF6B6B),
+            backgroundColor: Color(0xFF0056D2),
             foregroundColor: Colors.white,
           ),
           elevatedButtonTheme: ElevatedButtonThemeData(
             style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFFFF6B6B),
+              backgroundColor: const Color(0xFF0056D2),
               foregroundColor: Colors.white,
             ),
           ),

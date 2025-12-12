@@ -65,7 +65,7 @@ class _PymeProfileVitrinaScreenState extends State<PymeProfileVitrinaScreen> {
           padding: EdgeInsets.zero,
           children: [
             const DrawerHeader(
-              decoration: BoxDecoration(color: Color(0xFFFF6B6B)),
+              decoration: BoxDecoration(color: Color(0xFF0056D2)),
               child: Text('Cambiar Categoría (Demo)', style: TextStyle(color: Colors.white, fontSize: 24)),
             ),
             _buildCategoryTile('Comercio/retail'),
@@ -89,7 +89,7 @@ class _PymeProfileVitrinaScreenState extends State<PymeProfileVitrinaScreen> {
                 floating: false,
                 elevation: 0,
                 scrolledUnderElevation: 0,
-                backgroundColor: const Color(0xFFFF6B6B),
+                backgroundColor: const Color(0xFF0056D2),
                 actions: [
                   IconButton(
                     icon: const Icon(Icons.settings, color: Colors.white),
@@ -443,7 +443,7 @@ class _PymeProfileVitrinaScreenState extends State<PymeProfileVitrinaScreen> {
                 Text(
                   '\$${product.price.toStringAsFixed(0)}',
                   style: const TextStyle(
-                    color: Color(0xFFFF6B6B),
+                    color: Color(0xFF0056D2),
                     fontWeight: FontWeight.bold,
                     fontSize: 14,
                   ),

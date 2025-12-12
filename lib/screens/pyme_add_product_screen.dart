@@ -134,7 +134,7 @@ class _PymeAddProductScreenState extends State<PymeAddProductScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Producto agregado a $_currentCategory exitosamente', style: GoogleFonts.poppins()),
-          backgroundColor: const Color(0xFFFF6B6B),
+          backgroundColor: const Color(0xFF0056D2),
         ),
       );
     }
@@ -146,7 +146,7 @@ class _PymeAddProductScreenState extends State<PymeAddProductScreen> {
       backgroundColor: const Color(0xFFF7F9FC),
       appBar: AppBar(
         title: Text('Agregar $_currentCategory', style: GoogleFonts.poppins(fontWeight: FontWeight.bold, color: Colors.white)),
-        backgroundColor: const Color(0xFFFF6B6B),
+        backgroundColor: const Color(0xFF0056D2),
         iconTheme: const IconThemeData(color: Colors.white),
         elevation: 0,
       ),
@@ -197,7 +197,7 @@ class _PymeAddProductScreenState extends State<PymeAddProductScreen> {
                 child: ElevatedButton(
                   onPressed: _saveProduct,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFFFF6B6B),
+                    backgroundColor: const Color(0xFF0056D2),
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                     elevation: 4,
                   ),
@@ -251,10 +251,10 @@ class _PymeAddProductScreenState extends State<PymeAddProductScreen> {
       decoration: InputDecoration(
         labelText: label,
         labelStyle: GoogleFonts.poppins(color: Colors.grey[600]),
-        prefixIcon: Icon(icon, color: const Color(0xFFFF6B6B)),
+        prefixIcon: Icon(icon, color: const Color(0xFF0056D2)),
         border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: Colors.grey[200]!)),
         enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: Colors.grey[200]!)),
-        focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFFFF6B6B))),
+        focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFF0056D2))),
         filled: true,
         fillColor: Colors.grey[50],
       ),
@@ -320,7 +320,7 @@ class _PymeAddProductScreenState extends State<PymeAddProductScreen> {
               title: Text('¿Es un Operativo / Evento Único?', style: GoogleFonts.poppins()),
               subtitle: Text('Activa esto si es una fecha específica', style: GoogleFonts.poppins(fontSize: 12)),
               value: _dynamicControllers['is_event']?.text == 'true',
-              activeColor: const Color(0xFFFF6B6B),
+              activeColor: const Color(0xFF0056D2),
               onChanged: (val) {
                 setState(() {
                   _dynamicControllers['is_event']?.text = val.toString();

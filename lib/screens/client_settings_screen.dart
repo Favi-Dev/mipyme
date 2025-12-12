@@ -20,7 +20,7 @@ class _ClientSettingsScreenState extends State<ClientSettingsScreen> {
       appBar: AppBar(
         title: Text('Configuración', style: GoogleFonts.poppins(fontWeight: FontWeight.bold)),
         elevation: 0,
-        backgroundColor: const Color(0xFFFF6B6B),
+        backgroundColor: const Color(0xFF0056D2),
         foregroundColor: Colors.white,
       ),
       body: ListView(
@@ -86,7 +86,7 @@ class _ClientSettingsScreenState extends State<ClientSettingsScreen> {
         subtitle: Text(subtitle, style: GoogleFonts.poppins(fontSize: 12, color: Colors.grey)),
         value: value,
         onChanged: onChanged,
-        activeColor: const Color(0xFFFF6B6B),
+        activeColor: const Color(0xFF0056D2),
       ),
     );
   }
@@ -100,7 +100,7 @@ class _ClientSettingsScreenState extends State<ClientSettingsScreen> {
         boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 5)],
       ),
       child: ListTile(
-        leading: Icon(icon, color: const Color(0xFFFF6B6B)),
+        leading: Icon(icon, color: const Color(0xFF0056D2)),
         title: Text(title, style: GoogleFonts.poppins(fontWeight: FontWeight.w600)),
         trailing: const Icon(Icons.arrow_forward_ios, size: 16, color: Colors.grey),
         onTap: onTap,
