@@ -31,10 +31,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
       return;
     }
 
-    if (_selectedRole == UserRole.pyme) {
+    if (_selectedRole == UserRole.pyme || _selectedRole == UserRole.foundation) {
       if (_companyNameController.text.isEmpty) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Por favor ingrese el Nombre de la Empresa')),
+          SnackBar(content: Text(_selectedRole == UserRole.foundation ? 'Por favor ingrese el Nombre de la Fundación' : 'Por favor ingrese el Nombre de la Empresa')),
         );
         return;
       }
@@ -44,7 +44,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
         );
         return;
       }
-      if (_selectedCategory == null) {
+      if (_selectedRole == UserRole.pyme && _selectedCategory == null) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Por favor seleccione una categoría')),
         );
@@ -83,13 +83,13 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Scaffold(
-      backgroundColor: const Color(0xFFF7F9FC),
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.black87),
+          icon: Icon(Icons.arrow_back, color: theme.colorScheme.onSurface),
           onPressed: () => Navigator.pop(context),
         ),
       ),
@@ -101,19 +101,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
             children: [
               Text(
                 'Crear Cuenta',
-                style: GoogleFonts.poppins(
-                  color: Colors.black87,
-                  fontSize: 32,
-                  fontWeight: FontWeight.bold,
-                ),
+                style: theme.textTheme.headlineMedium,
               ),
               const SizedBox(height: 8),
               Text(
                 'Únete a la comunidad SoyPlus',
-                style: GoogleFonts.poppins(
-                  color: Colors.grey[600],
-                  fontSize: 16,
-                ),
+                style: theme.textTheme.bodyMedium,
               ),
               const SizedBox(height: 32),
               // Role Selection
@@ -126,7 +119,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       UserRole.client,
                     ),
                   ),
-                  const SizedBox(width: 16),
+                  const SizedBox(width: 8),
                   Expanded(
                     child: _buildRoleOption(
                       'Pyme',
@@ -134,63 +127,67 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       UserRole.pyme,
                     ),
                   ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: _buildRoleOption(
+                      'Fundación',
+                      Icons.volunteer_activism,
+                      UserRole.foundation,
+                    ),
+                  ),
                 ],
               ),
               const SizedBox(height: 24),
               TextField(
                 controller: _nameController,
-                style: const TextStyle(color: Colors.black87),
                 decoration: _inputDecoration(
-                  _selectedRole == UserRole.pyme ? 'Nombre del Representante' : 'Nombre Completo',
+                  (_selectedRole == UserRole.pyme || _selectedRole == UserRole.foundation) ? 'Nombre del Representante' : 'Nombre Completo',
                   Icons.person_outline,
                 ),
               ),
-              if (_selectedRole == UserRole.pyme) ...[
+              if (_selectedRole == UserRole.pyme || _selectedRole == UserRole.foundation) ...[
                 const SizedBox(height: 16),
                 TextField(
                   controller: _companyNameController,
-                  style: const TextStyle(color: Colors.black87),
-                  decoration: _inputDecoration('Nombre de la Empresa', Icons.store),
+                  decoration: _inputDecoration(_selectedRole == UserRole.foundation ? 'Nombre de la Fundación' : 'Nombre de la Empresa', Icons.store),
                 ),
                 const SizedBox(height: 16),
                 TextField(
                   controller: _businessNameController,
-                  style: const TextStyle(color: Colors.black87),
                   decoration: _inputDecoration('Razón Social', Icons.business),
                 ),
-                const SizedBox(height: 16),
-                DropdownButtonFormField<String>(
-                  value: _selectedCategory,
-                  decoration: _inputDecoration('Categoría', Icons.category),
-                  items: ProductService.categories.map((String category) {
-                    return DropdownMenuItem<String>(
-                      value: category,
-                      child: Text(category),
-                    );
-                  }).toList(),
-                  onChanged: (String? newValue) {
-                    setState(() {
-                      _selectedCategory = newValue;
-                    });
-                  },
-                ),
+                if (_selectedRole == UserRole.pyme) ...[
+                  const SizedBox(height: 16),
+                  DropdownButtonFormField<String>(
+                    value: _selectedCategory,
+                    decoration: _inputDecoration('Categoría', Icons.category),
+                    items: ProductService.categories.map((String category) {
+                      return DropdownMenuItem<String>(
+                        value: category,
+                        child: Text(category),
+                      );
+                    }).toList(),
+                    onChanged: (String? newValue) {
+                      setState(() {
+                        _selectedCategory = newValue;
+                      });
+                    },
+                  ),
+                ],
               ],
               const SizedBox(height: 16),
               TextField(
                 controller: _emailController,
-                style: const TextStyle(color: Colors.black87),
                 decoration: _inputDecoration('Correo Electrónico', Icons.email_outlined),
               ),
               const SizedBox(height: 16),
               TextField(
                 controller: _passwordController,
                 obscureText: _obscurePassword,
-                style: const TextStyle(color: Colors.black87),
                 decoration: _inputDecoration('Contraseña', Icons.lock_outline).copyWith(
                   suffixIcon: IconButton(
                     icon: Icon(
                       _obscurePassword ? Icons.visibility : Icons.visibility_off,
-                      color: Colors.grey[500],
                     ),
                     onPressed: () {
                       setState(() {
@@ -204,7 +201,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
               TextField(
                 controller: _confirmPasswordController,
                 obscureText: _obscurePassword,
-                style: const TextStyle(color: Colors.black87),
                 decoration: _inputDecoration('Confirmar Contraseña', Icons.lock_outline),
               ),
               const SizedBox(height: 32),
@@ -213,29 +209,16 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 height: 50,
                 child: ElevatedButton(
                   onPressed: _isLoading ? null : _register,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF0056D2),
-                    foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
                   child: _isLoading
-                      ? const SizedBox(
+                      ? SizedBox(
                           width: 24,
                           height: 24,
                           child: CircularProgressIndicator(
                             strokeWidth: 2,
-                            color: Colors.white,
+                            color: theme.colorScheme.onPrimary,
                           ),
                         )
-                      : Text(
-                          'Registrarse',
-                          style: GoogleFonts.poppins(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
+                      : const Text('Registrarse'),
                 ),
               ),
             ],
@@ -246,21 +229,22 @@ class _RegisterScreenState extends State<RegisterScreen> {
   }
 
   Widget _buildRoleOption(String label, IconData icon, UserRole role) {
+    final theme = Theme.of(context);
     final isSelected = _selectedRole == role;
     return GestureDetector(
       onTap: () => setState(() => _selectedRole = role),
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 16),
         decoration: BoxDecoration(
-          color: isSelected ? const Color(0xFF0056D2) : Colors.white,
+          color: isSelected ? theme.colorScheme.primary : theme.cardColor,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
-            color: isSelected ? const Color(0xFF0056D2) : Colors.grey[300]!,
+            color: isSelected ? theme.colorScheme.primary : theme.disabledColor.withOpacity(0.2),
           ),
           boxShadow: [
             if (!isSelected)
               BoxShadow(
-                color: Colors.grey.withOpacity(0.1),
+                color: theme.shadowColor.withOpacity(0.05),
                 blurRadius: 4,
                 offset: const Offset(0, 2),
               ),
@@ -270,14 +254,14 @@ class _RegisterScreenState extends State<RegisterScreen> {
           children: [
             Icon(
               icon,
-              color: isSelected ? Colors.white : Colors.grey[600],
+              color: isSelected ? theme.colorScheme.onPrimary : theme.colorScheme.onSurface.withOpacity(0.6),
               size: 32,
             ),
             const SizedBox(height: 8),
             Text(
               label,
-              style: GoogleFonts.poppins(
-                color: isSelected ? Colors.white : Colors.grey[600],
+              style: theme.textTheme.labelLarge?.copyWith(
+                color: isSelected ? theme.colorScheme.onPrimary : theme.colorScheme.onSurface.withOpacity(0.6),
                 fontWeight: FontWeight.bold,
               ),
             ),
@@ -290,18 +274,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
   InputDecoration _inputDecoration(String label, IconData icon) {
     return InputDecoration(
       labelText: label,
-      labelStyle: TextStyle(color: Colors.grey[600]),
-      prefixIcon: Icon(icon, color: const Color(0xFF0056D2)),
-      enabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
-        borderSide: BorderSide(color: Colors.grey[300]!),
-      ),
-      focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(color: Color(0xFF0056D2)),
-      ),
-      filled: true,
-      fillColor: Colors.white,
+      prefixIcon: Icon(icon),
     );
   }
 }

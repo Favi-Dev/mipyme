@@ -9,8 +9,9 @@ class RoleSelectionScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Scaffold(
-      backgroundColor: const Color(0xFFF7F9FC),
+      backgroundColor: theme.scaffoldBackgroundColor,
       body: Center(
         child: SingleChildScrollView(
           child: Padding(
@@ -18,20 +19,11 @@ class RoleSelectionScreen extends StatelessWidget {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-              const Icon(Icons.coffee, size: 80, color: Color(0xFF0056D2)),
+              Image.asset('assets/images/LOGOSOYPLUS.jpg', height: 200),
               const SizedBox(height: 24),
-              const Text(
-                'SoyPlus',
-                style: TextStyle(
-                  color: Colors.black87,
-                  fontSize: 32,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              const SizedBox(height: 8),
               Text(
                 'Selecciona tu perfil para ingresar',
-                style: TextStyle(color: Colors.grey[600], fontSize: 16),
+                style: theme.textTheme.bodyLarge?.copyWith(color: theme.colorScheme.onSurfaceVariant),
               ),
               const SizedBox(height: 48),
               _buildRoleButton(
@@ -39,7 +31,7 @@ class RoleSelectionScreen extends StatelessWidget {
                 'Cliente',
                 'Busco ofertas y pymes',
                 Icons.person,
-                const Color(0xFF0056D2),
+                theme.colorScheme.primary,
                 const ClientAppShell(),
               ),
               const SizedBox(height: 16),
@@ -48,10 +40,11 @@ class RoleSelectionScreen extends StatelessWidget {
                 'Pyme',
                 'Gestiono mi negocio',
                 Icons.storefront,
-                const Color(0xFFE63946),
+                theme.colorScheme.secondary,
                 const PymeAppShell(),
                 onTap: () {
                   VitrinaData.setCategory('Comercio/retail');
+                  VitrinaData.isFoundationUser = false;
                 },
               ),
               const SizedBox(height: 16),
@@ -60,10 +53,11 @@ class RoleSelectionScreen extends StatelessWidget {
                 'Fundación',
                 'Gestiono mi fundación',
                 Icons.volunteer_activism,
-                const Color(0xFFFFD700),
+                theme.colorScheme.tertiary,
                 const PymeAppShell(),
                 onTap: () {
                   VitrinaData.setCategory('Educación y cultura');
+                  VitrinaData.isFoundationUser = true;
                 },
               ),
               const SizedBox(height: 16),
@@ -72,7 +66,7 @@ class RoleSelectionScreen extends StatelessWidget {
                 'Administrador',
                 'Gestión de plataforma',
                 Icons.admin_panel_settings,
-                const Color(0xFF333333),
+                theme.colorScheme.onSurface,
                 const AdminAppShell(),
               ),
             ],
@@ -85,8 +79,9 @@ class RoleSelectionScreen extends StatelessWidget {
 
   Widget _buildRoleButton(BuildContext context, String title, String subtitle,
       IconData icon, Color color, Widget destination, {VoidCallback? onTap}) {
+    final theme = Theme.of(context);
     return Material(
-      color: Colors.white,
+      color: theme.cardColor,
       borderRadius: BorderRadius.circular(16),
       elevation: 2,
       child: InkWell(
@@ -119,24 +114,22 @@ class RoleSelectionScreen extends StatelessWidget {
                   children: [
                     Text(
                       title,
-                      style: const TextStyle(
-                        color: Colors.black87,
-                        fontSize: 18,
+                      style: theme.textTheme.titleMedium?.copyWith(
                         fontWeight: FontWeight.bold,
+                        color: theme.colorScheme.onSurface,
                       ),
                     ),
                     Text(
                       subtitle,
-                      style: TextStyle(
-                        color: Colors.grey[600],
-                        fontSize: 14,
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        color: theme.colorScheme.onSurfaceVariant,
                       ),
                     ),
                   ],
                 ),
               ),
               Icon(Icons.arrow_forward_ios,
-                  color: Colors.grey[300], size: 16),
+                  color: theme.colorScheme.onSurfaceVariant, size: 16),
             ],
           ),
         ),

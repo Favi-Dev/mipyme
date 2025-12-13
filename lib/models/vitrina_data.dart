@@ -82,5 +82,9 @@ class VitrinaData {
   static double currentDonations = 0;
   static String donationAlias = '';
   static String donationCbu = '';
+  
+  // User Role Context
+  static bool isFoundationUser = false;
+
   static bool get isFoundation => category == 'Educación y cultura' || name.toLowerCase().contains('fundación');
 }

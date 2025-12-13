@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../models/offer_data.dart';
 import '../models/vitrina_data.dart';
 import '../services/product_service.dart';
@@ -21,6 +21,9 @@ class _ClientPymeDetailScreenState extends State<ClientPymeDetailScreen> {
   bool _isFollowing = false;
   List<Product> _products = [];
 
+  List<Product> get _eventProducts => _products.where((p) => p.customAttributes['is_event'] == 'true' || (VitrinaData.isFoundation && p.isService)).toList();
+  List<Product> get _standardProducts => _products.where((p) => p.customAttributes['is_event'] != 'true' && (!VitrinaData.isFoundation || !p.isService)).toList();
+
   @override
   void initState() {
     super.initState();
@@ -33,7 +36,120 @@ class _ClientPymeDetailScreenState extends State<ClientPymeDetailScreen> {
     });
   }
 
+  Future<void> _launchUrl(String urlString) async {
+    final Uri url = Uri.parse(urlString);
+    try {
+      if (!await launchUrl(url, mode: LaunchMode.externalApplication)) {
+        throw Exception('Could not launch $url');
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('No se pudo abrir el enlace')),
+        );
+      }
+    }
+  }
+
+  void _showShareOptions() {
+    final theme = Theme.of(context);
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) => Container(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Compartir ${VitrinaData.name}',
+              style: theme.textTheme.titleLarge?.copyWith(
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 24),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceAround,
+              children: [
+                _buildShareOption(
+                  icon: Icons.copy,
+                  label: 'Copiar',
+                  onTap: () {
+                    Navigator.pop(context);
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Enlace copiado al portapapeles')),
+                    );
+                  },
+                ),
+                _buildShareOption(
+                  icon: Icons.message, // WhatsApp icon usually
+                  label: 'WhatsApp',
+                  color: Colors.green,
+                  onTap: () {
+                    Navigator.pop(context);
+                    // Generates a link like https://mipyme.app/pyme/pyme1
+                    final String link = 'https://mipyme.app/pyme/${VitrinaData.name.replaceAll(' ', '').toLowerCase()}';
+                    _launchUrl('https://wa.me/?text=¡Hola!%20Te%20recomiendo%20ver%20*${VitrinaData.name}*%20en%20la%20app%20MiPyme.%0A%0AMira%20sus%20productos%20y%20ofertas%20aquí:%20$link');
+                  },
+                ),
+                _buildShareOption(
+                  icon: Icons.email,
+                  label: 'Correo',
+                  color: const Color(0xFFBC4749), // Café
+                  onTap: () {
+                    Navigator.pop(context);
+                    final String link = 'https://mipyme.app/pyme/${VitrinaData.name.replaceAll(' ', '').toLowerCase()}';
+                    _launchUrl('mailto:?subject=Te%20recomiendo%20${VitrinaData.name}&body=Hola,%0A%0AEchale%20un%20vistazo%20a%20${VitrinaData.name}.%20Tienen%20cosas%20increíbles.%0A%0AVer%20perfil:%20$link');
+                  },
+                ),
+                _buildShareOption(
+                  icon: Icons.more_horiz,
+                  label: 'Más',
+                  color: const Color(0xFFA7C957), // Verde Claro
+                  onTap: () {
+                    Navigator.pop(context);
+                    // Standard share would go here
+                  },
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildShareOption({
+    required IconData icon,
+    required String label,
+    Color color = Colors.grey,
+    required VoidCallback onTap,
+  }) {
+    final theme = Theme.of(context);
+    return InkWell(
+      onTap: onTap,
+      child: Column(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: color.withOpacity(0.1),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(icon, color: color, size: 28),
+          ),
+          const SizedBox(height: 8),
+          Text(label, style: theme.textTheme.bodySmall),
+        ],
+      ),
+    );
+  }
+
   void _showDonationModal() {
+    final theme = Theme.of(context);
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -49,9 +165,9 @@ class _ClientPymeDetailScreenState extends State<ClientPymeDetailScreen> {
             minChildSize: 0.5,
             maxChildSize: 0.95,
             builder: (_, controller) => Container(
-              decoration: const BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+              decoration: BoxDecoration(
+                color: theme.colorScheme.surface,
+                borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
               ),
               padding: const EdgeInsets.all(24),
               child: ListView(
@@ -62,7 +178,7 @@ class _ClientPymeDetailScreenState extends State<ClientPymeDetailScreen> {
                       width: 40,
                       height: 4,
                       decoration: BoxDecoration(
-                        color: Colors.grey[300],
+                        color: theme.colorScheme.outlineVariant,
                         borderRadius: BorderRadius.circular(2),
                       ),
                     ),
@@ -70,16 +186,15 @@ class _ClientPymeDetailScreenState extends State<ClientPymeDetailScreen> {
                   const SizedBox(height: 24),
                   Text(
                     'Donar a ${VitrinaData.name}',
-                    style: GoogleFonts.poppins(
-                      fontSize: 24,
+                    style: theme.textTheme.headlineSmall?.copyWith(
                       fontWeight: FontWeight.bold,
                     ),
                   ),
                   const SizedBox(height: 8),
                   Text(
                     'Tu aporte ayuda a continuar con nuestra labor.',
-                    style: GoogleFonts.poppins(
-                      color: Colors.grey[600],
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      color: theme.colorScheme.onSurfaceVariant,
                     ),
                   ),
                   const SizedBox(height: 24),
@@ -88,7 +203,7 @@ class _ClientPymeDetailScreenState extends State<ClientPymeDetailScreen> {
                   Container(
                     padding: const EdgeInsets.all(4),
                     decoration: BoxDecoration(
-                      color: Colors.grey[100],
+                      color: theme.colorScheme.surfaceContainerHighest,
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Row(
@@ -99,11 +214,11 @@ class _ClientPymeDetailScreenState extends State<ClientPymeDetailScreen> {
                             child: Container(
                               padding: const EdgeInsets.symmetric(vertical: 12),
                               decoration: BoxDecoration(
-                                color: !isMonthly ? Colors.white : Colors.transparent,
+                                color: !isMonthly ? theme.colorScheme.surface : Colors.transparent,
                                 borderRadius: BorderRadius.circular(10),
                                 boxShadow: !isMonthly ? [
                                   BoxShadow(
-                                    color: Colors.black.withOpacity(0.05),
+                                    color: Colors.black.withValues(alpha: 0.05),
                                     blurRadius: 4,
                                   )
                                 ] : null,
@@ -111,9 +226,9 @@ class _ClientPymeDetailScreenState extends State<ClientPymeDetailScreen> {
                               child: Text(
                                 'Única vez',
                                 textAlign: TextAlign.center,
-                                style: GoogleFonts.poppins(
+                                style: theme.textTheme.labelLarge?.copyWith(
                                   fontWeight: FontWeight.w600,
-                                  color: !isMonthly ? Colors.black87 : Colors.grey[600],
+                                  color: !isMonthly ? theme.colorScheme.onSurface : theme.colorScheme.onSurfaceVariant,
                                 ),
                               ),
                             ),
@@ -125,11 +240,11 @@ class _ClientPymeDetailScreenState extends State<ClientPymeDetailScreen> {
                             child: Container(
                               padding: const EdgeInsets.symmetric(vertical: 12),
                               decoration: BoxDecoration(
-                                color: isMonthly ? Colors.white : Colors.transparent,
+                                color: isMonthly ? theme.colorScheme.surface : Colors.transparent,
                                 borderRadius: BorderRadius.circular(10),
                                 boxShadow: isMonthly ? [
                                   BoxShadow(
-                                    color: Colors.black.withOpacity(0.05),
+                                    color: Colors.black.withValues(alpha: 0.05),
                                     blurRadius: 4,
                                   )
                                 ] : null,
@@ -137,9 +252,9 @@ class _ClientPymeDetailScreenState extends State<ClientPymeDetailScreen> {
                               child: Text(
                                 'Mensual',
                                 textAlign: TextAlign.center,
-                                style: GoogleFonts.poppins(
+                                style: theme.textTheme.labelLarge?.copyWith(
                                   fontWeight: FontWeight.w600,
-                                  color: isMonthly ? const Color(0xFF0056D2) : Colors.grey[600],
+                                  color: isMonthly ? theme.colorScheme.primary : theme.colorScheme.onSurfaceVariant,
                                 ),
                               ),
                             ),
@@ -153,9 +268,8 @@ class _ClientPymeDetailScreenState extends State<ClientPymeDetailScreen> {
                   // Amount Selection
                   Text(
                     'Selecciona un monto',
-                    style: GoogleFonts.poppins(
+                    style: theme.textTheme.titleMedium?.copyWith(
                       fontWeight: FontWeight.w600,
-                      fontSize: 16,
                     ),
                   ),
                   const SizedBox(height: 12),
@@ -169,16 +283,16 @@ class _ClientPymeDetailScreenState extends State<ClientPymeDetailScreen> {
                         onSelected: (selected) {
                           if (selected) setState(() => selectedAmount = amount);
                         },
-                        selectedColor: const Color(0xFF0056D2),
+                        selectedColor: theme.colorScheme.primary,
                         labelStyle: TextStyle(
-                          color: selectedAmount == amount ? Colors.white : Colors.black87,
+                          color: selectedAmount == amount ? theme.colorScheme.onPrimary : theme.colorScheme.onSurface,
                           fontWeight: FontWeight.w600,
                         ),
-                        backgroundColor: Colors.white,
+                        backgroundColor: theme.colorScheme.surface,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(8),
                           side: BorderSide(
-                            color: selectedAmount == amount ? const Color(0xFF0056D2) : Colors.grey[300]!,
+                            color: selectedAmount == amount ? theme.colorScheme.primary : theme.colorScheme.outline,
                           ),
                         ),
                       )),
@@ -186,10 +300,10 @@ class _ClientPymeDetailScreenState extends State<ClientPymeDetailScreen> {
                         label: const Text('Otro monto'),
                         selected: false,
                         onSelected: (_) {},
-                        backgroundColor: Colors.white,
+                        backgroundColor: theme.colorScheme.surface,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(8),
-                          side: BorderSide(color: Colors.grey[300]!),
+                          side: BorderSide(color: theme.colorScheme.outline),
                         ),
                       ),
                     ],
@@ -199,14 +313,14 @@ class _ClientPymeDetailScreenState extends State<ClientPymeDetailScreen> {
                   // Progress
                   Text(
                     'Meta de recaudación',
-                    style: GoogleFonts.poppins(
+                    style: theme.textTheme.titleMedium?.copyWith(
                       fontWeight: FontWeight.w600,
                     ),
                   ),
                   const SizedBox(height: 8),
                   LinearProgressIndicator(
                     value: VitrinaData.currentDonations / VitrinaData.donationGoal,
-                    backgroundColor: Colors.grey[200],
+                    backgroundColor: theme.colorScheme.surfaceContainerHighest,
                     color: const Color(0xFFFFD700), // Gold for progress
                     minHeight: 10,
                     borderRadius: BorderRadius.circular(5),
@@ -217,40 +331,39 @@ class _ClientPymeDetailScreenState extends State<ClientPymeDetailScreen> {
                     children: [
                       Text(
                         '\$${VitrinaData.currentDonations.toStringAsFixed(0)}',
-                        style: GoogleFonts.poppins(
+                        style: theme.textTheme.bodyMedium?.copyWith(
                           fontWeight: FontWeight.bold,
                           color: const Color(0xFFFFD700), // Gold
                         ),
                       ),
                       Text(
                         'Meta: \$${VitrinaData.donationGoal.toStringAsFixed(0)}',
-                        style: GoogleFonts.poppins(color: Colors.grey[600]),
+                        style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurfaceVariant),
                       ),
                     ],
                   ),
                   const SizedBox(height: 32),
 
-                  // Transfer Info
-                  Text(
-                    'Datos de Transferencia',
-                    style: GoogleFonts.poppins(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 16),
+                  // Payment Method Info
                   Container(
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
-                      color: Colors.grey[50],
+                      color: theme.colorScheme.primaryContainer,
                       borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: Colors.grey[200]!),
+                      border: Border.all(color: theme.colorScheme.primary.withOpacity(0.2)),
                     ),
-                    child: Column(
+                    child: Row(
                       children: [
-                        _buildCopyableRow('Alias', VitrinaData.donationAlias),
-                        const Divider(height: 24),
-                        _buildCopyableRow('CBU', VitrinaData.donationCbu),
+                        Icon(Icons.credit_card, color: theme.colorScheme.primary),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Text(
+                            'Se utilizará tu método de pago registrado para realizar el aporte.',
+                            style: theme.textTheme.bodySmall?.copyWith(
+                              color: theme.colorScheme.onPrimaryContainer,
+                            ),
+                          ),
+                        ),
                       ],
                     ),
                   ),
@@ -272,7 +385,7 @@ class _ClientPymeDetailScreenState extends State<ClientPymeDetailScreen> {
                         );
                       },
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFFE63946), // Action Red for Donation
+                        backgroundColor: const Color(0xFF386641), // Verde Hoja Profundo
                         padding: const EdgeInsets.symmetric(vertical: 16),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12),
@@ -280,8 +393,7 @@ class _ClientPymeDetailScreenState extends State<ClientPymeDetailScreen> {
                       ),
                       child: Text(
                         isMonthly ? 'Suscribirse Mensualmente' : 'Realizar Donación',
-                        style: GoogleFonts.poppins(
-                          fontSize: 16,
+                        style: theme.textTheme.titleMedium?.copyWith(
                           fontWeight: FontWeight.bold,
                           color: Colors.white,
                         ),
@@ -297,41 +409,7 @@ class _ClientPymeDetailScreenState extends State<ClientPymeDetailScreen> {
     );
   }
 
-  Widget _buildCopyableRow(String label, String value) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              label,
-              style: GoogleFonts.poppins(
-                color: Colors.grey[600],
-                fontSize: 12,
-              ),
-            ),
-            Text(
-              value,
-              style: GoogleFonts.poppins(
-                fontWeight: FontWeight.w600,
-                fontSize: 16,
-              ),
-            ),
-          ],
-        ),
-        IconButton(
-          icon: const Icon(Icons.copy, color: Color(0xFF0056D2)),
-          onPressed: () {
-            // Clipboard logic would go here
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text('$label copiado al portapapeles')),
-            );
-          },
-        ),
-      ],
-    );
-  }
+
 
   @override
   void dispose() {
@@ -341,8 +419,9 @@ class _ClientPymeDetailScreenState extends State<ClientPymeDetailScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Scaffold(
-      backgroundColor: const Color(0xFFF7F9FC),
+      backgroundColor: theme.colorScheme.surface,
       body: Stack(
         children: [
           CustomScrollView(
@@ -354,7 +433,7 @@ class _ClientPymeDetailScreenState extends State<ClientPymeDetailScreen> {
                 floating: false,
                 elevation: 0,
                 scrolledUnderElevation: 0,
-                backgroundColor: const Color(0xFFF7F9FC),
+                backgroundColor: theme.colorScheme.surface,
                 leading: IconButton(
                   icon: const Icon(Icons.arrow_back, color: Colors.white),
                   onPressed: () => Navigator.pop(context),
@@ -363,7 +442,7 @@ class _ClientPymeDetailScreenState extends State<ClientPymeDetailScreen> {
                   IconButton(
                     icon: Icon(
                       _isFollowing ? Icons.favorite : Icons.favorite_border,
-                      color: _isFollowing ? const Color(0xFF0056D2) : Colors.white,
+                      color: _isFollowing ? theme.colorScheme.primary : Colors.white,
                     ),
                     onPressed: () {
                       setState(() {
@@ -376,7 +455,7 @@ class _ClientPymeDetailScreenState extends State<ClientPymeDetailScreen> {
                                 ? '¡Ahora sigues a ${VitrinaData.name}!'
                                 : 'Dejaste de seguir a ${VitrinaData.name}',
                           ),
-                          backgroundColor: _isFollowing ? const Color(0xFF0056D2) : Colors.grey,
+                          backgroundColor: _isFollowing ? theme.colorScheme.primary : Colors.grey,
                           duration: const Duration(seconds: 2),
                         ),
                       );
@@ -384,13 +463,13 @@ class _ClientPymeDetailScreenState extends State<ClientPymeDetailScreen> {
                   ),
                   IconButton(
                     icon: const Icon(Icons.share, color: Colors.white),
-                    onPressed: () {},
+                    onPressed: _showShareOptions,
                   ),
                 ],
                 flexibleSpace: FlexibleSpaceBar(
                   title: Text(
                     VitrinaData.name,
-                    style: GoogleFonts.poppins(
+                    style: theme.textTheme.titleLarge?.copyWith(
                       color: Colors.white,
                       fontWeight: FontWeight.bold,
                       shadows: [
@@ -443,10 +522,9 @@ class _ClientPymeDetailScreenState extends State<ClientPymeDetailScreen> {
                         children: [
                           Text(
                             'Descripción',
-                            style: GoogleFonts.poppins(
-                              fontSize: 20,
+                            style: theme.textTheme.titleLarge?.copyWith(
                               fontWeight: FontWeight.bold,
-                              color: Colors.black87,
+                              color: theme.colorScheme.onSurface,
                             ),
                           ),
                           SupporterCounter(count: VitrinaData.supporterCount),
@@ -455,9 +533,8 @@ class _ClientPymeDetailScreenState extends State<ClientPymeDetailScreen> {
                       const SizedBox(height: 8),
                       Text(
                         VitrinaData.description,
-                        style: GoogleFonts.poppins(
-                          color: Colors.grey[700],
-                          fontSize: 14,
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          color: theme.colorScheme.onSurfaceVariant,
                         ),
                       ),
                       if (VitrinaData.isFoundation) ...[
@@ -469,13 +546,13 @@ class _ClientPymeDetailScreenState extends State<ClientPymeDetailScreen> {
                             icon: const Icon(Icons.volunteer_activism, color: Colors.white),
                             label: Text(
                               'Donar a esta Fundación',
-                              style: GoogleFonts.poppins(
+                              style: theme.textTheme.labelLarge?.copyWith(
                                 fontWeight: FontWeight.bold,
                                 color: Colors.white,
                               ),
                             ),
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: const Color(0xFFE63946), // Action Red for Donation
+                              backgroundColor: const Color(0xFF386641), // Verde Hoja Profundo
                               padding: const EdgeInsets.symmetric(vertical: 12),
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(12),
@@ -486,46 +563,67 @@ class _ClientPymeDetailScreenState extends State<ClientPymeDetailScreen> {
                       ],
                       const SizedBox(height: 24),
 
-                      // Offers
-                      Text(
-                        'Ofertas Disponibles',
-                        style: GoogleFonts.poppins(
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.black87,
-                        ),
-                      ),
-                      const SizedBox(height: 12),
-                      SingleChildScrollView(
-                        scrollDirection: Axis.horizontal,
-                        child: Row(
-                          children: OfferData.offers.map((offer) {
-                            return Padding(
-                              padding: const EdgeInsets.only(right: 12),
-                              child: _buildClientOfferCard(
-                                offer: offer,
-                              ),
-                            );
-                          }).toList(),
-                        ),
-                      ),
-                      const SizedBox(height: 24),
-
-                      // Products
-                      if (_products.isNotEmpty) ...[
+                      // Offers or Events
+                      if (!VitrinaData.isFoundation) ...[
                         Text(
-                          'Productos',
-                          style: GoogleFonts.poppins(
-                            fontSize: 20,
+                          'Ofertas Disponibles',
+                          style: theme.textTheme.titleLarge?.copyWith(
                             fontWeight: FontWeight.bold,
-                            color: Colors.black87,
+                            color: theme.colorScheme.onSurface,
                           ),
                         ),
                         const SizedBox(height: 12),
                         SingleChildScrollView(
                           scrollDirection: Axis.horizontal,
                           child: Row(
-                            children: _products.map((product) {
+                            children: OfferData.offers.map((offer) {
+                              return Padding(
+                                padding: const EdgeInsets.only(right: 12),
+                                child: _buildClientOfferCard(
+                                  offer: offer,
+                                ),
+                              );
+                            }).toList(),
+                          ),
+                        ),
+                        const SizedBox(height: 24),
+                      ] else if (_eventProducts.isNotEmpty) ...[
+                        Text(
+                          'Próximos Eventos',
+                          style: theme.textTheme.titleLarge?.copyWith(
+                            fontWeight: FontWeight.bold,
+                            color: theme.colorScheme.onSurface,
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        SingleChildScrollView(
+                          scrollDirection: Axis.horizontal,
+                          child: Row(
+                            children: _eventProducts.map((product) {
+                              return Padding(
+                                padding: const EdgeInsets.only(right: 12),
+                                child: _buildProductCard(product),
+                              );
+                            }).toList(),
+                          ),
+                        ),
+                        const SizedBox(height: 24),
+                      ],
+
+                      // Products
+                      if (_standardProducts.isNotEmpty) ...[
+                        Text(
+                          'Productos',
+                          style: theme.textTheme.titleLarge?.copyWith(
+                            fontWeight: FontWeight.bold,
+                            color: theme.colorScheme.onSurface,
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        SingleChildScrollView(
+                          scrollDirection: Axis.horizontal,
+                          child: Row(
+                            children: _standardProducts.map((product) {
                               return Padding(
                                 padding: const EdgeInsets.only(right: 12),
                                 child: _buildProductCard(product),
@@ -539,10 +637,9 @@ class _ClientPymeDetailScreenState extends State<ClientPymeDetailScreen> {
                       // Info
                       Text(
                         'Información',
-                        style: GoogleFonts.poppins(
-                          fontSize: 20,
+                        style: theme.textTheme.titleLarge?.copyWith(
                           fontWeight: FontWeight.bold,
-                          color: Colors.black87,
+                          color: theme.colorScheme.onSurface,
                         ),
                       ),
                       const SizedBox(height: 12),
@@ -559,19 +656,19 @@ class _ClientPymeDetailScreenState extends State<ClientPymeDetailScreen> {
                             Icons.language,
                             'Sitio Web',
                             Colors.blueAccent,
-                            () {},
+                            () => _launchUrl('https://www.google.com'),
                           ),
                           _buildContactButton(
                             Icons.camera_alt,
                             'Instagram',
                             Colors.purpleAccent,
-                            () {},
+                            () => _launchUrl('https://www.instagram.com'),
                           ),
                           _buildContactButton(
                             Icons.message,
                             'WhatsApp',
                             Colors.green,
-                            () {},
+                            () => _launchUrl('https://wa.me/56912345678'),
                           ),
                         ],
                       ),
@@ -623,7 +720,10 @@ class _ClientPymeDetailScreenState extends State<ClientPymeDetailScreen> {
     );
   }
 
+
+
   Widget _buildClientOfferCard({required Offer offer}) {
+    final theme = Theme.of(context);
     return Container(
       width: 220,
       padding: const EdgeInsets.all(16),
@@ -669,16 +769,15 @@ class _ClientPymeDetailScreenState extends State<ClientPymeDetailScreen> {
           const SizedBox(height: 12),
           Text(
             offer.title,
-            style: GoogleFonts.poppins(
+            style: theme.textTheme.titleMedium?.copyWith(
               color: Colors.white,
               fontWeight: FontWeight.bold,
-              fontSize: 16,
             ),
           ),
           const SizedBox(height: 4),
           Text(
             offer.description,
-            style: GoogleFonts.poppins(color: Colors.white.withOpacity(0.9), fontSize: 12),
+            style: theme.textTheme.bodySmall?.copyWith(color: Colors.white.withOpacity(0.9)),
           ),
           const SizedBox(height: 12),
           Container(
@@ -694,7 +793,7 @@ class _ClientPymeDetailScreenState extends State<ClientPymeDetailScreen> {
                 Expanded(
                   child: Text(
                     'Usa tu cupón mensual aquí',
-                    style: GoogleFonts.poppins(
+                    style: theme.textTheme.bodySmall?.copyWith(
                       color: Colors.white,
                       fontSize: 10,
                     ),
@@ -709,14 +808,15 @@ class _ClientPymeDetailScreenState extends State<ClientPymeDetailScreen> {
   }
 
   Widget _buildProductCard(Product product) {
+    final theme = Theme.of(context);
     return Container(
       width: 160,
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: theme.colorScheme.surfaceContainerLowest,
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 8,
             offset: const Offset(0, 4),
           ),
@@ -734,8 +834,8 @@ class _ClientPymeDetailScreenState extends State<ClientPymeDetailScreen> {
               fit: BoxFit.cover,
               errorBuilder: (_, __, ___) => Container(
                 height: 120,
-                color: Colors.grey[200],
-                child: const Icon(Icons.image_not_supported, color: Colors.grey),
+                color: theme.colorScheme.surfaceContainerHighest,
+                child: Icon(Icons.image_not_supported, color: theme.colorScheme.onSurfaceVariant),
               ),
             ),
           ),
@@ -748,19 +848,17 @@ class _ClientPymeDetailScreenState extends State<ClientPymeDetailScreen> {
                   product.name,
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
-                  style: GoogleFonts.poppins(
+                  style: theme.textTheme.bodyMedium?.copyWith(
                     fontWeight: FontWeight.w600,
-                    fontSize: 14,
-                    color: Colors.black87,
+                    color: theme.colorScheme.onSurface,
                   ),
                 ),
                 const SizedBox(height: 4),
                 Text(
                   '\$${product.price.toStringAsFixed(0)}',
-                  style: GoogleFonts.poppins(
-                    color: const Color(0xFF0056D2),
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    color: theme.colorScheme.primary,
                     fontWeight: FontWeight.bold,
-                    fontSize: 14,
                   ),
                 ),
                 const SizedBox(height: 8),
@@ -783,20 +881,20 @@ class _ClientPymeDetailScreenState extends State<ClientPymeDetailScreen> {
                             final confirm = await showDialog<bool>(
                               context: context,
                               builder: (context) => AlertDialog(
-                                title: Text('Operativo Especial', style: GoogleFonts.poppins(fontWeight: FontWeight.bold)),
+                                title: Text('Operativo Especial', style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
                                 content: Text(
                                   'Este servicio es un evento único para el día:\n\n${eventDate.day}/${eventDate.month}/${eventDate.year}\n\n¿Deseas seleccionar una hora para este día?',
-                                  style: GoogleFonts.poppins()
+                                  style: theme.textTheme.bodyMedium
                                 ),
                                 actions: [
                                   TextButton(
                                     onPressed: () => Navigator.pop(context, false),
-                                    child: Text('Cancelar', style: GoogleFonts.poppins(color: Colors.grey)),
+                                    child: Text('Cancelar', style: theme.textTheme.labelLarge?.copyWith(color: theme.colorScheme.onSurfaceVariant)),
                                   ),
                                   ElevatedButton(
                                     onPressed: () => Navigator.pop(context, true),
-                                    style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF0056D2)),
-                                    child: Text('Continuar', style: GoogleFonts.poppins(color: Colors.white)),
+                                    style: ElevatedButton.styleFrom(backgroundColor: theme.colorScheme.primary),
+                                    child: Text('Continuar', style: theme.textTheme.labelLarge?.copyWith(color: theme.colorScheme.onPrimary)),
                                   ),
                                 ],
                               ),
@@ -815,8 +913,8 @@ class _ClientPymeDetailScreenState extends State<ClientPymeDetailScreen> {
                               builder: (context, child) {
                                 return Theme(
                                   data: Theme.of(context).copyWith(
-                                    colorScheme: const ColorScheme.light(
-                                      primary: Color(0xFF0056D2),
+                                    colorScheme: ColorScheme.light(
+                                      primary: theme.colorScheme.primary,
                                     ),
                                   ),
                                   child: child!,
@@ -832,8 +930,8 @@ class _ClientPymeDetailScreenState extends State<ClientPymeDetailScreen> {
                               builder: (context, child) {
                                 return Theme(
                                   data: Theme.of(context).copyWith(
-                                    colorScheme: const ColorScheme.light(
-                                      primary: Color(0xFF0056D2),
+                                    colorScheme: ColorScheme.light(
+                                      primary: theme.colorScheme.primary,
                                     ),
                                   ),
                                   child: child!,
@@ -855,7 +953,7 @@ class _ClientPymeDetailScreenState extends State<ClientPymeDetailScreen> {
                                 SnackBar(
                                   content: Text('Reserva agendada para el ${scheduledTime.day}/${scheduledTime.month} a las ${scheduledTime.hour}:${scheduledTime.minute.toString().padLeft(2, '0')}'),
                                   duration: const Duration(seconds: 2),
-                                  backgroundColor: const Color(0xFFE63946),
+                                  backgroundColor: const Color(0xFFA7C957), // Verde Claro
                                 ),
                               );
                             }
@@ -866,7 +964,7 @@ class _ClientPymeDetailScreenState extends State<ClientPymeDetailScreen> {
                             const SnackBar(
                               content: Text('Agregado al carrito'),
                               duration: Duration(seconds: 1),
-                              backgroundColor: Color(0xFFE63946),
+                              backgroundColor: Color(0xFFA7C957), // Verde Claro
                             ),
                           );
                         }
@@ -875,22 +973,26 @@ class _ClientPymeDetailScreenState extends State<ClientPymeDetailScreen> {
                           String errorMessage = e.toString().replaceAll('Exception: ', '');
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(
-                              content: Text(errorMessage, style: GoogleFonts.poppins()),
-                              backgroundColor: Colors.redAccent,
+                              content: Text(errorMessage, style: theme.textTheme.bodyMedium),
+                              backgroundColor: theme.colorScheme.error,
                             ),
                           );
                         }
                       }
                     },
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: product.isService ? const Color(0xFF0056D2) : const Color(0xFFE63946),
+                      backgroundColor: product.isService ? theme.colorScheme.primary : const Color(0xFF386641), // Verde Hoja Profundo
                       foregroundColor: Colors.white,
                       padding: EdgeInsets.zero,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(8),
                       ),
                     ),
-                    child: Text(product.isService ? 'Reservar' : 'Agregar'),
+                    child: Text(
+                      product.customAttributes['is_event'] == 'true'
+                          ? 'Participar'
+                          : (product.isService ? 'Reservar' : 'Comprar'),
+                    ),
                   ),
                 ),
               ],
@@ -902,15 +1004,16 @@ class _ClientPymeDetailScreenState extends State<ClientPymeDetailScreen> {
   }
 
   Widget _buildInfoRow(IconData icon, String text) {
+    final theme = Theme.of(context);
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Icon(icon, color: Colors.grey[600], size: 20),
+        Icon(icon, color: theme.colorScheme.onSurfaceVariant, size: 20),
         const SizedBox(width: 12),
         Expanded(
           child: Text(
             text,
-            style: GoogleFonts.poppins(color: Colors.grey[700], fontSize: 14),
+            style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.onSurfaceVariant),
           ),
         ),
       ],
@@ -919,6 +1022,7 @@ class _ClientPymeDetailScreenState extends State<ClientPymeDetailScreen> {
 
   Widget _buildContactButton(
       IconData icon, String label, Color color, VoidCallback onTap) {
+    final theme = Theme.of(context);
     return Column(
       children: [
         InkWell(
@@ -937,7 +1041,7 @@ class _ClientPymeDetailScreenState extends State<ClientPymeDetailScreen> {
         const SizedBox(height: 8),
         Text(
           label,
-          style: GoogleFonts.poppins(color: Colors.white70, fontSize: 12),
+          style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurfaceVariant),
         ),
       ],
     );

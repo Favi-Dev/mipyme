@@ -6,7 +6,9 @@ import '../services/product_service.dart';
 
 class PymeAddProductScreen extends StatefulWidget {
   final bool isService;
-  const PymeAddProductScreen({super.key, required this.isService});
+  final Product? product;
+
+  const PymeAddProductScreen({super.key, required this.isService, this.product});
 
   @override
   State<PymeAddProductScreen> createState() => _PymeAddProductScreenState();
@@ -32,8 +34,33 @@ class _PymeAddProductScreenState extends State<PymeAddProductScreen> {
   @override
   void initState() {
     super.initState();
-    _currentCategory = VitrinaData.category;
+    if (widget.product != null) {
+      _currentCategory = widget.product!.category;
+    } else {
+      _currentCategory = VitrinaData.category;
+    }
     _initializeDynamicControllers();
+    
+    if (widget.product != null) {
+      _loadProductData();
+    }
+  }
+
+  void _loadProductData() {
+    final p = widget.product!;
+    _nameController.text = p.name;
+    _codeController.text = p.code;
+    _priceController.text = p.price.toStringAsFixed(0);
+    _stockController.text = p.stock.toString();
+    _imageController.text = p.imageUrl;
+    _descController.text = p.description;
+    
+    // Load dynamic attributes
+    p.customAttributes.forEach((key, value) {
+      if (_dynamicControllers.containsKey(key)) {
+        _dynamicControllers[key]!.text = value.toString();
+      }
+    });
   }
 
   void _initializeDynamicControllers() {
@@ -115,17 +142,18 @@ class _PymeAddProductScreenState extends State<PymeAddProductScreen> {
       });
 
       final newProduct = Product(
-        id: DateTime.now().millisecondsSinceEpoch.toString(),
+        id: widget.product?.id ?? DateTime.now().millisecondsSinceEpoch.toString(),
         pymeId: 'pyme1', // Mocked current pyme
         name: _nameController.text,
         description: _descController.text,
-        price: double.parse(_priceController.text),
+        price: double.tryParse(_priceController.text) ?? 0,
         imageUrl: _imageController.text.isEmpty
             ? 'https://picsum.photos/200'
             : _imageController.text,
         code: _codeController.text,
-        stock: int.parse(_stockController.text),
+        stock: int.tryParse(_stockController.text) ?? 0,
         category: _currentCategory,
+        isService: widget.isService,
         customAttributes: attributes,
       );
 

@@ -105,6 +105,7 @@ class _ClientMapScreenState extends State<ClientMapScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Scaffold(
       body: Stack(
         children: [
@@ -117,12 +118,14 @@ class _ClientMapScreenState extends State<ClientMapScreen> {
                 fit: BoxFit.cover,
                 errorBuilder: (context, error, stackTrace) {
                   return Container(
-                    color: Colors.grey[200],
-                    child: const Center(
+                    color: theme.colorScheme.surfaceContainerHighest,
+                    child: Center(
                       child: Text(
                         'No se pudo cargar el mapa.\nReinicia la aplicación si acabas de agregar la imagen.',
                         textAlign: TextAlign.center,
-                        style: TextStyle(color: Colors.grey),
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          color: theme.colorScheme.onSurfaceVariant,
+                        ),
                       ),
                     ),
                   );
@@ -138,7 +141,7 @@ class _ClientMapScreenState extends State<ClientMapScreen> {
             right: 16,
             child: Container(
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: theme.colorScheme.surface,
                 borderRadius: BorderRadius.circular(16),
                 boxShadow: [
                   BoxShadow(
@@ -151,7 +154,7 @@ class _ClientMapScreenState extends State<ClientMapScreen> {
               child: TextField(
                 decoration: InputDecoration(
                   hintText: 'Buscar en el mapa...',
-                  prefixIcon: const Icon(Icons.search, color: Color(0xFF0056D2)),
+                  prefixIcon: Icon(Icons.search, color: theme.colorScheme.primary),
                   border: InputBorder.none,
                   contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
                 ),
@@ -173,7 +176,7 @@ class _ClientMapScreenState extends State<ClientMapScreen> {
                       decoration: BoxDecoration(
                         color: pin['color'],
                         shape: BoxShape.circle,
-                        border: Border.all(color: Colors.white, width: 2),
+                        border: Border.all(color: theme.colorScheme.surface, width: 2),
                         boxShadow: [
                           BoxShadow(
                             color: Colors.black.withValues(alpha: 0.3),
@@ -192,7 +195,7 @@ class _ClientMapScreenState extends State<ClientMapScreen> {
                       margin: const EdgeInsets.only(top: 4),
                       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                       decoration: BoxDecoration(
-                        color: Colors.white,
+                        color: theme.colorScheme.surface,
                         borderRadius: BorderRadius.circular(8),
                         boxShadow: [
                           BoxShadow(
@@ -203,8 +206,7 @@ class _ClientMapScreenState extends State<ClientMapScreen> {
                       ),
                       child: Text(
                         pin['name'],
-                        style: const TextStyle(
-                          fontSize: 10,
+                        style: theme.textTheme.bodySmall?.copyWith(
                           fontWeight: FontWeight.bold,
                         ),
                       ),
@@ -220,20 +222,21 @@ class _ClientMapScreenState extends State<ClientMapScreen> {
         onPressed: () {
           // Center map or current location action
         },
-        backgroundColor: Colors.white,
-        child: const Icon(Icons.my_location, color: Color(0xFF0056D2)),
+        backgroundColor: theme.colorScheme.surface,
+        child: Icon(Icons.my_location, color: theme.colorScheme.primary),
       ),
     );
   }
 
   void _showPymePreview(BuildContext context, Map<String, dynamic> pin) {
+    final theme = Theme.of(context);
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
       builder: (context) => Container(
         margin: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: theme.colorScheme.surface,
           borderRadius: BorderRadius.circular(24),
           boxShadow: [
             BoxShadow(
@@ -262,14 +265,15 @@ class _ClientMapScreenState extends State<ClientMapScreen> {
               ),
               title: Text(
                 pin['name'],
-                style: const TextStyle(
+                style: theme.textTheme.titleLarge?.copyWith(
                   fontWeight: FontWeight.bold,
-                  fontSize: 18,
                 ),
               ),
               subtitle: Text(
                 pin['category'],
-                style: TextStyle(color: Colors.grey[600]),
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  color: theme.colorScheme.onSurface.withOpacity(0.6),
+                ),
               ),
               trailing: IconButton(
                 icon: const Icon(Icons.arrow_forward_ios, size: 16),
@@ -288,8 +292,8 @@ class _ClientMapScreenState extends State<ClientMapScreen> {
                         _navigateToPymeDetail(context, pin);
                       },
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF0056D2),
-                        foregroundColor: Colors.white,
+                        backgroundColor: theme.colorScheme.primary,
+                        foregroundColor: theme.colorScheme.onPrimary,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12),
                         ),

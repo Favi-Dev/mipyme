@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
+import '../models/vitrina_data.dart';
+import '../services/product_service.dart';
+import 'client_pyme_detail_screen.dart';
 import 'login_screen.dart';
 import 'client_payment_methods_screen.dart';
+import 'client_payments_subscriptions_screen.dart';
 import '../widgets/supporter_counter.dart';
 import 'client_qr_screen.dart';
 import 'client_history_screen.dart';
@@ -14,8 +17,8 @@ class ClientProfileScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Scaffold(
-      backgroundColor: const Color(0xFFF7F9FC),
       body: SingleChildScrollView(
         child: Column(
           children: [
@@ -29,7 +32,7 @@ class ClientProfileScreen extends StatelessWidget {
                     height: 100,
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
-                      border: Border.all(color: const Color(0xFF0056D2), width: 3),
+                      border: Border.all(color: theme.colorScheme.primary, width: 3),
                       image: const DecorationImage(
                         image: NetworkImage('https://i.pravatar.cc/300'),
                         fit: BoxFit.cover,
@@ -39,25 +42,20 @@ class ClientProfileScreen extends StatelessWidget {
                   const SizedBox(height: 15),
                   Text(
                     'Joaquin',
-                    style: GoogleFonts.poppins(
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.black87,
-                    ),
+                    style: theme.textTheme.headlineMedium,
                   ),
                   const SizedBox(height: 5),
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
                     decoration: BoxDecoration(
-                      color: const Color(0xFF0056D2),
+                      color: theme.colorScheme.primary,
                       borderRadius: BorderRadius.circular(20),
                     ),
                     child: Text(
                       'Plan Premium',
-                      style: GoogleFonts.poppins(
-                        fontSize: 12,
+                      style: theme.textTheme.labelMedium?.copyWith(
+                        color: theme.colorScheme.onPrimary,
                         fontWeight: FontWeight.bold,
-                        color: Colors.white,
                       ),
                     ),
                   ),
@@ -107,6 +105,19 @@ class ClientProfileScreen extends StatelessWidget {
             ),
             _buildProfileOption(
               context,
+              icon: Icons.receipt_long,
+              title: 'Pagos y Suscripciones',
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const ClientPaymentsSubscriptionsScreen(),
+                  ),
+                );
+              },
+            ),
+            _buildProfileOption(
+              context,
               icon: Icons.location_on,
               title: 'Mis Direcciones',
               onTap: () {
@@ -146,6 +157,80 @@ class ClientProfileScreen extends StatelessWidget {
             ),
             const SizedBox(height: 30),
             
+            // Supported Foundations Section
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Fundaciones que apoyas',
+                    style: theme.textTheme.titleLarge?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  GestureDetector(
+                    onTap: () {
+                      VitrinaData.setCategory('Educación y cultura');
+                      ProductService().loadMockProductsForCategory('Educación y cultura');
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const ClientPymeDetailScreen(),
+                        ),
+                      );
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: theme.cardColor,
+                        borderRadius: BorderRadius.circular(16),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: 0.05),
+                            blurRadius: 10,
+                            offset: const Offset(0, 4),
+                          ),
+                        ],
+                      ),
+                      child: Row(
+                        children: [
+                          const CircleAvatar(
+                            backgroundImage: AssetImage('assets/images/Logo los robles.jpg'),
+                            radius: 24,
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'Fundación Los Robles',
+                                  style: theme.textTheme.titleMedium?.copyWith(
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                                Text(
+                                  'Socio Activo',
+                                  style: theme.textTheme.bodySmall?.copyWith(
+                                    color: theme.colorScheme.primary,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          Icon(Icons.volunteer_activism, color: theme.colorScheme.secondary),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 24),
+
             // Supported Pymes Section
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 24.0),
@@ -154,56 +239,62 @@ class ClientProfileScreen extends StatelessWidget {
                 children: [
                   Text(
                     'Pymes que apoyas',
-                    style: GoogleFonts.poppins(
-                      fontSize: 18,
+                    style: theme.textTheme.titleLarge?.copyWith(
                       fontWeight: FontWeight.bold,
-                      color: Colors.black87,
                     ),
                   ),
                   const SizedBox(height: 16),
-                  Container(
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(16),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.05),
-                          blurRadius: 10,
-                          offset: const Offset(0, 4),
+                  GestureDetector(
+                    onTap: () {
+                      VitrinaData.setCategory('Alimentos y gastronomía');
+                      ProductService().loadMockProductsForCategory('Alimentos y gastronomía');
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const ClientPymeDetailScreen(),
                         ),
-                      ],
-                    ),
-                    child: Row(
-                      children: [
-                        const CircleAvatar(
-                          backgroundImage: NetworkImage('https://picsum.photos/id/1018/200/200'),
-                          radius: 24,
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                'Café Eclipse',
-                                style: GoogleFonts.poppins(
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 16,
-                                ),
-                              ),
-                              Text(
-                                '3 cupones canjeados',
-                                style: GoogleFonts.poppins(
-                                  color: Colors.grey[600],
-                                  fontSize: 12,
-                                ),
-                              ),
-                            ],
+                      );
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: theme.cardColor,
+                        borderRadius: BorderRadius.circular(16),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: 0.05),
+                            blurRadius: 10,
+                            offset: const Offset(0, 4),
                           ),
-                        ),
-                        const SupporterCounter(count: 128, isSmall: true),
-                      ],
+                        ],
+                      ),
+                      child: Row(
+                        children: [
+                          const CircleAvatar(
+                            backgroundImage: NetworkImage('https://picsum.photos/id/1018/200/200'),
+                            radius: 24,
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'Café Eclipse',
+                                  style: theme.textTheme.titleMedium?.copyWith(
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                                Text(
+                                  '3 cupones canjeados',
+                                  style: theme.textTheme.bodyMedium,
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SupporterCounter(count: 128, isSmall: true),
+                        ],
+                      ),
                     ),
                   ),
                 ],
@@ -214,7 +305,7 @@ class ClientProfileScreen extends StatelessWidget {
               context,
               icon: Icons.logout,
               title: 'Cerrar Sesión',
-              color: Colors.redAccent,
+              color: theme.colorScheme.error,
               onTap: () {
                 Navigator.of(context).pushAndRemoveUntil(
                   MaterialPageRoute(builder: (context) => const LoginScreen()),
@@ -233,27 +324,29 @@ class ClientProfileScreen extends StatelessWidget {
     required IconData icon,
     required String title,
     required VoidCallback onTap,
-    Color color = Colors.black87,
+    Color? color,
   }) {
+    final theme = Theme.of(context);
+    final effectiveColor = color ?? theme.colorScheme.onSurface;
+
     return ListTile(
       leading: Container(
         padding: const EdgeInsets.all(8),
         decoration: BoxDecoration(
-          color: color == Colors.redAccent 
-              ? Colors.redAccent.withOpacity(0.1) 
-              : Colors.grey.withOpacity(0.1),
+          color: effectiveColor == theme.colorScheme.error 
+              ? theme.colorScheme.error.withValues(alpha: 0.1) 
+              : theme.colorScheme.onSurface.withValues(alpha: 0.05),
           borderRadius: BorderRadius.circular(10),
         ),
-        child: Icon(icon, color: color),
+        child: Icon(icon, color: effectiveColor),
       ),
       title: Text(
         title,
-        style: GoogleFonts.poppins(
-          color: color,
-          fontSize: 16,
+        style: theme.textTheme.bodyLarge?.copyWith(
+          color: effectiveColor,
         ),
       ),
-      trailing: Icon(Icons.arrow_forward_ios, color: Colors.grey.withOpacity(0.5), size: 16),
+      trailing: Icon(Icons.arrow_forward_ios, color: theme.colorScheme.onSurface.withValues(alpha: 0.3), size: 16),
       onTap: onTap,
       contentPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
     );

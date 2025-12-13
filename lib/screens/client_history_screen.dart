@@ -7,17 +7,15 @@ class ClientHistoryScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF7F9FC),
       appBar: AppBar(
-        title: Text('Historial de Compras', style: GoogleFonts.poppins(fontWeight: FontWeight.bold)),
+        title: const Text('Historial de Compras'),
         elevation: 0,
-        backgroundColor: const Color(0xFF0056D2),
-        foregroundColor: Colors.white,
       ),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
           _buildHistoryItem(
+            context,
             'Café Eclipse',
             '28 Nov 2025',
             'Café de Grano 250g',
@@ -25,6 +23,7 @@ class ClientHistoryScreen extends StatelessWidget {
             'Completado',
           ),
           _buildHistoryItem(
+            context,
             'Panadería La Masa',
             '25 Nov 2025',
             'Pan Integral',
@@ -32,6 +31,7 @@ class ClientHistoryScreen extends StatelessWidget {
             'Completado',
           ),
            _buildHistoryItem(
+            context,
             'Artesanías Chile',
             '20 Nov 2025',
             'Taza de Cerámica',
@@ -43,7 +43,8 @@ class ClientHistoryScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildHistoryItem(String store, String date, String product, int price, String status) {
+  Widget _buildHistoryItem(BuildContext context, String store, String date, String product, int price, String status) {
+    final theme = Theme.of(context);
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
       padding: const EdgeInsets.all(16),
@@ -63,10 +64,10 @@ class ClientHistoryScreen extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: const Color(0xFFF7F9FC),
+              color: theme.colorScheme.surface,
               borderRadius: BorderRadius.circular(12),
             ),
-            child: const Icon(Icons.shopping_bag_outlined, color: Color(0xFF0056D2)),
+            child: Icon(Icons.shopping_bag_outlined, color: theme.colorScheme.primary),
           ),
           const SizedBox(width: 16),
           Expanded(
@@ -75,15 +76,15 @@ class ClientHistoryScreen extends StatelessWidget {
               children: [
                 Text(
                   store,
-                  style: GoogleFonts.poppins(fontWeight: FontWeight.bold, fontSize: 16),
+                  style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
                 ),
                 Text(
                   product,
-                  style: GoogleFonts.poppins(color: Colors.grey[600], fontSize: 14),
+                  style: theme.textTheme.bodyMedium,
                 ),
                 Text(
                   date,
-                  style: GoogleFonts.poppins(color: Colors.grey[400], fontSize: 12),
+                  style: theme.textTheme.bodySmall,
                 ),
               ],
             ),
@@ -93,18 +94,24 @@ class ClientHistoryScreen extends StatelessWidget {
             children: [
               Text(
                 '\$${price.toString()}',
-                style: GoogleFonts.poppins(fontWeight: FontWeight.bold, fontSize: 16, color: const Color(0xFF0056D2)),
+                style: theme.textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.bold,
+                  color: theme.colorScheme.primary,
+                ),
               ),
               const SizedBox(height: 4),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                 decoration: BoxDecoration(
-                  color: Colors.green.withOpacity(0.1),
+                  color: theme.colorScheme.secondary.withOpacity(0.1),
                   borderRadius: BorderRadius.circular(4),
                 ),
                 child: Text(
                   status,
-                  style: GoogleFonts.poppins(color: Colors.green, fontSize: 10, fontWeight: FontWeight.bold),
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: theme.colorScheme.secondary,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
               ),
             ],

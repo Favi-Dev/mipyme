@@ -24,14 +24,14 @@ class OfferData {
       title: 'Exclusivo App Soy Pro',
       description: '20% dcto. en Botas de Cuero',
       icon: Icons.star,
-      color: Colors.blueAccent,
+      color: const Color(0xFF386641), // Verde Hoja Profundo
     ),
     Offer(
       id: '2',
       title: 'Promo del Mes',
       description: 'Limpieza de calzado gratis',
       icon: Icons.local_offer,
-      color: Colors.orangeAccent,
+      color: const Color(0xFFA7C957), // Verde Claro
     ),
   ];
 }

@@ -1,4 +1,4 @@
-enum UserRole { client, pyme, admin }
+enum UserRole { client, pyme, foundation, admin }
 
 class AuthService {
   // Mock authentication
@@ -7,6 +7,8 @@ class AuthService {
 
     if (email == 'admin@soypyme.cl' && password == 'admin123') {
       return UserRole.admin;
+    } else if (email.contains('fundacion') && password == 'fundacion123') {
+      return UserRole.foundation;
     } else if (email.contains('pyme') && password == 'pyme123') {
       return UserRole.pyme;
     } else if (password == 'user123') {

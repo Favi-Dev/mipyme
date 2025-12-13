@@ -6,22 +6,23 @@ class AdminDashboardScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Scaffold(
-      backgroundColor: const Color(0xFFF7F9FC),
+      backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: theme.colorScheme.surface,
         elevation: 0,
         title: Text(
           'Panel de Administración',
-          style: GoogleFonts.poppins(
-            color: Colors.black87,
+          style: theme.textTheme.titleLarge?.copyWith(
+            color: theme.colorScheme.onSurface,
             fontWeight: FontWeight.bold,
           ),
         ),
-        iconTheme: const IconThemeData(color: Colors.black87),
+        iconTheme: IconThemeData(color: theme.colorScheme.onSurface),
         actions: [
           IconButton(
-            icon: const Icon(Icons.refresh, color: Colors.black87),
+            icon: Icon(Icons.refresh, color: theme.colorScheme.onSurface),
             onPressed: () {},
           ),
         ],
@@ -33,9 +34,8 @@ class AdminDashboardScreen extends StatelessWidget {
           children: [
             Text(
               'Resumen Global',
-              style: GoogleFonts.poppins(
-                color: Colors.black87,
-                fontSize: 16,
+              style: theme.textTheme.titleMedium?.copyWith(
+                color: theme.colorScheme.onSurface,
                 fontWeight: FontWeight.w600,
               ),
             ),
@@ -44,19 +44,21 @@ class AdminDashboardScreen extends StatelessWidget {
               children: [
                 Expanded(
                   child: _buildStatCard(
+                    context,
                     'Usuarios',
                     '1,250',
                     Icons.people,
-                    const Color(0xFFE63946),
+                    theme.colorScheme.secondary,
                   ),
                 ),
                 const SizedBox(width: 16),
                 Expanded(
                   child: _buildStatCard(
+                    context,
                     'Pymes',
                     '340',
                     Icons.store,
-                    const Color(0xFF0056D2),
+                    theme.colorScheme.primary,
                   ),
                 ),
               ],
@@ -66,19 +68,21 @@ class AdminDashboardScreen extends StatelessWidget {
               children: [
                 Expanded(
                   child: _buildStatCard(
+                    context,
                     'Transacciones',
                     '8,900',
                     Icons.receipt_long,
-                    const Color(0xFF333333),
+                    theme.colorScheme.onSurface,
                   ),
                 ),
                 const SizedBox(width: 16),
                 Expanded(
                   child: _buildStatCard(
+                    context,
                     'Reportes',
                     '12',
                     Icons.warning,
-                    Colors.redAccent,
+                    theme.colorScheme.error,
                   ),
                 ),
               ],
@@ -86,26 +90,28 @@ class AdminDashboardScreen extends StatelessWidget {
             const SizedBox(height: 32),
             Text(
               'Actividad Reciente',
-              style: GoogleFonts.poppins(
-                color: Colors.black87,
-                fontSize: 16,
+              style: theme.textTheme.titleMedium?.copyWith(
+                color: theme.colorScheme.onSurface,
                 fontWeight: FontWeight.w600,
               ),
             ),
             const SizedBox(height: 16),
             _buildActivityItem(
+              context,
               'Nueva Pyme registrada: "Café Central"',
               'Hace 5 min',
               Icons.add_business,
               Colors.green,
             ),
             _buildActivityItem(
+              context,
               'Usuario reportado: @juanperez',
               'Hace 20 min',
               Icons.report,
               Colors.orange,
             ),
             _buildActivityItem(
+              context,
               'Soporte solicitado: "Error en login"',
               'Hace 1 hora',
               Icons.support_agent,
@@ -117,11 +123,12 @@ class AdminDashboardScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildStatCard(String title, String value, IconData icon, Color color) {
+  Widget _buildStatCard(BuildContext context, String title, String value, IconData icon, Color color) {
+    final theme = Theme.of(context);
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: theme.cardColor,
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
@@ -145,17 +152,15 @@ class AdminDashboardScreen extends StatelessWidget {
           const SizedBox(height: 16),
           Text(
             value,
-            style: GoogleFonts.poppins(
-              color: Colors.black87,
-              fontSize: 24,
+            style: theme.textTheme.headlineSmall?.copyWith(
+              color: theme.colorScheme.onSurface,
               fontWeight: FontWeight.bold,
             ),
           ),
           Text(
             title,
-            style: GoogleFonts.poppins(
-              color: Colors.grey[600],
-              fontSize: 14,
+            style: theme.textTheme.bodyMedium?.copyWith(
+              color: theme.colorScheme.onSurfaceVariant,
             ),
           ),
         ],
@@ -164,12 +169,13 @@ class AdminDashboardScreen extends StatelessWidget {
   }
 
   Widget _buildActivityItem(
-      String title, String time, IconData icon, Color color) {
+      BuildContext context, String title, String time, IconData icon, Color color) {
+    final theme = Theme.of(context);
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: theme.cardColor,
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
@@ -196,17 +202,15 @@ class AdminDashboardScreen extends StatelessWidget {
               children: [
                 Text(
                   title,
-                  style: GoogleFonts.poppins(
-                    color: Colors.black87,
-                    fontSize: 14,
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    color: theme.colorScheme.onSurface,
                     fontWeight: FontWeight.w500,
                   ),
                 ),
                 Text(
                   time,
-                  style: GoogleFonts.poppins(
-                    color: Colors.grey[500],
-                    fontSize: 12,
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: theme.colorScheme.onSurfaceVariant,
                   ),
                 ),
               ],

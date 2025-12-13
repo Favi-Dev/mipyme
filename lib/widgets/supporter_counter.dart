@@ -13,6 +13,7 @@ class SupporterCounter extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -21,7 +22,7 @@ class SupporterCounter extends StatelessWidget {
           style: GoogleFonts.poppins(
             fontWeight: FontWeight.bold,
             fontSize: isSmall ? 14 : 18,
-            color: const Color(0xFF0056D2),
+            color: theme.colorScheme.primary,
           ),
         ),
         const SizedBox(width: 4),
@@ -30,13 +31,13 @@ class SupporterCounter extends StatelessWidget {
           children: [
             Icon(
               Icons.favorite,
-              color: const Color(0xFF0056D2),
+              color: theme.colorScheme.primary,
               size: isSmall ? 32 : 40,
             ),
             Text(
               _formatCount(count),
               style: GoogleFonts.poppins(
-                color: Colors.white,
+                color: theme.colorScheme.onPrimary,
                 fontWeight: FontWeight.bold,
                 fontSize: isSmall ? 10 : 12,
               ),

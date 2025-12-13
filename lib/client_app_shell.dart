@@ -19,6 +19,7 @@ class _ClientAppShellState extends State<ClientAppShell> {
 
   final List<Widget> _screens = [
     const ClientHomeScreen(),
+    const ClientHomeScreen(showFoundationsOnly: true),
     const ClientMapScreen(),
     const ClientCartScreen(),
     const ClientQrScreen(),
@@ -38,13 +39,14 @@ class _ClientAppShellState extends State<ClientAppShell> {
       body: _screens[_selectedIndex],
       bottomNavigationBar: BottomNavigationBar(
         type: BottomNavigationBarType.fixed,
-        backgroundColor: Colors.white, // Light background for nav
-        selectedItemColor: const Color(0xFF0056D2), // Playful Red
+        backgroundColor: Theme.of(context).cardColor,
+        selectedItemColor: Theme.of(context).colorScheme.primary,
         unselectedItemColor: Colors.grey,
         currentIndex: _selectedIndex,
         onTap: _onItemTapped,
         items: [
           const BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Inicio'),
+          const BottomNavigationBarItem(icon: Icon(Icons.volunteer_activism), label: 'Fundaciones'),
           const BottomNavigationBarItem(icon: Icon(Icons.map), label: 'Mapa'),
           BottomNavigationBarItem(
             icon: Consumer<CartService>(

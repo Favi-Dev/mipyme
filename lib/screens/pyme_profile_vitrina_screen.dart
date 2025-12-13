@@ -20,11 +20,29 @@ class _PymeProfileVitrinaScreenState extends State<PymeProfileVitrinaScreen> {
   final ScrollController _scrollController = ScrollController();
   final ProductService _productService = ProductService();
   List<Product> _products = [];
+  List<String> _availableCategories = [];
 
   @override
   void initState() {
     super.initState();
     _loadProducts();
+    _initializeCategories();
+  }
+
+  void _initializeCategories() {
+    if (VitrinaData.isFoundationUser) {
+      _availableCategories = ['Educación y cultura'];
+    } else {
+      _availableCategories = [
+        'Comercio/retail',
+        'Alimentos y gastronomía',
+        'Servicios profesionales',
+        'Salud, belleza y bienestar',
+        'Oficios y manufactura',
+        'Transporte y logística',
+        'Metamorfosis',
+      ];
+    }
   }
 
   void _loadProducts() {
@@ -68,13 +86,7 @@ class _PymeProfileVitrinaScreenState extends State<PymeProfileVitrinaScreen> {
               decoration: BoxDecoration(color: Color(0xFF0056D2)),
               child: Text('Cambiar Categoría (Demo)', style: TextStyle(color: Colors.white, fontSize: 24)),
             ),
-            _buildCategoryTile('Comercio/retail'),
-            _buildCategoryTile('Alimentos y gastronomía'),
-            _buildCategoryTile('Servicios profesionales'),
-            _buildCategoryTile('Salud, belleza y bienestar'),
-            _buildCategoryTile('Oficios y manufactura'),
-            _buildCategoryTile('Educación y cultura'),
-            _buildCategoryTile('Transporte y logística'),
+            ..._availableCategories.map((category) => _buildCategoryTile(category)),
           ],
         ),
       ),

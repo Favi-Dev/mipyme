@@ -5,6 +5,7 @@ import '../client_app_shell.dart';
 import '../pyme_app_shell.dart';
 import '../admin_app_shell.dart';
 import 'register_screen.dart';
+import '../models/vitrina_data.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -38,6 +39,11 @@ class _LoginScreenState extends State<LoginScreen> {
           destination = const ClientAppShell();
           break;
         case UserRole.pyme:
+          VitrinaData.isFoundationUser = false;
+          destination = const PymeAppShell();
+          break;
+        case UserRole.foundation:
+          VitrinaData.isFoundationUser = true;
           destination = const PymeAppShell();
           break;
         case UserRole.admin:
@@ -61,75 +67,39 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Scaffold(
-      backgroundColor: const Color(0xFFF7F9FC),
+      backgroundColor: const Color(0xFFFEF2DA),
       body: Center(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(24.0),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Icon(Icons.coffee, size: 80, color: Color(0xFF0056D2)),
+              Image.asset('assets/images/LOGOSOYPLUS.jpg', height: 200),
               const SizedBox(height: 24),
-              RichText(
-                text: TextSpan(
-                  style: GoogleFonts.poppins(
-                    fontSize: 32,
-                    fontWeight: FontWeight.bold,
-                  ),
-                  children: [
-                    const TextSpan(
-                      text: 'Soy',
-                      style: TextStyle(color: Colors.black87),
-                    ),
-                    const TextSpan(
-                      text: 'Plus',
-                      style: TextStyle(color: Color(0xFF0056D2)),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 8),
               Text(
                 'Únete a SoyPlus',
-                style: GoogleFonts.poppins(
-                  color: Colors.grey[600],
-                  fontSize: 16,
-                ),
+                style: theme.textTheme.bodyMedium,
               ),
               const SizedBox(height: 48),
               TextField(
                 controller: _emailController,
-                style: const TextStyle(color: Colors.black87),
-                decoration: InputDecoration(
+                decoration: const InputDecoration(
                   labelText: 'Correo Electrónico',
-                  labelStyle: TextStyle(color: Colors.grey[600]),
-                  prefixIcon: const Icon(Icons.email, color: Color(0xFF0056D2)),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide(color: Colors.grey[300]!),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: const BorderSide(color: Color(0xFF0056D2)),
-                  ),
-                  filled: true,
-                  fillColor: Colors.white,
+                  prefixIcon: Icon(Icons.email),
                 ),
               ),
               const SizedBox(height: 16),
               TextField(
                 controller: _passwordController,
                 obscureText: _obscurePassword,
-                style: const TextStyle(color: Colors.black87),
                 decoration: InputDecoration(
                   labelText: 'Contraseña',
-                  labelStyle: TextStyle(color: Colors.grey[600]),
-                  prefixIcon: const Icon(Icons.lock, color: Color(0xFF0056D2)),
+                  prefixIcon: const Icon(Icons.lock),
                   suffixIcon: IconButton(
                     icon: Icon(
                       _obscurePassword ? Icons.visibility : Icons.visibility_off,
-                      color: Colors.grey[500],
                     ),
                     onPressed: () {
                       setState(() {
@@ -137,16 +107,6 @@ class _LoginScreenState extends State<LoginScreen> {
                       });
                     },
                   ),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide(color: Colors.grey[300]!),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: const BorderSide(color: Color(0xFF0056D2)),
-                  ),
-                  filled: true,
-                  fillColor: Colors.white,
                 ),
               ),
               const SizedBox(height: 24),
@@ -155,29 +115,16 @@ class _LoginScreenState extends State<LoginScreen> {
                 height: 50,
                 child: ElevatedButton(
                   onPressed: _isLoading ? null : _login,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF0056D2),
-                    foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
                   child: _isLoading
-                      ? const SizedBox(
+                      ? SizedBox(
                           width: 24,
                           height: 24,
                           child: CircularProgressIndicator(
                             strokeWidth: 2,
-                            color: Colors.white,
+                            color: theme.colorScheme.onPrimary,
                           ),
                         )
-                      : Text(
-                          'Iniciar Sesión',
-                          style: GoogleFonts.poppins(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
+                      : const Text('Iniciar Sesión'),
                 ),
               ),
               const SizedBox(height: 24),
@@ -186,7 +133,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 children: [
                   Text(
                     '¿No tienes cuenta? ',
-                    style: GoogleFonts.poppins(color: Colors.grey[600]),
+                    style: theme.textTheme.bodyMedium,
                   ),
                   TextButton(
                     onPressed: () {
@@ -198,8 +145,8 @@ class _LoginScreenState extends State<LoginScreen> {
                     },
                     child: Text(
                       'Regístrate',
-                      style: GoogleFonts.poppins(
-                        color: const Color(0xFF0056D2),
+                      style: theme.textTheme.labelLarge?.copyWith(
+                        color: theme.colorScheme.primary,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
@@ -207,36 +154,100 @@ class _LoginScreenState extends State<LoginScreen> {
                 ],
               ),
               const SizedBox(height: 20),
-              // Hint for demo
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: Colors.grey[200],
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Column(
-                  children: [
-                    Text(
-                      'Credenciales de Prueba:',
-                      style: GoogleFonts.poppins(
-                          color: Colors.grey[600], fontSize: 12),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      'Pyme: pyme@negocio.cl / pyme123',
-                      style: GoogleFonts.poppins(
-                          color: Colors.grey[500], fontSize: 10),
-                    ),
-                    Text(
-                      'Cliente: usuario@mail.com / user123',
-                      style: GoogleFonts.poppins(
-                          color: Colors.grey[500], fontSize: 10),
-                    ),
-                  ],
-                ),
+              // Quick Access Demo Buttons
+              Column(
+                children: [
+                  Text(
+                    'Accesos Rápidos (Demo)',
+                    style: theme.textTheme.bodySmall,
+                  ),
+                  const SizedBox(height: 12),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      _buildQuickAccessButton(
+                        context,
+                        'Cliente',
+                        Icons.person,
+                        theme.colorScheme.primary,
+                        () => Navigator.pushReplacement(
+                          context,
+                          MaterialPageRoute(builder: (context) => const ClientAppShell()),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      _buildQuickAccessButton(
+                        context,
+                        'Pyme',
+                        Icons.storefront,
+                        theme.colorScheme.secondary,
+                        () {
+                          VitrinaData.setCategory('Comercio/retail');
+                          VitrinaData.isFoundationUser = false;
+                          Navigator.pushReplacement(
+                            context,
+                            MaterialPageRoute(builder: (context) => const PymeAppShell()),
+                          );
+                        },
+                      ),
+                      const SizedBox(width: 12),
+                      _buildQuickAccessButton(
+                        context,
+                        'Fundación',
+                        Icons.volunteer_activism,
+                        theme.colorScheme.tertiary,
+                        () {
+                          VitrinaData.setCategory('Educación y cultura');
+                          VitrinaData.isFoundationUser = true;
+                          Navigator.pushReplacement(
+                            context,
+                            MaterialPageRoute(builder: (context) => const PymeAppShell()),
+                          );
+                        },
+                      ),
+                    ],
+                  ),
+                ],
               ),
             ],
           ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildQuickAccessButton(BuildContext context, String label, IconData icon, Color color, VoidCallback onTap) {
+    final theme = Theme.of(context);
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
+        width: 80,
+        padding: const EdgeInsets.symmetric(vertical: 12),
+        decoration: BoxDecoration(
+          color: theme.cardColor,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: color.withOpacity(0.3)),
+          boxShadow: [
+            BoxShadow(
+              color: color.withOpacity(0.1),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Column(
+          children: [
+            Icon(icon, color: color, size: 24),
+            const SizedBox(height: 4),
+            Text(
+              label,
+              style: theme.textTheme.labelSmall?.copyWith(
+                color: color,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ],
         ),
       ),
     );

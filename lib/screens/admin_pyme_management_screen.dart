@@ -6,26 +6,27 @@ class AdminPymeManagementScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return DefaultTabController(
       length: 2,
       child: Scaffold(
-        backgroundColor: const Color(0xFFF7F9FC),
+        backgroundColor: theme.scaffoldBackgroundColor,
         appBar: AppBar(
-          backgroundColor: Colors.white,
+          backgroundColor: theme.colorScheme.surface,
           elevation: 0,
           title: Text(
             'Gestión de Pymes',
-            style: GoogleFonts.poppins(
-              color: Colors.black87,
+            style: theme.textTheme.titleLarge?.copyWith(
+              color: theme.colorScheme.onSurface,
               fontWeight: FontWeight.bold,
             ),
           ),
-          iconTheme: const IconThemeData(color: Colors.black87),
-          bottom: const TabBar(
-            indicatorColor: Color(0xFF0056D2),
-            labelColor: Color(0xFF0056D2),
-            unselectedLabelColor: Colors.grey,
-            tabs: [
+          iconTheme: IconThemeData(color: theme.colorScheme.onSurface),
+          bottom: TabBar(
+            indicatorColor: theme.colorScheme.primary,
+            labelColor: theme.colorScheme.primary,
+            unselectedLabelColor: theme.colorScheme.onSurfaceVariant,
+            tabs: const [
               Tab(text: 'Activas'),
               Tab(text: 'Pendientes'),
             ],
@@ -33,29 +34,30 @@ class AdminPymeManagementScreen extends StatelessWidget {
         ),
         body: TabBarView(
           children: [
-            _buildPymeList(active: true),
-            _buildPymeList(active: false),
+            _buildPymeList(context, active: true),
+            _buildPymeList(context, active: false),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildPymeList({required bool active}) {
+  Widget _buildPymeList(BuildContext context, {required bool active}) {
     return ListView.builder(
       padding: const EdgeInsets.all(16),
       itemCount: 5,
       itemBuilder: (context, index) {
-        return _buildPymeTile(index, active);
+        return _buildPymeTile(context, index, active);
       },
     );
   }
 
-  Widget _buildPymeTile(int index, bool active) {
+  Widget _buildPymeTile(BuildContext context, int index, bool active) {
+    final theme = Theme.of(context);
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: theme.cardColor,
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
@@ -70,7 +72,7 @@ class AdminPymeManagementScreen extends StatelessWidget {
           width: 50,
           height: 50,
           decoration: BoxDecoration(
-            color: Colors.grey[200],
+            color: theme.colorScheme.surfaceContainerHighest,
             borderRadius: BorderRadius.circular(8),
             image: DecorationImage(
               image: NetworkImage('https://picsum.photos/seed/${index + 50}/100/100'),
@@ -80,23 +82,23 @@ class AdminPymeManagementScreen extends StatelessWidget {
         ),
         title: Text(
           active ? 'Pyme Activa ${index + 1}' : 'Solicitud Pyme ${index + 1}',
-          style: GoogleFonts.poppins(color: Colors.black87, fontWeight: FontWeight.w600),
+          style: theme.textTheme.titleMedium?.copyWith(color: theme.colorScheme.onSurface, fontWeight: FontWeight.w600),
         ),
         subtitle: Text(
           'Categoría • Dirección',
-          style: GoogleFonts.poppins(color: Colors.grey[600], fontSize: 12),
+          style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurfaceVariant),
         ),
         trailing: active
-            ? const Icon(Icons.check_circle, color: Color(0xFFE63946))
+            ? Icon(Icons.check_circle, color: theme.colorScheme.secondary)
             : Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   IconButton(
-                    icon: const Icon(Icons.check, color: Color(0xFFE63946)),
+                    icon: Icon(Icons.check, color: theme.colorScheme.secondary),
                     onPressed: () {},
                   ),
                   IconButton(
-                    icon: const Icon(Icons.close, color: Color(0xFF0056D2)),
+                    icon: Icon(Icons.close, color: theme.colorScheme.error),
                     onPressed: () {},
                   ),
                 ],

@@ -6,32 +6,33 @@ class AdminUserManagementScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Scaffold(
-      backgroundColor: const Color(0xFFF7F9FC),
+      backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: theme.colorScheme.surface,
         elevation: 0,
         title: Text(
           'Gestión de Usuarios',
-          style: GoogleFonts.poppins(
-            color: Colors.black87,
+          style: theme.textTheme.titleLarge?.copyWith(
+            color: theme.colorScheme.onSurface,
             fontWeight: FontWeight.bold,
           ),
         ),
-        iconTheme: const IconThemeData(color: Colors.black87),
+        iconTheme: IconThemeData(color: theme.colorScheme.onSurface),
       ),
       body: Column(
         children: [
           Padding(
             padding: const EdgeInsets.all(16.0),
             child: TextField(
-              style: const TextStyle(color: Colors.black87),
+              style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.onSurface),
               decoration: InputDecoration(
                 hintText: 'Buscar usuario...',
-                hintStyle: TextStyle(color: Colors.grey[500]),
-                prefixIcon: const Icon(Icons.search, color: Colors.grey),
+                hintStyle: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+                prefixIcon: Icon(Icons.search, color: theme.colorScheme.onSurfaceVariant),
                 filled: true,
-                fillColor: Colors.white,
+                fillColor: theme.cardColor,
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
                   borderSide: BorderSide.none,
@@ -42,7 +43,7 @@ class AdminUserManagementScreen extends StatelessWidget {
                 ),
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
-                  borderSide: const BorderSide(color: Color(0xFF0056D2)),
+                  borderSide: BorderSide(color: theme.colorScheme.primary),
                 ),
               ),
             ),
@@ -51,7 +52,7 @@ class AdminUserManagementScreen extends StatelessWidget {
             child: ListView.builder(
               itemCount: 10,
               itemBuilder: (context, index) {
-                return _buildUserTile(index);
+                return _buildUserTile(context, index);
               },
             ),
           ),
@@ -60,11 +61,12 @@ class AdminUserManagementScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildUserTile(int index) {
+  Widget _buildUserTile(BuildContext context, int index) {
+    final theme = Theme.of(context);
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: theme.cardColor,
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
@@ -76,30 +78,30 @@ class AdminUserManagementScreen extends StatelessWidget {
       ),
       child: ListTile(
         leading: CircleAvatar(
-          backgroundColor: const Color(0xFFE63946),
+          backgroundColor: theme.colorScheme.secondary,
           child: Text(
             'U${index + 1}',
-            style: const TextStyle(color: Colors.white),
+            style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.onSecondary),
           ),
         ),
         title: Text(
           'Usuario ${index + 1}',
-          style: GoogleFonts.poppins(color: Colors.black87),
+          style: theme.textTheme.titleMedium?.copyWith(color: theme.colorScheme.onSurface),
         ),
         subtitle: Text(
           'usuario${index + 1}@email.com',
-          style: GoogleFonts.poppins(color: Colors.grey[600], fontSize: 12),
+          style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurfaceVariant),
         ),
         trailing: PopupMenuButton(
-          icon: const Icon(Icons.more_vert, color: Colors.grey),
+          icon: Icon(Icons.more_vert, color: theme.colorScheme.onSurfaceVariant),
           itemBuilder: (context) => [
-            const PopupMenuItem(
+            PopupMenuItem(
               value: 'ban',
-              child: Text('Suspender Cuenta'),
+              child: Text('Suspender Cuenta', style: theme.textTheme.bodyMedium),
             ),
-            const PopupMenuItem(
+            PopupMenuItem(
               value: 'details',
-              child: Text('Ver Detalles'),
+              child: Text('Ver Detalles', style: theme.textTheme.bodyMedium),
             ),
           ],
         ),

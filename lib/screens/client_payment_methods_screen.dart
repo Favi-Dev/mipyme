@@ -25,6 +25,7 @@ class _ClientPaymentMethodsScreenState extends State<ClientPaymentMethodsScreen>
   ];
 
   void _addNewCard() {
+    final theme = Theme.of(context);
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -39,33 +40,34 @@ class _ClientPaymentMethodsScreenState extends State<ClientPaymentMethodsScreen>
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
+            Text(
               'Agregar Nueva Tarjeta',
-              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+              style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 16),
-            const TextField(
+            TextField(
               decoration: InputDecoration(
                 labelText: 'Número de Tarjeta',
-                border: OutlineInputBorder(),
-                prefixIcon: Icon(Icons.credit_card),
+                border: const OutlineInputBorder(),
+                focusedBorder: OutlineInputBorder(borderSide: BorderSide(color: theme.colorScheme.primary)),
+                prefixIcon: const Icon(Icons.credit_card),
               ),
               keyboardType: TextInputType.number,
             ),
             const SizedBox(height: 12),
-            Row(
+            const Row(
               children: [
                 Expanded(
-                  child: const TextField(
+                  child: TextField(
                     decoration: InputDecoration(
                       labelText: 'Expiración (MM/YY)',
                       border: OutlineInputBorder(),
                     ),
                   ),
                 ),
-                const SizedBox(width: 12),
+                SizedBox(width: 12),
                 Expanded(
-                  child: const TextField(
+                  child: TextField(
                     decoration: InputDecoration(
                       labelText: 'CVV',
                       border: OutlineInputBorder(),
@@ -94,8 +96,8 @@ class _ClientPaymentMethodsScreenState extends State<ClientPaymentMethodsScreen>
                   );
                 },
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF0056D2),
-                  foregroundColor: Colors.white,
+                  backgroundColor: theme.colorScheme.primary,
+                  foregroundColor: theme.colorScheme.onPrimary,
                   padding: const EdgeInsets.symmetric(vertical: 16),
                 ),
                 child: const Text('Guardar Tarjeta'),
@@ -110,21 +112,22 @@ class _ClientPaymentMethodsScreenState extends State<ClientPaymentMethodsScreen>
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Scaffold(
       appBar: AppBar(
         title: const Text('Métodos de Pago'),
-        backgroundColor: const Color(0xFF0056D2),
-        foregroundColor: Colors.white,
+        backgroundColor: theme.colorScheme.primary,
+        foregroundColor: theme.colorScheme.onPrimary,
       ),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
-          const Text(
+          Text(
             'Tus Tarjetas',
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 16),
-          ..._paymentMethods.map((method) => _buildPaymentCard(method)),
+          ..._paymentMethods.map((method) => _buildPaymentCard(context, method)),
           const SizedBox(height: 24),
           OutlinedButton.icon(
             onPressed: _addNewCard,
@@ -132,8 +135,8 @@ class _ClientPaymentMethodsScreenState extends State<ClientPaymentMethodsScreen>
             label: const Text('Agregar Método de Pago'),
             style: OutlinedButton.styleFrom(
               padding: const EdgeInsets.symmetric(vertical: 16),
-              side: const BorderSide(color: Color(0xFF0056D2)),
-              foregroundColor: const Color(0xFF0056D2),
+              side: BorderSide(color: theme.colorScheme.primary),
+              foregroundColor: theme.colorScheme.primary,
             ),
           ),
         ],
@@ -141,7 +144,8 @@ class _ClientPaymentMethodsScreenState extends State<ClientPaymentMethodsScreen>
     );
   }
 
-  Widget _buildPaymentCard(Map<String, dynamic> method) {
+  Widget _buildPaymentCard(BuildContext context, Map<String, dynamic> method) {
+    final theme = Theme.of(context);
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
       elevation: 2,
@@ -149,15 +153,15 @@ class _ClientPaymentMethodsScreenState extends State<ClientPaymentMethodsScreen>
       child: ListTile(
         leading: Icon(
           Icons.credit_card,
-          color: method['isDefault'] ? const Color(0xFF0056D2) : Colors.grey,
+          color: method['isDefault'] ? theme.colorScheme.primary : theme.colorScheme.onSurfaceVariant,
           size: 32,
         ),
-        title: Text(method['type']),
-        subtitle: Text('${method['number']} • Exp: ${method['expiry']}'),
+        title: Text(method['type'], style: theme.textTheme.bodyLarge),
+        subtitle: Text('${method['number']} • Exp: ${method['expiry']}', style: theme.textTheme.bodyMedium),
         trailing: method['isDefault']
-            ? const Chip(
-                label: Text('Principal', style: TextStyle(color: Colors.white, fontSize: 10)),
-                backgroundColor: Color(0xFFE63946),
+            ? Chip(
+                label: Text('Principal', style: theme.textTheme.labelSmall?.copyWith(color: theme.colorScheme.onSecondary)),
+                backgroundColor: theme.colorScheme.secondary,
               )
             : PopupMenuButton(
                 itemBuilder: (context) => [

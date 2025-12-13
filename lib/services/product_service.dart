@@ -91,6 +91,7 @@ class ProductService {
             code: 'LEG001',
             stock: 10,
             category: 'Servicios profesionales',
+            isService: true,
             customAttributes: {'modalidad': 'Online', 'duracion': '1 hora'},
           ),
           Product(
@@ -103,6 +104,7 @@ class ProductService {
             code: 'LEG002',
             stock: 5,
             category: 'Servicios profesionales',
+            isService: true,
             customAttributes: {'modalidad': 'Remoto', 'duracion': '3 días hábiles'},
           ),
         ]);
@@ -159,6 +161,7 @@ class ProductService {
             code: 'SER001',
             stock: 5,
             category: 'Oficios y manufactura',
+            isService: true,
             customAttributes: {'tiempo_entrega': '1 semana', 'garantia': '6 meses'},
           ),
         ]);
@@ -175,6 +178,7 @@ class ProductService {
             code: 'EDU001',
             stock: 50,
             category: 'Educación y cultura',
+            isService: true,
             customAttributes: {
               'nivel': 'Básico', 
               'horario': '10:00 - 12:00',
@@ -192,6 +196,7 @@ class ProductService {
             code: 'EDU002',
             stock: 15,
             category: 'Educación y cultura',
+            isService: true,
             customAttributes: {'nivel': 'Intermedio', 'horario': 'Sábados 15:00'},
           ),
         ]);
@@ -208,6 +213,7 @@ class ProductService {
             code: 'FLE001',
             stock: 50,
             category: 'Transporte y logística',
+            isService: true,
             customAttributes: {'capacidad': '500kg', 'cobertura': 'Santiago Centro'},
           ),
           Product(
@@ -220,6 +226,7 @@ class ProductService {
             code: 'MUD001',
             stock: 20,
             category: 'Transporte y logística',
+            isService: true,
             customAttributes: {'capacidad': 'Camión 3/4', 'cobertura': 'Región Metropolitana'},
           ),
         ]);
@@ -269,6 +276,17 @@ class ProductService {
 
   void addProduct(Product product) {
     _products.add(product);
+  }
+
+  void updateProduct(Product product) {
+    final index = _products.indexWhere((p) => p.id == product.id);
+    if (index != -1) {
+      _products[index] = product;
+    }
+  }
+
+  void deleteProduct(String id) {
+    _products.removeWhere((p) => p.id == id);
   }
 
   List<String> getCategories() {

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../services/product_service.dart';
 import '../models/product.dart';
+import '../models/vitrina_data.dart';
 import 'pyme_add_product_screen.dart';
 
 class PymeProductsScreen extends StatefulWidget {
@@ -66,40 +67,50 @@ class _PymeProductsScreenState extends State<PymeProductsScreen> {
             ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () async {
-          // Show dialog to choose Product or Service
-          final bool? isService = await showDialog<bool>(
-            context: context,
-            builder: (context) => AlertDialog(
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-              title: Text('¿Qué deseas agregar?', style: GoogleFonts.poppins(fontWeight: FontWeight.bold)),
-              content: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  ListTile(
-                    leading: const Icon(Icons.inventory_2, color: Color(0xFF0056D2)),
-                    title: Text('Producto', style: GoogleFonts.poppins(fontWeight: FontWeight.w600)),
-                    subtitle: Text('Artículo físico con stock', style: GoogleFonts.poppins(fontSize: 12)),
-                    onTap: () => Navigator.pop(context, false),
-                  ),
-                  const Divider(),
-                  ListTile(
-                    leading: const Icon(Icons.calendar_today, color: Color(0xFF0056D2)),
-                    title: Text('Servicio', style: GoogleFonts.poppins(fontWeight: FontWeight.w600)),
-                    subtitle: Text('Actividad con reserva de hora', style: GoogleFonts.poppins(fontSize: 12)),
-                    onTap: () => Navigator.pop(context, true),
-                  ),
-                ],
-              ),
-            ),
-          );
-
-          if (isService != null) {
+          if (VitrinaData.isFoundation) {
+            // Foundations can only add Products here (Events are in a separate tab)
             await Navigator.push(
               context,
               MaterialPageRoute(
-                  builder: (context) => PymeAddProductScreen(isService: isService)),
+                  builder: (context) => const PymeAddProductScreen(isService: false)),
             );
             _loadProducts();
+          } else {
+            // Regular Pymes can choose between Product and Service
+            final bool? isService = await showDialog<bool>(
+              context: context,
+              builder: (context) => AlertDialog(
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                title: Text('¿Qué deseas agregar?', style: GoogleFonts.poppins(fontWeight: FontWeight.bold)),
+                content: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    ListTile(
+                      leading: const Icon(Icons.inventory_2, color: Color(0xFF0056D2)),
+                      title: Text('Producto', style: GoogleFonts.poppins(fontWeight: FontWeight.w600)),
+                      subtitle: Text('Artículo físico con stock', style: GoogleFonts.poppins(fontSize: 12)),
+                      onTap: () => Navigator.pop(context, false),
+                    ),
+                    const Divider(),
+                    ListTile(
+                      leading: const Icon(Icons.calendar_today, color: Color(0xFF0056D2)),
+                      title: Text('Servicio', style: GoogleFonts.poppins(fontWeight: FontWeight.w600)),
+                      subtitle: Text('Actividad con reserva de hora', style: GoogleFonts.poppins(fontSize: 12)),
+                      onTap: () => Navigator.pop(context, true),
+                    ),
+                  ],
+                ),
+              ),
+            );
+
+            if (isService != null) {
+              await Navigator.push(
+                context,
+                MaterialPageRoute(
+                    builder: (context) => PymeAddProductScreen(isService: isService)),
+              );
+              _loadProducts();
+            }
           }
         },
         backgroundColor: const Color(0xFF0056D2),
@@ -177,14 +188,51 @@ class _PymeProductsScreenState extends State<PymeProductsScreen> {
                               overflow: TextOverflow.ellipsis,
                             ),
                           ),
-                          Container(
-                            padding: const EdgeInsets.all(4),
-                            decoration: BoxDecoration(
-                              color: Colors.grey[100],
-                              borderRadius: BorderRadius.circular(8),
+                          GestureDetector(
+                            onTap: () {
+                              showModalBottomSheet(
+                                context: context,
+                                shape: const RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+                                ),
+                                builder: (context) => Container(
+                                  padding: const EdgeInsets.all(24),
+                                  child: Column(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      ListTile(
+                                        leading: const Icon(Icons.edit, color: Colors.blue),
+                                        title: Text('Editar', style: GoogleFonts.poppins()),
+                                        onTap: () {
+                                          Navigator.pop(context);
+                                          // TODO: Navigate to edit screen
+                                        },
+                                      ),
+                                      ListTile(
+                                        leading: const Icon(Icons.delete, color: Colors.red),
+                                        title: Text('Eliminar', style: GoogleFonts.poppins()),
+                                        onTap: () {
+                                          Navigator.pop(context);
+                                          // TODO: Implement delete logic
+                                          ScaffoldMessenger.of(context).showSnackBar(
+                                            const SnackBar(content: Text('Producto eliminado')),
+                                          );
+                                        },
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              );
+                            },
+                            child: Container(
+                              padding: const EdgeInsets.all(4),
+                              decoration: BoxDecoration(
+                                color: Colors.grey[100],
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: const Icon(Icons.more_vert,
+                                  size: 20, color: Colors.grey),
                             ),
-                            child: const Icon(Icons.more_vert,
-                                size: 20, color: Colors.grey),
                           ),
                         ],
                       ),

@@ -1,36 +1,43 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 class ClientAddressesScreen extends StatelessWidget {
   const ClientAddressesScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Scaffold(
-      backgroundColor: const Color(0xFFF7F9FC),
+      backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
         title: Text('Mis Direcciones',
-            style: GoogleFonts.poppins(fontWeight: FontWeight.bold)),
+            style: theme.textTheme.titleLarge?.copyWith(
+              fontWeight: FontWeight.bold,
+              color: theme.colorScheme.onPrimary,
+            )),
         elevation: 0,
-        backgroundColor: const Color(0xFF0056D2),
-        foregroundColor: Colors.white,
+        backgroundColor: theme.colorScheme.primary,
+        foregroundColor: theme.colorScheme.onPrimary,
+        iconTheme: IconThemeData(color: theme.colorScheme.onPrimary),
       ),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
           _buildAddressCard(
+            context: context,
             icon: Icons.home,
             label: 'Casa',
             address: 'Av. Providencia 1234, Depto 402',
             isDefault: true,
           ),
           _buildAddressCard(
+            context: context,
             icon: Icons.work,
             label: 'Oficina',
             address: 'Cerro El Plomo 5630, Las Condes',
             isDefault: false,
           ),
           _buildAddressCard(
+            context: context,
             icon: Icons.favorite,
             label: 'Casa de Mamá',
             address: 'Irarrázaval 3500, Ñuñoa',
@@ -40,15 +47,15 @@ class ClientAddressesScreen extends StatelessWidget {
           SizedBox(
             width: double.infinity,
             child: ElevatedButton.icon(
-              onPressed: () {},
+              onPressed: () => _showAddAddressDialog(context),
               icon: const Icon(Icons.add_location_alt),
               label: Text(
                 'Agregar Nueva Dirección',
-                style: GoogleFonts.poppins(fontWeight: FontWeight.bold),
+                style: theme.textTheme.labelLarge?.copyWith(fontWeight: FontWeight.bold, color: theme.colorScheme.onPrimary),
               ),
               style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF0056D2),
-                foregroundColor: Colors.white,
+                backgroundColor: theme.colorScheme.primary,
+                foregroundColor: theme.colorScheme.onPrimary,
                 padding: const EdgeInsets.symmetric(vertical: 16),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),
@@ -62,17 +69,69 @@ class ClientAddressesScreen extends StatelessWidget {
     );
   }
 
+  void _showAddAddressDialog(BuildContext context) {
+    final theme = Theme.of(context);
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('Nueva Dirección', style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(
+              decoration: InputDecoration(
+                labelText: 'Nombre (ej. Casa, Trabajo)',
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  borderSide: BorderSide(color: theme.colorScheme.primary),
+                ),
+              ),
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              decoration: InputDecoration(
+                labelText: 'Dirección',
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  borderSide: BorderSide(color: theme.colorScheme.primary),
+                ),
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text('Cancelar', style: theme.textTheme.labelLarge?.copyWith(color: theme.colorScheme.onSurfaceVariant)),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(context),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: theme.colorScheme.primary,
+              foregroundColor: theme.colorScheme.onPrimary,
+            ),
+            child: Text('Guardar', style: theme.textTheme.labelLarge?.copyWith(color: theme.colorScheme.onPrimary)),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildAddressCard({
+    required BuildContext context,
     required IconData icon,
     required String label,
     required String address,
     required bool isDefault,
   }) {
+    final theme = Theme.of(context);
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: theme.cardColor,
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
@@ -82,7 +141,7 @@ class ClientAddressesScreen extends StatelessWidget {
           ),
         ],
         border: isDefault
-            ? Border.all(color: const Color(0xFF0056D2), width: 1.5)
+            ? Border.all(color: theme.colorScheme.primary, width: 1.5)
             : null,
       ),
       child: Row(
@@ -91,13 +150,13 @@ class ClientAddressesScreen extends StatelessWidget {
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
               color: isDefault
-                  ? const Color(0xFF0056D2).withOpacity(0.1)
-                  : Colors.grey[100],
+                  ? theme.colorScheme.primary.withOpacity(0.1)
+                  : theme.colorScheme.surfaceContainerHighest,
               shape: BoxShape.circle,
             ),
             child: Icon(
               icon,
-              color: isDefault ? const Color(0xFF0056D2) : Colors.grey[600],
+              color: isDefault ? theme.colorScheme.primary : theme.colorScheme.onSurfaceVariant,
             ),
           ),
           const SizedBox(width: 16),
@@ -109,10 +168,9 @@ class ClientAddressesScreen extends StatelessWidget {
                   children: [
                     Text(
                       label,
-                      style: GoogleFonts.poppins(
+                      style: theme.textTheme.titleMedium?.copyWith(
                         fontWeight: FontWeight.bold,
-                        fontSize: 16,
-                        color: Colors.black87,
+                        color: theme.colorScheme.onSurface,
                       ),
                     ),
                     if (isDefault) ...[
@@ -121,14 +179,13 @@ class ClientAddressesScreen extends StatelessWidget {
                         padding: const EdgeInsets.symmetric(
                             horizontal: 8, vertical: 2),
                         decoration: BoxDecoration(
-                          color: const Color(0xFF0056D2),
+                          color: theme.colorScheme.primary,
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: Text(
                           'Principal',
-                          style: GoogleFonts.poppins(
-                            fontSize: 10,
-                            color: Colors.white,
+                          style: theme.textTheme.labelSmall?.copyWith(
+                            color: theme.colorScheme.onPrimary,
                             fontWeight: FontWeight.w600,
                           ),
                         ),
@@ -139,17 +196,40 @@ class ClientAddressesScreen extends StatelessWidget {
                 const SizedBox(height: 4),
                 Text(
                   address,
-                  style: GoogleFonts.poppins(
-                    color: Colors.grey[600],
-                    fontSize: 13,
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    color: theme.colorScheme.onSurfaceVariant,
                   ),
                 ),
               ],
             ),
           ),
-          IconButton(
-            icon: const Icon(Icons.more_vert, color: Colors.grey),
-            onPressed: () {},
+          PopupMenuButton<String>(
+            icon: Icon(Icons.more_vert, color: theme.colorScheme.onSurfaceVariant),
+            onSelected: (value) {
+              // Handle actions
+            },
+            itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
+              PopupMenuItem<String>(
+                value: 'edit',
+                child: Row(
+                  children: [
+                    Icon(Icons.edit, size: 18, color: theme.colorScheme.onSurfaceVariant),
+                    const SizedBox(width: 8),
+                    Text('Editar', style: theme.textTheme.bodyMedium),
+                  ],
+                ),
+              ),
+              PopupMenuItem<String>(
+                value: 'delete',
+                child: Row(
+                  children: [
+                    Icon(Icons.delete, size: 18, color: theme.colorScheme.error),
+                    const SizedBox(width: 8),
+                    Text('Eliminar', style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.error)),
+                  ],
+                ),
+              ),
+            ],
           ),
         ],
       ),

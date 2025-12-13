@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:google_fonts/google_fonts.dart';
 import '../services/cart_service.dart';
 import '../models/cart_item.dart';
 
@@ -13,30 +12,31 @@ class ClientCartScreen extends StatefulWidget {
 
 class _ClientCartScreenState extends State<ClientCartScreen> {
   void _showCouponDialog(CartService cartService) {
+    final theme = Theme.of(context);
     final TextEditingController controller = TextEditingController();
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         title: Text('Canjear Cupón QR',
-            style: GoogleFonts.poppins(fontWeight: FontWeight.bold)),
+            style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             Text('Simulación de escaneo de QR.',
-                style: GoogleFonts.poppins(color: Colors.grey[600])),
+                style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.onSurfaceVariant)),
             const SizedBox(height: 16),
             TextField(
               controller: controller,
               decoration: InputDecoration(
                 labelText: 'Código del Cupón',
-                labelStyle: GoogleFonts.poppins(),
+                labelStyle: theme.textTheme.bodyMedium,
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
                 ),
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
-                  borderSide: const BorderSide(color: Color(0xFF0056D2)),
+                  borderSide: BorderSide(color: theme.colorScheme.primary),
                 ),
               ),
             ),
@@ -46,7 +46,7 @@ class _ClientCartScreenState extends State<ClientCartScreen> {
           TextButton(
             onPressed: () => Navigator.pop(context),
             child: Text('Cancelar',
-                style: GoogleFonts.poppins(color: Colors.grey)),
+                style: theme.textTheme.labelLarge?.copyWith(color: theme.colorScheme.onSurfaceVariant)),
           ),
           ElevatedButton(
             onPressed: () {
@@ -57,16 +57,16 @@ class _ClientCartScreenState extends State<ClientCartScreen> {
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
                       content: Text('Cupón aplicado con éxito!',
-                          style: GoogleFonts.poppins()),
-                      backgroundColor: Colors.green,
+                          style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.onPrimary)),
+                      backgroundColor: theme.colorScheme.primary,
                     ),
                   );
                 } else {
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
                       content: Text('No se pudo aplicar el cupón.',
-                          style: GoogleFonts.poppins()),
-                      backgroundColor: Colors.red,
+                          style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.onError)),
+                      backgroundColor: theme.colorScheme.error,
                     ),
                   );
                 }
@@ -75,19 +75,20 @@ class _ClientCartScreenState extends State<ClientCartScreen> {
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
                     content:
-                        Text('Código inválido.', style: GoogleFonts.poppins()),
-                    backgroundColor: Colors.red,
+                        Text('Código inválido.', style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.onError)),
+                    backgroundColor: theme.colorScheme.error,
                   ),
                 );
               }
             },
             style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF0056D2),
+              backgroundColor: theme.colorScheme.primary,
+              foregroundColor: theme.colorScheme.onPrimary,
               shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12)),
             ),
             child: Text('Canjear',
-                style: GoogleFonts.poppins(color: Colors.white)),
+                style: theme.textTheme.labelLarge?.copyWith(color: theme.colorScheme.onPrimary)),
           ),
         ],
       ),
@@ -97,24 +98,26 @@ class _ClientCartScreenState extends State<ClientCartScreen> {
   @override
   Widget build(BuildContext context) {
     final cartService = context.watch<CartService>();
+    final theme = Theme.of(context);
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF7F9FC),
+      backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
-        backgroundColor: const Color(0xFF0056D2),
+        backgroundColor: theme.colorScheme.primary,
         elevation: 0,
         centerTitle: true,
+        iconTheme: IconThemeData(color: theme.colorScheme.onPrimary),
         title: Text(
           'Mi Carrito',
-          style: GoogleFonts.poppins(
+          style: theme.textTheme.titleLarge?.copyWith(
             fontWeight: FontWeight.bold,
-            color: Colors.white,
+            color: theme.colorScheme.onPrimary,
           ),
         ),
         actions: [
           if (cartService.items.isNotEmpty)
             IconButton(
-              icon: const Icon(Icons.delete_outline, color: Colors.white),
+              icon: Icon(Icons.delete_outline, color: theme.colorScheme.onPrimary),
               onPressed: () => cartService.clearCart(),
             ),
         ],
@@ -127,7 +130,7 @@ class _ClientCartScreenState extends State<ClientCartScreen> {
                   Container(
                     padding: const EdgeInsets.all(24),
                     decoration: BoxDecoration(
-                      color: Colors.white,
+                      color: theme.cardColor,
                       shape: BoxShape.circle,
                       boxShadow: [
                         BoxShadow(
@@ -138,23 +141,21 @@ class _ClientCartScreenState extends State<ClientCartScreen> {
                       ],
                     ),
                     child: Icon(Icons.shopping_cart_outlined,
-                        size: 64, color: Colors.grey[300]),
+                        size: 64, color: theme.colorScheme.onSurfaceVariant.withOpacity(0.5)),
                   ),
                   const SizedBox(height: 24),
                   Text(
                     'Tu carrito está vacío',
-                    style: GoogleFonts.poppins(
-                      color: Colors.grey[800],
-                      fontSize: 20,
+                    style: theme.textTheme.headlineSmall?.copyWith(
+                      color: theme.colorScheme.onSurface,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
                   const SizedBox(height: 8),
                   Text(
                     '¡Explora y agrega productos!',
-                    style: GoogleFonts.poppins(
-                      color: Colors.grey[500],
-                      fontSize: 14,
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      color: theme.colorScheme.onSurfaceVariant,
                     ),
                   ),
                 ],
@@ -168,22 +169,22 @@ class _ClientCartScreenState extends State<ClientCartScreen> {
                     itemCount: cartService.items.length,
                     itemBuilder: (context, index) {
                       final item = cartService.items[index];
-                      return _buildCartItem(item, cartService);
+                      return _buildCartItem(item, cartService, theme);
                     },
                   ),
                 ),
-                _buildSummarySection(cartService),
+                _buildSummarySection(cartService, theme),
               ],
             ),
     );
   }
 
-  Widget _buildCartItem(CartItem item, CartService cartService) {
+  Widget _buildCartItem(CartItem item, CartService cartService, ThemeData theme) {
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: theme.cardColor,
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
@@ -205,8 +206,8 @@ class _ClientCartScreenState extends State<ClientCartScreen> {
               errorBuilder: (_, __, ___) => Container(
                 width: 80,
                 height: 80,
-                color: Colors.grey[100],
-                child: Icon(Icons.image_not_supported, color: Colors.grey[400]),
+                color: theme.colorScheme.surfaceContainerHighest,
+                child: Icon(Icons.image_not_supported, color: theme.colorScheme.onSurfaceVariant),
               ),
             ),
           ),
@@ -217,10 +218,9 @@ class _ClientCartScreenState extends State<ClientCartScreen> {
               children: [
                 Text(
                   item.product.name,
-                  style: GoogleFonts.poppins(
+                  style: theme.textTheme.titleMedium?.copyWith(
                     fontWeight: FontWeight.bold,
-                    fontSize: 16,
-                    color: Colors.black87,
+                    color: theme.colorScheme.onSurface,
                   ),
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
@@ -228,10 +228,9 @@ class _ClientCartScreenState extends State<ClientCartScreen> {
                 const SizedBox(height: 4),
                 Text(
                   '\$${item.product.price.toStringAsFixed(0)}',
-                  style: GoogleFonts.poppins(
-                    color: const Color(0xFF0056D2),
+                  style: theme.textTheme.bodyLarge?.copyWith(
+                    color: theme.colorScheme.primary,
                     fontWeight: FontWeight.w600,
-                    fontSize: 14,
                   ),
                 ),
                 if (item.scheduledTime != null)
@@ -239,13 +238,12 @@ class _ClientCartScreenState extends State<ClientCartScreen> {
                     padding: const EdgeInsets.only(top: 4),
                     child: Row(
                       children: [
-                        Icon(Icons.calendar_today, size: 12, color: Colors.grey[600]),
+                        Icon(Icons.calendar_today, size: 12, color: theme.colorScheme.onSurfaceVariant),
                         const SizedBox(width: 4),
                         Text(
                           '${item.scheduledTime!.day}/${item.scheduledTime!.month} ${item.scheduledTime!.hour}:${item.scheduledTime!.minute.toString().padLeft(2, '0')}',
-                          style: GoogleFonts.poppins(
-                            fontSize: 12,
-                            color: Colors.grey[600],
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: theme.colorScheme.onSurfaceVariant,
                           ),
                         ),
                       ],
@@ -256,23 +254,23 @@ class _ClientCartScreenState extends State<ClientCartScreen> {
           ),
           Container(
             decoration: BoxDecoration(
-              color: Colors.grey[50],
+              color: theme.colorScheme.surfaceContainerHighest.withOpacity(0.3),
               borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: Colors.grey[200]!),
+              border: Border.all(color: theme.colorScheme.outlineVariant),
             ),
             child: Row(
               children: [
                 _buildQuantityButton(
                   icon: Icons.remove,
                   onTap: () => cartService.removeFromCart(item.product, scheduledTime: item.scheduledTime),
+                  theme: theme,
                 ),
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 8),
                   child: Text(
                     '${item.quantity}',
-                    style: GoogleFonts.poppins(
+                    style: theme.textTheme.bodyLarge?.copyWith(
                       fontWeight: FontWeight.bold,
-                      fontSize: 14,
                     ),
                   ),
                 ),
@@ -288,6 +286,7 @@ class _ClientCartScreenState extends State<ClientCartScreen> {
                     }
                   },
                   isAdd: true,
+                  theme: theme,
                 ),
               ],
             ),
@@ -298,7 +297,7 @@ class _ClientCartScreenState extends State<ClientCartScreen> {
   }
 
   Widget _buildQuantityButton(
-      {required IconData icon, required VoidCallback onTap, bool isAdd = false}) {
+      {required IconData icon, required VoidCallback onTap, required ThemeData theme, bool isAdd = false}) {
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(12),
@@ -307,17 +306,17 @@ class _ClientCartScreenState extends State<ClientCartScreen> {
         child: Icon(
           icon,
           size: 16,
-          color: isAdd ? const Color(0xFF0056D2) : Colors.grey[600],
+          color: isAdd ? theme.colorScheme.primary : theme.colorScheme.onSurfaceVariant,
         ),
       ),
     );
   }
 
-  Widget _buildSummarySection(CartService cartService) {
+  Widget _buildSummarySection(CartService cartService, ThemeData theme) {
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: theme.cardColor,
         borderRadius: const BorderRadius.vertical(top: Radius.circular(30)),
         boxShadow: [
           BoxShadow(
@@ -331,7 +330,7 @@ class _ClientCartScreenState extends State<ClientCartScreen> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            _buildSummaryRow('Subtotal', cartService.subtotal),
+            _buildSummaryRow('Subtotal', cartService.subtotal, theme),
             if (cartService.discount > 0) ...[
               const SizedBox(height: 8),
               Row(
@@ -339,11 +338,11 @@ class _ClientCartScreenState extends State<ClientCartScreen> {
                 children: [
                   Text(
                     'Descuento Cupón',
-                    style: GoogleFonts.poppins(color: Colors.grey[600]),
+                    style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.onSurfaceVariant),
                   ),
                   Text(
                     '-\$${cartService.discount.toStringAsFixed(0)}',
-                    style: GoogleFonts.poppins(
+                    style: theme.textTheme.bodyMedium?.copyWith(
                       color: Colors.green,
                       fontWeight: FontWeight.w600,
                     ),
@@ -360,18 +359,16 @@ class _ClientCartScreenState extends State<ClientCartScreen> {
               children: [
                 Text(
                   'Total',
-                  style: GoogleFonts.poppins(
-                    fontSize: 20,
+                  style: theme.textTheme.titleLarge?.copyWith(
                     fontWeight: FontWeight.bold,
-                    color: Colors.black87,
+                    color: theme.colorScheme.onSurface,
                   ),
                 ),
                 Text(
                   '\$${cartService.total.toStringAsFixed(0)}',
-                  style: GoogleFonts.poppins(
-                    fontSize: 24,
+                  style: theme.textTheme.headlineSmall?.copyWith(
                     fontWeight: FontWeight.bold,
-                    color: const Color(0xFF0056D2),
+                    color: theme.colorScheme.primary,
                   ),
                 ),
               ],
@@ -383,11 +380,11 @@ class _ClientCartScreenState extends State<ClientCartScreen> {
                   child: OutlinedButton.icon(
                     onPressed: () => _showCouponDialog(cartService),
                     icon: const Icon(Icons.qr_code),
-                    label: Text('Cupón', style: GoogleFonts.poppins()),
+                    label: Text('Cupón', style: theme.textTheme.labelLarge),
                     style: OutlinedButton.styleFrom(
-                      foregroundColor: Colors.black87,
+                      foregroundColor: theme.colorScheme.onSurface,
                       padding: const EdgeInsets.symmetric(vertical: 16),
-                      side: BorderSide(color: Colors.grey[300]!),
+                      side: BorderSide(color: theme.colorScheme.outline),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(16),
                       ),
@@ -405,7 +402,7 @@ class _ClientCartScreenState extends State<ClientCartScreen> {
                       showDialog(
                         context: context,
                         barrierDismissible: false,
-                        builder: (context) => const Center(child: CircularProgressIndicator(color: Color(0xFF0056D2))),
+                        builder: (context) => Center(child: CircularProgressIndicator(color: theme.colorScheme.primary)),
                       );
 
                       Future.delayed(const Duration(seconds: 2), () {
@@ -415,7 +412,7 @@ class _ClientCartScreenState extends State<ClientCartScreen> {
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(
                             content: Text('¡Pago exitoso! Tu reserva ha sido confirmada.',
-                                style: GoogleFonts.poppins()),
+                                style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.onPrimary)),
                             backgroundColor: Colors.green,
                           ),
                         );
@@ -425,8 +422,8 @@ class _ClientCartScreenState extends State<ClientCartScreen> {
                       });
                     },
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF0056D2),
-                      foregroundColor: Colors.white,
+                      backgroundColor: theme.colorScheme.primary,
+                      foregroundColor: theme.colorScheme.onPrimary,
                       padding: const EdgeInsets.symmetric(vertical: 16),
                       elevation: 0,
                       shape: RoundedRectangleBorder(
@@ -435,9 +432,9 @@ class _ClientCartScreenState extends State<ClientCartScreen> {
                     ),
                     child: Text(
                       'Pagar Ahora',
-                      style: GoogleFonts.poppins(
+                      style: theme.textTheme.titleMedium?.copyWith(
                         fontWeight: FontWeight.bold,
-                        fontSize: 16,
+                        color: theme.colorScheme.onPrimary,
                       ),
                     ),
                   ),
@@ -450,19 +447,19 @@ class _ClientCartScreenState extends State<ClientCartScreen> {
     );
   }
 
-  Widget _buildSummaryRow(String label, double amount) {
+  Widget _buildSummaryRow(String label, double amount, ThemeData theme) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         Text(
           label,
-          style: GoogleFonts.poppins(color: Colors.grey[600]),
+          style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.onSurfaceVariant),
         ),
         Text(
           '\$${amount.toStringAsFixed(0)}',
-          style: GoogleFonts.poppins(
+          style: theme.textTheme.bodyLarge?.copyWith(
             fontWeight: FontWeight.w600,
-            color: Colors.black87,
+            color: theme.colorScheme.onSurface,
           ),
         ),
       ],

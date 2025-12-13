@@ -7,22 +7,23 @@ class AdminSupportScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Scaffold(
-      backgroundColor: const Color(0xFFF7F9FC),
+      backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: theme.colorScheme.surface,
         elevation: 0,
         title: Text(
           'Soporte y Tickets',
-          style: GoogleFonts.poppins(
-            color: Colors.black87,
+          style: theme.textTheme.titleLarge?.copyWith(
+            color: theme.colorScheme.onSurface,
             fontWeight: FontWeight.bold,
           ),
         ),
-        iconTheme: const IconThemeData(color: Colors.black87),
+        iconTheme: IconThemeData(color: theme.colorScheme.onSurface),
         actions: [
           IconButton(
-            icon: const Icon(Icons.logout, color: Color(0xFF0056D2)),
+            icon: Icon(Icons.logout, color: theme.colorScheme.primary),
             onPressed: () {
                Navigator.of(context).pushAndRemoveUntil(
                   MaterialPageRoute(builder: (context) => const LoginScreen()),
@@ -36,10 +37,14 @@ class AdminSupportScreen extends StatelessWidget {
         padding: const EdgeInsets.all(16),
         itemCount: 8,
         itemBuilder: (context, index) {
+          final priorityColor = index % 3 == 0 
+              ? theme.colorScheme.primary 
+              : (index % 3 == 1 ? theme.colorScheme.secondary : theme.colorScheme.error);
+          
           return Container(
             margin: const EdgeInsets.only(bottom: 12),
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: theme.cardColor,
               borderRadius: BorderRadius.circular(12),
               boxShadow: [
                 BoxShadow(
@@ -50,7 +55,7 @@ class AdminSupportScreen extends StatelessWidget {
               ],
               border: Border(
                 left: BorderSide(
-                  color: index % 3 == 0 ? const Color(0xFF0056D2) : (index % 3 == 1 ? const Color(0xFF333333) : const Color(0xFFE63946)),
+                  color: priorityColor,
                   width: 4,
                 ),
               ),
@@ -58,16 +63,21 @@ class AdminSupportScreen extends StatelessWidget {
             child: ListTile(
               title: Text(
                 'Ticket #${1000 + index}',
-                style: GoogleFonts.poppins(color: Colors.black87, fontWeight: FontWeight.bold),
+                style: theme.textTheme.titleMedium?.copyWith(
+                  color: theme.colorScheme.onSurface,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
               subtitle: Text(
                 'Problema con el inicio de sesión...',
-                style: GoogleFonts.poppins(color: Colors.grey[600]),
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
               ),
               trailing: Text(
                 index % 3 == 0 ? 'Alta' : (index % 3 == 1 ? 'Media' : 'Baja'),
-                style: GoogleFonts.poppins(
-                  color: index % 3 == 0 ? const Color(0xFF0056D2) : (index % 3 == 1 ? Colors.orange : const Color(0xFFE63946)),
+                style: theme.textTheme.labelLarge?.copyWith(
+                  color: priorityColor,
                   fontWeight: FontWeight.bold,
                 ),
               ),
