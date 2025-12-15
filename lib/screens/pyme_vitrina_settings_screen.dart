@@ -63,25 +63,25 @@ class _PymeVitrinaSettingsScreenState extends State<PymeVitrinaSettingsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF7F9FC),
+      backgroundColor: const Color(0xFFF4F1EA),
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: const Color(0xFFF4F1EA),
         elevation: 0,
         title: Text(
           'Editar Vitrina',
           style: GoogleFonts.poppins(
-            color: Colors.black87,
+            color: const Color(0xFF2F3F2A),
             fontWeight: FontWeight.bold,
           ),
         ),
-        iconTheme: const IconThemeData(color: Colors.black87),
+        iconTheme: const IconThemeData(color: Color(0xFF2F3F2A)),
         actions: [
           TextButton(
             onPressed: _saveSettings,
             child: Text(
               'Guardar',
               style: GoogleFonts.poppins(
-                color: const Color(0xFF0056D2),
+                color: const Color(0xFF6F8F5E),
                 fontWeight: FontWeight.bold,
               ),
             ),
@@ -124,13 +124,13 @@ class _PymeVitrinaSettingsScreenState extends State<PymeVitrinaSettingsScreen> {
                     (route) => false,
                   );
                 },
-                icon: const Icon(Icons.logout, color: Colors.redAccent),
+                icon: const Icon(Icons.logout, color: Color(0xFF8B5A3C)),
                 label: const Text(
                   'Cerrar Sesión',
-                  style: TextStyle(color: Colors.redAccent, fontSize: 16),
+                  style: TextStyle(color: Color(0xFF8B5A3C), fontSize: 16),
                 ),
                 style: OutlinedButton.styleFrom(
-                  side: const BorderSide(color: Colors.redAccent),
+                  side: const BorderSide(color: Color(0xFF8B5A3C)),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
                   ),
@@ -150,7 +150,7 @@ class _PymeVitrinaSettingsScreenState extends State<PymeVitrinaSettingsScreen> {
       child: Text(
         title,
         style: GoogleFonts.poppins(
-          color: const Color(0xFF0056D2),
+          color: const Color(0xFF2F3F2A),
           fontSize: 18,
           fontWeight: FontWeight.bold,
         ),
@@ -163,20 +163,24 @@ class _PymeVitrinaSettingsScreenState extends State<PymeVitrinaSettingsScreen> {
     return TextField(
       controller: controller,
       maxLines: maxLines,
-      style: const TextStyle(color: Colors.black87),
+      style: const TextStyle(color: Color(0xFF2F3F2A)),
       decoration: InputDecoration(
         labelText: label,
-        labelStyle: TextStyle(color: Colors.grey[600]),
-        prefixIcon: icon != null ? Icon(icon, color: Colors.grey) : null,
+        labelStyle: TextStyle(color: const Color(0xFF2F3F2A).withOpacity(0.7)),
+        prefixIcon: icon != null ? Icon(icon, color: const Color(0xFF2F3F2A).withOpacity(0.7)) : null,
         filled: true,
-        fillColor: Colors.white,
+        fillColor: const Color(0xFFFFFFFF),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide.none,
+          borderSide: BorderSide(color: const Color(0xFF2F3F2A).withOpacity(0.1)),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: const Color(0xFF2F3F2A).withOpacity(0.1)),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: Color(0xFF0056D2)),
+          borderSide: const BorderSide(color: Color(0xFF6F8F5E)),
         ),
       ),
     );

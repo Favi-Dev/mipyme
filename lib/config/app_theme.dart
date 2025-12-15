@@ -3,8 +3,8 @@ import 'package:google_fonts/google_fonts.dart';
 
 class AppTheme {
   // 1️⃣ Colores principales (identidad núcleo)
-  static const Color deepLeafGreen = Color(0xFF2F3F2A); // Verde Hoja Profundo
-  static const Color warmWhite = Color(0xFFF4F1EA); // Blanco Cálido
+  static const Color deepLeafGreen = Color(0xFF2F3F2A); // Verde Hoja Profundo (Fondo)
+  static const Color warmWhite = Color(0xFFF4F1EA); // Blanco Cálido (Texto)
 
   // 2️⃣ Colores secundarios (humanidad y diversidad)
   static const Color earthBrown = Color(0xFF8B5A3C); // Café Tierra
@@ -22,16 +22,16 @@ class AppTheme {
       colorScheme: ColorScheme.fromSeed(
         seedColor: deepLeafGreen,
         primary: deepLeafGreen,
-        onPrimary: warmWhite,
+        onPrimary: warmWhite, // Botones con texto blanco
         secondary: lightGreen,
-        onSecondary: Colors.white,
-        surface: warmWhite,
-        onSurface: deepLeafGreen,
+        onSecondary: warmWhite,
+        surface: warmWhite, // Fondo claro
+        onSurface: deepLeafGreen, // Texto oscuro sobre fondo claro
         tertiary: earthBrown,
-        error: const Color(0xFFBA1A1A), // Standard error red
+        error: earthBrown,
       ),
 
-      // Fondo principal de la app (para pantallas de lectura/formularios)
+      // Fondo principal de la app
       scaffoldBackgroundColor: warmWhite,
 
       // Configuración del AppBar
@@ -47,7 +47,10 @@ class AppTheme {
       ),
 
       // Configuración de textos
-      textTheme: GoogleFonts.interTextTheme().copyWith(
+      textTheme: GoogleFonts.interTextTheme().apply(
+        bodyColor: deepLeafGreen,
+        displayColor: deepLeafGreen,
+      ).copyWith(
         // Títulos con Poppins
         displayLarge: GoogleFonts.poppins(
           color: deepLeafGreen,
@@ -84,7 +87,7 @@ class AppTheme {
           fontSize: 14,
         ),
         bodySmall: GoogleFonts.inter(
-          color: organicGrey,
+          color: organicGrey.withOpacity(0.8),
           fontSize: 12,
         ),
       ),
@@ -118,12 +121,12 @@ class AppTheme {
       // Inputs y Formularios
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
-        fillColor: Colors.white,
-        labelStyle: GoogleFonts.inter(color: organicGrey),
-        hintStyle: GoogleFonts.inter(color: organicGrey.withOpacity(0.7)),
+        fillColor: warmWhite,
+        labelStyle: GoogleFonts.inter(color: deepLeafGreen),
+        hintStyle: GoogleFonts.inter(color: deepLeafGreen.withOpacity(0.7)),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(8),
-          borderSide: const BorderSide(color: organicGrey),
+          borderSide: const BorderSide(color: deepLeafGreen),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(8),

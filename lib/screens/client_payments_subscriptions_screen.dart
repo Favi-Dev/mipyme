@@ -87,7 +87,7 @@ class ClientPaymentsSubscriptionsScreen extends StatelessWidget {
             borderRadius: BorderRadius.circular(12),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withValues(alpha: 0.05),
+                color: const Color(0xFF2F3F2A).withOpacity(0.1),
                 blurRadius: 8,
                 offset: const Offset(0, 2),
               ),
@@ -135,7 +135,7 @@ class ClientPaymentsSubscriptionsScreen extends StatelessWidget {
                   Text(
                     payment['status']!,
                     style: theme.textTheme.labelSmall?.copyWith(
-                      color: Colors.green, // Keep green for success status
+                      color: const Color(0xFF6F8F5E), // Keep green for success status
                       fontWeight: FontWeight.w600,
                     ),
                   ),
@@ -170,7 +170,7 @@ class ClientPaymentsSubscriptionsScreen extends StatelessWidget {
           nextBilling: 'Próximo cobro: 10 Ene 2026',
           isActive: true,
           icon: Icons.volunteer_activism,
-          color: const Color(0xFFE63946), // Keep specific brand color
+          color: const Color(0xFF8B5A3C), // Keep specific brand color
         ),
       ],
     );
@@ -193,7 +193,7 @@ class ClientPaymentsSubscriptionsScreen extends StatelessWidget {
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
+            color: const Color(0xFF2F3F2A).withOpacity(0.1),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -234,16 +234,16 @@ class ClientPaymentsSubscriptionsScreen extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
-                  color: isActive ? Colors.green.withOpacity(0.1) : theme.colorScheme.surfaceContainerHighest,
+                  color: isActive ? const Color(0xFF6F8F5E).withOpacity(0.1) : theme.colorScheme.surfaceContainerHighest,
                   borderRadius: BorderRadius.circular(8),
                   border: Border.all(
-                    color: isActive ? Colors.green : theme.colorScheme.outline,
+                    color: isActive ? const Color(0xFF6F8F5E) : theme.colorScheme.outline,
                   ),
                 ),
                 child: Text(
                   isActive ? 'Activa' : 'Inactiva',
                   style: theme.textTheme.labelSmall?.copyWith(
-                    color: isActive ? Colors.green : theme.colorScheme.onSurfaceVariant,
+                    color: isActive ? const Color(0xFF6F8F5E) : theme.colorScheme.onSurfaceVariant,
                     fontWeight: FontWeight.bold,
                   ),
                 ),

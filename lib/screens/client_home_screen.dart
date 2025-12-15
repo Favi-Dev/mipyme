@@ -218,7 +218,7 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
             const CircleAvatar(
               radius: 22,
               backgroundImage: NetworkImage('https://i.pravatar.cc/150?img=11'),
-              backgroundColor: Colors.white24,
+              backgroundColor: Color(0x3DF4F1EA),
             ),
             const SizedBox(width: 12),
             Column(
@@ -227,7 +227,7 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
                 Text(
                   widget.showFoundationsOnly ? 'Fundaciones' : 'Hola, Joaquín',
                   style: theme.textTheme.titleLarge?.copyWith(
-                    color: theme.colorScheme.onPrimary,
+                    color: const Color(0xFFF4F1EA),
                     fontWeight: FontWeight.bold,
                   ),
                 ),
@@ -235,12 +235,12 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
                   Row(
                     children: [
                       Icon(Icons.location_on,
-                          size: 12, color: theme.colorScheme.onPrimary.withOpacity(0.9)),
+                          size: 12, color: const Color(0xFFF4F1EA).withOpacity(0.9)),
                       const SizedBox(width: 4),
                       Text(
                         'Providencia, Santiago',
                         style: theme.textTheme.bodySmall?.copyWith(
-                          color: theme.colorScheme.onPrimary.withOpacity(0.9),
+                          color: const Color(0xFFF4F1EA).withOpacity(0.9),
                         ),
                       ),
                     ],
@@ -253,11 +253,11 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
           Container(
             margin: const EdgeInsets.only(right: 16),
             decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.2),
+              color: const Color(0xFFF4F1EA).withOpacity(0.2),
               borderRadius: BorderRadius.circular(12),
             ),
             child: IconButton(
-              icon: const Icon(Icons.notifications_outlined, color: Colors.white),
+              icon: const Icon(Icons.notifications_outlined, color: Color(0xFFF4F1EA)),
               onPressed: _showNotifications,
             ),
           ),
@@ -275,11 +275,11 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
                 Expanded(
                   child: Container(
                     decoration: BoxDecoration(
-                      color: Colors.white,
+                      color: const Color(0xFFF4F1EA),
                       borderRadius: BorderRadius.circular(16),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withOpacity(0.05),
+                          color: const Color(0xFF2F3F2A).withOpacity(0.3),
                           blurRadius: 10,
                           offset: const Offset(0, 4),
                         ),
@@ -292,10 +292,10 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
                           _searchQuery = value;
                         });
                       },
-                      style: theme.textTheme.bodyLarge,
+                      style: theme.textTheme.bodyLarge?.copyWith(color: const Color(0xFF2F3F2A)),
                       decoration: InputDecoration(
                         hintText: widget.showFoundationsOnly ? 'Buscar fundación...' : '¿Qué buscas hoy?',
-                        hintStyle: theme.textTheme.bodyMedium?.copyWith(color: Colors.grey[400]),
+                        hintStyle: theme.textTheme.bodyMedium?.copyWith(color: const Color(0xFF2F3F2A).withOpacity(0.6)),
                         prefixIcon:
                             Icon(Icons.search, color: theme.colorScheme.primary),
                         border: InputBorder.none,
@@ -319,7 +319,7 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
                     ],
                   ),
                   child: IconButton(
-                    icon: const Icon(Icons.tune, color: Colors.white),
+                    icon: const Icon(Icons.tune, color: Color(0xFFF4F1EA)),
                     onPressed: _showFilterDialog,
                   ),
                 ),
@@ -348,7 +348,7 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
                       'Zapatería Los Robles',
                       '20% dcto. en Botas',
                       'Calzado',
-                      const Color(0xFF8D6E63),
+                      const Color(0xFF8B5A3C),
                       Icons.shopping_bag,
                       'assets/images/logo el roble calzados.jpg',
                     ),
@@ -358,7 +358,7 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
                       'Farmayuda',
                       'Descuentos en Recetas',
                       'Salud',
-                      const Color(0xFFE63946),
+                      const Color(0xFF6F8F5E),
                       Icons.medical_services,
                       'assets/images/logo farmayuda.jpg',
                     ),
@@ -422,7 +422,7 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
           padding: const EdgeInsets.all(20.0),
           child: Text(
             'No se encontraron resultados',
-            style: TextStyle(color: Colors.grey[600]),
+            style: TextStyle(color: Color(0xFF2F3F2A)),
           ),
         ),
       );
@@ -595,13 +595,13 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
                 : AssetImage(imageUrl) as ImageProvider,
             fit: BoxFit.cover,
             colorFilter: ColorFilter.mode(
-              Colors.black.withOpacity(0.3),
+              const Color(0xFF2F3F2A).withOpacity(0.3),
               BlendMode.darken,
             ),
           ),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.1),
+              color: const Color(0xFF2F3F2A).withOpacity(0.1),
               blurRadius: 10,
               offset: const Offset(0, 4),
             ),
@@ -616,7 +616,7 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
               end: Alignment.bottomCenter,
               colors: [
                 Colors.transparent,
-                Colors.black.withOpacity(0.8),
+                const Color(0xFF2F3F2A).withOpacity(0.8),
               ],
             ),
           ),
@@ -630,11 +630,11 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
                   Container(
                     padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.2),
+                      color: const Color(0xFFF4F1EA).withOpacity(0.2),
                       borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: Colors.white.withOpacity(0.3)),
+                      border: Border.all(color: const Color(0xFFF4F1EA).withOpacity(0.3)),
                     ),
-                    child: Icon(icon, color: Colors.white, size: 20),
+                    child: Icon(icon, color: const Color(0xFFF4F1EA), size: 20),
                   ),
                   Container(
                     padding:
@@ -646,7 +646,7 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
                     child: Text(
                       tag.toUpperCase(),
                       style: const TextStyle(
-                        color: Colors.white,
+                        color: Color(0xFFF4F1EA),
                         fontSize: 10,
                         fontWeight: FontWeight.bold,
                         letterSpacing: 0.5,
@@ -661,7 +661,7 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
                   Text(
                     offer,
                     style: const TextStyle(
-                      color: Colors.white,
+                      color: Color(0xFFF4F1EA),
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
                       height: 1.2,
@@ -670,12 +670,12 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
                   const SizedBox(height: 4),
                   Row(
                     children: [
-                      const Icon(Icons.store, color: Colors.white70, size: 14),
+                      const Icon(Icons.store, color: Color(0xB3F4F1EA), size: 14),
                       const SizedBox(width: 4),
                       Text(
                         pymeName,
                         style: const TextStyle(
-                          color: Colors.white70,
+                          color: Color(0xB3F4F1EA),
                           fontSize: 13,
                         ),
                       ),
@@ -708,11 +708,11 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
       child: Container(
         margin: const EdgeInsets.only(bottom: 20),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: const Color(0xFFF4F1EA),
           borderRadius: BorderRadius.circular(20),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.05),
+              color: const Color(0xFF2F3F2A).withOpacity(0.1),
               blurRadius: 15,
               offset: const Offset(0, 5),
             ),
@@ -754,11 +754,11 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
                     child: Container(
                       padding: const EdgeInsets.all(8),
                       decoration: BoxDecoration(
-                        color: Colors.white,
+                        color: const Color(0xFFF4F1EA),
                         shape: BoxShape.circle,
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.black.withOpacity(0.1),
+                            color: const Color(0xFF2F3F2A).withOpacity(0.1),
                             blurRadius: 8,
                           ),
                         ],
@@ -779,17 +779,17 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
                       padding:
                           const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                       decoration: BoxDecoration(
-                        color: Colors.green.withOpacity(0.9),
+                        color: const Color(0xFF6F8F5E).withOpacity(0.9),
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: const Row(
                         children: [
-                          Icon(Icons.access_time, color: Colors.white, size: 12),
+                          Icon(Icons.access_time, color: Color(0xFFF4F1EA), size: 12),
                           SizedBox(width: 4),
                           Text(
                             'ABIERTO',
                             style: TextStyle(
-                              color: Colors.white,
+                              color: Color(0xFFF4F1EA),
                               fontSize: 10,
                               fontWeight: FontWeight.bold,
                             ),
@@ -811,7 +811,7 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
                       Text(
                         pyme['name'],
                         style: const TextStyle(
-                          color: Color(0xFF2D3436),
+                          color: Color(0xFF2F3F2A),
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
                         ),
@@ -820,18 +820,18 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
                         padding: const EdgeInsets.symmetric(
                             horizontal: 8, vertical: 4),
                         decoration: BoxDecoration(
-                          color: const Color(0xFF333333).withOpacity(0.2),
+                          color: const Color(0xFF2F3F2A).withOpacity(0.1),
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: Row(
                           children: [
                             const Icon(Icons.star,
-                                color: Color(0xFF333333), size: 14),
+                                color: Color(0xFF8B5A3C), size: 14),
                             const SizedBox(width: 4),
                             Text(
                               pyme['rating'],
                               style: const TextStyle(
-                                color: Color(0xFFB7950B),
+                                color: Color(0xFF8B5A3C),
                                 fontSize: 12,
                                 fontWeight: FontWeight.bold,
                               ),
@@ -845,23 +845,23 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
                   Row(
                     children: [
                       Icon(Icons.storefront,
-                          size: 16, color: Colors.grey[400]),
+                          size: 16, color: const Color(0xFF2F3F2A).withOpacity(0.7)),
                       const SizedBox(width: 4),
                       Text(
                         pyme['category'],
-                        style: TextStyle(
-                          color: Colors.grey[600],
+                        style: const TextStyle(
+                          color: Color(0xFF2F3F2A),
                           fontSize: 14,
                         ),
                       ),
                       const SizedBox(width: 12),
                       Icon(Icons.location_on,
-                          size: 16, color: Colors.grey[400]),
+                          size: 16, color: const Color(0xFF2F3F2A).withOpacity(0.7)),
                       const SizedBox(width: 4),
                       Text(
                         pyme['distance'],
-                        style: TextStyle(
-                          color: Colors.grey[600],
+                        style: const TextStyle(
+                          color: Color(0xFF2F3F2A),
                           fontSize: 14,
                         ),
                       ),
@@ -888,7 +888,7 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
 
   Widget _buildTag(BuildContext context, String text, {Color? color}) {
     final theme = Theme.of(context);
-    final tagColor = color ?? theme.textTheme.bodyMedium?.color ?? Colors.grey[600];
+    final tagColor = color ?? theme.textTheme.bodyMedium?.color ?? const Color(0xFF2F3F2A).withOpacity(0.7);
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(

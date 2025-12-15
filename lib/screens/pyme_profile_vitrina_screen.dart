@@ -46,6 +46,8 @@ class _PymeProfileVitrinaScreenState extends State<PymeProfileVitrinaScreen> {
   }
 
   void _loadProducts() {
+    // Ensure we load products matching the current VitrinaData category
+    _productService.loadMockProductsForCategory(VitrinaData.category);
     setState(() {
       _products = _productService.getProductsByPyme('pyme1');
     });
@@ -77,14 +79,14 @@ class _PymeProfileVitrinaScreenState extends State<PymeProfileVitrinaScreen> {
     final textTheme = Theme.of(context).textTheme;
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF7F9FC), // Light background
+      backgroundColor: const Color(0xFFF4F1EA), // Warm White background
       drawer: Drawer(
         child: ListView(
           padding: EdgeInsets.zero,
           children: [
             const DrawerHeader(
-              decoration: BoxDecoration(color: Color(0xFF0056D2)),
-              child: Text('Cambiar Categoría (Demo)', style: TextStyle(color: Colors.white, fontSize: 24)),
+              decoration: BoxDecoration(color: Color(0xFF2F3F2A)),
+              child: Text('Cambiar Categoría (Demo)', style: TextStyle(color: Color(0xFFF4F1EA), fontSize: 24)),
             ),
             ..._availableCategories.map((category) => _buildCategoryTile(category)),
           ],
@@ -101,10 +103,10 @@ class _PymeProfileVitrinaScreenState extends State<PymeProfileVitrinaScreen> {
                 floating: false,
                 elevation: 0,
                 scrolledUnderElevation: 0,
-                backgroundColor: const Color(0xFF0056D2),
+                backgroundColor: const Color(0xFF2F3F2A),
                 actions: [
                   IconButton(
-                    icon: const Icon(Icons.settings, color: Colors.white),
+                    icon: const Icon(Icons.settings, color: Color(0xFFF4F1EA)),
                     onPressed: () async {
                       await Navigator.push(
                         context,
@@ -121,7 +123,7 @@ class _PymeProfileVitrinaScreenState extends State<PymeProfileVitrinaScreen> {
                   title: Text(
                     VitrinaData.name,
                     style: const TextStyle(
-                      color: Colors.white,
+                      color: Color(0xFFF4F1EA),
                       fontWeight: FontWeight.bold,
                       shadows: [
                         Shadow(
@@ -172,7 +174,7 @@ class _PymeProfileVitrinaScreenState extends State<PymeProfileVitrinaScreen> {
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          _buildSectionTitle('Descripción', Colors.black87),
+                          _buildSectionTitle('Descripción', const Color(0xFF2F3F2A)),
                           SupporterCounter(count: VitrinaData.supporterCount),
                         ],
                       ),
@@ -180,7 +182,7 @@ class _PymeProfileVitrinaScreenState extends State<PymeProfileVitrinaScreen> {
                       Text(
                         VitrinaData.description,
                         style: textTheme.bodyMedium
-                            ?.copyWith(color: Colors.black54),
+                            ?.copyWith(color: const Color(0xFF2F3F2A).withOpacity(0.7)),
                       ),
                       const SizedBox(height: 24),
 
@@ -188,9 +190,9 @@ class _PymeProfileVitrinaScreenState extends State<PymeProfileVitrinaScreen> {
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          _buildSectionTitle('Ofertas', Colors.black87),
+                          _buildSectionTitle('Ofertas', const Color(0xFF2F3F2A)),
                           IconButton(
-                            icon: const Icon(Icons.edit, color: Colors.grey),
+                            icon: const Icon(Icons.edit, color: Color(0xFF6F8F5E)),
                             onPressed: () async {
                               await Navigator.push(
                                 context,
@@ -228,9 +230,9 @@ class _PymeProfileVitrinaScreenState extends State<PymeProfileVitrinaScreen> {
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          _buildSectionTitle('Productos', Colors.black87),
+                          _buildSectionTitle('Productos', const Color(0xFF2F3F2A)),
                           IconButton(
-                            icon: const Icon(Icons.edit, color: Colors.grey),
+                            icon: const Icon(Icons.edit, color: Color(0xFF6F8F5E)),
                             onPressed: () async {
                               await Navigator.push(
                                 context,
@@ -246,7 +248,7 @@ class _PymeProfileVitrinaScreenState extends State<PymeProfileVitrinaScreen> {
                       ),
                       const SizedBox(height: 12),
                       if (_products.isEmpty)
-                        const Text('No hay productos registrados', style: TextStyle(color: Colors.grey))
+                        Text('No hay productos registrados', style: TextStyle(color: const Color(0xFF2F3F2A).withOpacity(0.5)))
                       else
                         SingleChildScrollView(
                           scrollDirection: Axis.horizontal,
@@ -262,13 +264,13 @@ class _PymeProfileVitrinaScreenState extends State<PymeProfileVitrinaScreen> {
                       const SizedBox(height: 24),
 
                       // Hours Section
-                      _buildSectionTitle('Horarios', Colors.black87),
+                      _buildSectionTitle('Horarios', const Color(0xFF2F3F2A)),
                       const SizedBox(height: 8),
-                      _buildInfoRow(Icons.access_time, VitrinaData.hours, Colors.black54),
+                      _buildInfoRow(Icons.access_time, VitrinaData.hours, const Color(0xFF2F3F2A).withOpacity(0.7)),
                       const SizedBox(height: 24),
 
                       // Contact Section
-                      _buildSectionTitle('Contacto', Colors.black87),
+                      _buildSectionTitle('Contacto', const Color(0xFF2F3F2A)),
                       const SizedBox(height: 12),
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceAround,
@@ -277,40 +279,40 @@ class _PymeProfileVitrinaScreenState extends State<PymeProfileVitrinaScreen> {
                             ScaffoldMessenger.of(context).showSnackBar(
                               SnackBar(
                                 content: Text('Ir a: ${VitrinaData.webUrl}'),
-                                backgroundColor: Colors.amber,
+                                backgroundColor: const Color(0xFF8B5A3C),
                                 behavior: SnackBarBehavior.floating,
                               ),
                             );
-                          }, Colors.blue),
+                          }, const Color(0xFF2F3F2A)),
                           _buildSocialButton(Icons.camera_alt, 'Instagram', () {
                             ScaffoldMessenger.of(context).showSnackBar(
                               SnackBar(
                                 content:
                                     Text('Ir a: ${VitrinaData.instagramHandle}'),
-                                backgroundColor: Colors.purpleAccent,
+                                backgroundColor: const Color(0xFF8B5A3C),
                                 behavior: SnackBarBehavior.floating,
                               ),
                             );
-                          }, Colors.purple),
+                          }, const Color(0xFF2F3F2A)),
                           _buildSocialButton(Icons.message, 'WhatsApp', () {
                             ScaffoldMessenger.of(context).showSnackBar(
                               SnackBar(
                                 content:
                                     Text('Ir a: ${VitrinaData.whatsappNumber}'),
-                                backgroundColor: Colors.green,
+                                backgroundColor: const Color(0xFF6F8F5E),
                                 behavior: SnackBarBehavior.floating,
                               ),
                             );
-                          }, Colors.green),
+                          }, const Color(0xFF6F8F5E)),
                         ],
                       ),
                       const SizedBox(height: 24),
 
                       // Location Section
-                      _buildSectionTitle('Ubicación', Colors.black87),
+                      _buildSectionTitle('Ubicación', const Color(0xFF2F3F2A)),
                       const SizedBox(height: 8),
                       _buildInfoRow(
-                          Icons.location_on, VitrinaData.location, Colors.black54),
+                          Icons.location_on, VitrinaData.location, const Color(0xFF2F3F2A).withOpacity(0.7)),
                       const SizedBox(height: 40), // Bottom padding
                     ],
                   ),
@@ -336,20 +338,20 @@ class _PymeProfileVitrinaScreenState extends State<PymeProfileVitrinaScreen> {
             },
             child: Container(
               padding: const EdgeInsets.all(4),
-              decoration: const BoxDecoration(
-                color: Colors.white,
+              decoration: BoxDecoration(
+                color: const Color(0xFFFFFFFF),
                 shape: BoxShape.circle,
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black26,
+                    color: const Color(0xFF2F3F2A).withOpacity(0.2),
                     blurRadius: 8,
-                    offset: Offset(0, 2),
+                    offset: const Offset(0, 2),
                   )
                 ]
               ),
               child: CircleAvatar(
                 radius: 40,
-                backgroundColor: Colors.white,
+                backgroundColor: const Color(0xFFFFFFFF),
                 backgroundImage: VitrinaData.logoUrl.startsWith('http')
                     ? NetworkImage(VitrinaData.logoUrl)
                     : AssetImage(VitrinaData.logoUrl) as ImageProvider,
@@ -372,11 +374,11 @@ class _PymeProfileVitrinaScreenState extends State<PymeProfileVitrinaScreen> {
       width: 200,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: const Color(0xFFFFFFFF),
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: const Color(0xFF2F3F2A).withOpacity(0.05),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -390,7 +392,7 @@ class _PymeProfileVitrinaScreenState extends State<PymeProfileVitrinaScreen> {
           Text(
             title,
             style: const TextStyle(
-              color: Colors.black87,
+              color: Color(0xFF2F3F2A),
               fontWeight: FontWeight.bold,
               fontSize: 16,
             ),
@@ -398,7 +400,7 @@ class _PymeProfileVitrinaScreenState extends State<PymeProfileVitrinaScreen> {
           const SizedBox(height: 4),
           Text(
             description,
-            style: const TextStyle(color: Colors.black54, fontSize: 14),
+            style: TextStyle(color: const Color(0xFF2F3F2A).withOpacity(0.7), fontSize: 14),
           ),
         ],
       ),
@@ -409,11 +411,11 @@ class _PymeProfileVitrinaScreenState extends State<PymeProfileVitrinaScreen> {
     return Container(
       width: 160,
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: const Color(0xFFFFFFFF),
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: const Color(0xFF2F3F2A).withOpacity(0.05),
             blurRadius: 8,
             offset: const Offset(0, 4),
           ),
@@ -431,8 +433,8 @@ class _PymeProfileVitrinaScreenState extends State<PymeProfileVitrinaScreen> {
               fit: BoxFit.cover,
               errorBuilder: (_, __, ___) => Container(
                 height: 120,
-                color: Colors.grey[200],
-                child: const Icon(Icons.image_not_supported, color: Colors.grey),
+                color: const Color(0xFFF4F1EA),
+                child: Icon(Icons.image_not_supported, color: const Color(0xFF2F3F2A).withOpacity(0.3)),
               ),
             ),
           ),
@@ -448,14 +450,14 @@ class _PymeProfileVitrinaScreenState extends State<PymeProfileVitrinaScreen> {
                   style: const TextStyle(
                     fontWeight: FontWeight.w600,
                     fontSize: 14,
-                    color: Colors.black87,
+                    color: Color(0xFF2F3F2A),
                   ),
                 ),
                 const SizedBox(height: 4),
                 Text(
                   '\$${product.price.toStringAsFixed(0)}',
                   style: const TextStyle(
-                    color: Color(0xFF0056D2),
+                    color: Color(0xFF6F8F5E),
                     fontWeight: FontWeight.bold,
                     fontSize: 14,
                   ),
@@ -512,7 +514,7 @@ class _PymeProfileVitrinaScreenState extends State<PymeProfileVitrinaScreen> {
           const SizedBox(height: 8),
           Text(
             label,
-            style: const TextStyle(color: Colors.black54, fontSize: 12),
+            style: TextStyle(color: const Color(0xFF2F3F2A).withOpacity(0.7), fontSize: 12),
           ),
         ],
       ),

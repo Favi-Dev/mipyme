@@ -40,7 +40,7 @@ class ClientQrScreen extends StatelessWidget {
                           borderRadius: BorderRadius.circular(20),
                           boxShadow: [
                             BoxShadow(
-                              color: Colors.black.withValues(alpha: 0.1),
+                              color: const Color(0xFF2F3F2A).withOpacity(0.1),
                               blurRadius: 20,
                               offset: const Offset(0, 10),
                             ),
@@ -71,13 +71,13 @@ class ClientQrScreen extends StatelessWidget {
                                 Container(
                                   width: 250,
                                   height: 250,
-                                  color: Colors.white, // QR code background should usually be white for contrast
+                                  color: const Color(0xFFF4F1EA), // QR code background
                                   child: Center(
                                     child: Icon(
                                       Icons.qr_code_2,
                                       color: ClientData.isMonthlyCouponRedeemed 
                                           ? theme.colorScheme.outline.withOpacity(0.3) 
-                                          : Colors.black, // QR code usually black
+                                          : const Color(0xFF2F3F2A), // QR code color
                                       size: 150,
                                     ),
                                   ),

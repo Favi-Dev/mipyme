@@ -14,27 +14,27 @@ class _PymeMetricsScreenState extends State<PymeMetricsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF7F9FC),
+      backgroundColor: const Color(0xFFF4F1EA),
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: const Color(0xFF2F3F2A),
         elevation: 0,
         title: Text(
           'Métricas',
           style: GoogleFonts.poppins(
-            color: Colors.black87,
+            color: const Color(0xFFF4F1EA),
             fontWeight: FontWeight.bold,
           ),
         ),
-        iconTheme: const IconThemeData(color: Colors.black87),
+        iconTheme: const IconThemeData(color: Color(0xFFF4F1EA)),
         actions: [
           Padding(
             padding: const EdgeInsets.only(right: 16.0),
             child: DropdownButtonHideUnderline(
               child: DropdownButton<String>(
-                dropdownColor: Colors.white,
+                dropdownColor: const Color(0xFFF4F1EA),
                 value: _selectedTimeRange,
-                icon: const Icon(Icons.keyboard_arrow_down, color: Color(0xFF333333)),
-                style: GoogleFonts.poppins(color: Colors.black87, fontSize: 14),
+                icon: const Icon(Icons.keyboard_arrow_down, color: Color(0xFFF4F1EA)),
+                style: GoogleFonts.poppins(color: const Color(0xFFF4F1EA), fontSize: 14),
                 onChanged: (String? newValue) {
                   setState(() {
                     _selectedTimeRange = newValue!;
@@ -48,7 +48,7 @@ class _PymeMetricsScreenState extends State<PymeMetricsScreen> {
                 ].map<DropdownMenuItem<String>>((String value) {
                   return DropdownMenuItem<String>(
                     value: value,
-                    child: Text(value),
+                    child: Text(value, style: TextStyle(color: const Color(0xFF2F3F2A))),
                   );
                 }).toList(),
               ),
@@ -64,7 +64,7 @@ class _PymeMetricsScreenState extends State<PymeMetricsScreen> {
             Text(
               'Resumen General',
               style: GoogleFonts.poppins(
-                color: Colors.black87,
+                color: const Color(0xFF2F3F2A),
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
               ),
@@ -85,7 +85,7 @@ class _PymeMetricsScreenState extends State<PymeMetricsScreen> {
                   trend: '+12%',
                   isPositive: true,
                   icon: Icons.qr_code,
-                  color: Colors.blueAccent,
+                  color: const Color(0xFF6F8F5E),
                 ),
                 _buildKpiCard(
                   title: 'Visitas al Perfil',
@@ -93,7 +93,7 @@ class _PymeMetricsScreenState extends State<PymeMetricsScreen> {
                   trend: '+5%',
                   isPositive: true,
                   icon: Icons.visibility,
-                  color: Colors.purpleAccent,
+                  color: const Color(0xFF8B5A3C),
                 ),
                 _buildKpiCard(
                   title: 'Ofertas Activas',
@@ -101,7 +101,7 @@ class _PymeMetricsScreenState extends State<PymeMetricsScreen> {
                   trend: 'Max: 5',
                   isPositive: null, // Neutral
                   icon: Icons.local_offer,
-                  color: Colors.orangeAccent,
+                  color: const Color(0xFFE3B58F),
                 ),
                 _buildKpiCard(
                   title: 'Valoración',
@@ -109,7 +109,7 @@ class _PymeMetricsScreenState extends State<PymeMetricsScreen> {
                   trend: '-0.1',
                   isPositive: false,
                   icon: Icons.star,
-                  color: const Color(0xFF333333),
+                  color: const Color(0xFF2F3F2A),
                 ),
               ],
             ),
@@ -119,7 +119,7 @@ class _PymeMetricsScreenState extends State<PymeMetricsScreen> {
             Text(
               'Actividad Semanal',
               style: GoogleFonts.poppins(
-                color: Colors.black87,
+                color: const Color(0xFF2F3F2A),
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
               ),
@@ -128,11 +128,11 @@ class _PymeMetricsScreenState extends State<PymeMetricsScreen> {
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: const Color(0xFFFFFFFF),
                 borderRadius: BorderRadius.circular(16),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.05),
+                    color: const Color(0xFF2F3F2A).withOpacity(0.1),
                     blurRadius: 10,
                     offset: const Offset(0, 4),
                   ),
@@ -144,8 +144,8 @@ class _PymeMetricsScreenState extends State<PymeMetricsScreen> {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text('Canjes por día',
-                          style: GoogleFonts.poppins(color: Colors.grey[600])),
-                      Icon(Icons.bar_chart, color: Colors.grey[400]),
+                          style: GoogleFonts.poppins(color: const Color(0xFF2F3F2A).withOpacity(0.6))),
+                      Icon(Icons.bar_chart, color: const Color(0xFF2F3F2A).withOpacity(0.4)),
                     ],
                   ),
                   const SizedBox(height: 24),
@@ -153,13 +153,13 @@ class _PymeMetricsScreenState extends State<PymeMetricsScreen> {
                     mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                     crossAxisAlignment: CrossAxisAlignment.end,
                     children: [
-                      _buildBar('Lun', 0.4, const Color(0xFFE63946)),
-                      _buildBar('Mar', 0.6, const Color(0xFFE63946)),
-                      _buildBar('Mié', 0.3, const Color(0xFFE63946)),
-                      _buildBar('Jue', 0.8, const Color(0xFF333333)),
-                      _buildBar('Vie', 0.9, const Color(0xFFE63946)),
-                      _buildBar('Sáb', 0.7, const Color(0xFFE63946)),
-                      _buildBar('Dom', 0.5, const Color(0xFFE63946)),
+                      _buildBar('Lun', 0.4, const Color(0xFF8B5A3C)),
+                      _buildBar('Mar', 0.6, const Color(0xFF8B5A3C)),
+                      _buildBar('Mié', 0.3, const Color(0xFF8B5A3C)),
+                      _buildBar('Jue', 0.8, const Color(0xFF2F3F2A)),
+                      _buildBar('Vie', 0.9, const Color(0xFF8B5A3C)),
+                      _buildBar('Sáb', 0.7, const Color(0xFF8B5A3C)),
+                      _buildBar('Dom', 0.5, const Color(0xFF8B5A3C)),
                     ],
                   ),
                 ],
@@ -172,7 +172,7 @@ class _PymeMetricsScreenState extends State<PymeMetricsScreen> {
             Text(
               'Actividad Reciente',
               style: GoogleFonts.poppins(
-                color: Colors.black87,
+                color: const Color(0xFF2F3F2A),
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
               ),
@@ -184,25 +184,25 @@ class _PymeMetricsScreenState extends State<PymeMetricsScreen> {
               children: [
                 _buildActivityItem(
                   icon: Icons.check_circle_outline,
-                  color: Colors.green,
+                  color: const Color(0xFF6F8F5E),
                   title: 'Cupón canjeado',
                   subtitle: 'Cliente #482 - Hace 10 min',
                 ),
                 _buildActivityItem(
                   icon: Icons.star_border,
-                  color: const Color(0xFF333333),
+                  color: const Color(0xFF2F3F2A),
                   title: 'Nueva reseña recibida',
                   subtitle: '5 estrellas de Juan P. - Hace 2 horas',
                 ),
                 _buildActivityItem(
                   icon: Icons.edit,
-                  color: Colors.blueAccent,
+                  color: const Color(0xFF8B5A3C),
                   title: 'Oferta actualizada',
                   subtitle: 'Exclusivo App Soy Pro - Ayer',
                 ),
                 _buildActivityItem(
                   icon: Icons.check_circle_outline,
-                  color: Colors.green,
+                  color: const Color(0xFF6F8F5E),
                   title: 'Cupón canjeado',
                   subtitle: 'Cliente #301 - Ayer',
                 ),
@@ -225,11 +225,11 @@ class _PymeMetricsScreenState extends State<PymeMetricsScreen> {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: const Color(0xFFF4F1EA),
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: const Color(0xFF2F3F2A).withOpacity(0.1),
             blurRadius: 5,
             offset: const Offset(0, 2),
           ),
@@ -249,14 +249,14 @@ class _PymeMetricsScreenState extends State<PymeMetricsScreen> {
                       const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                   decoration: BoxDecoration(
                     color: isPositive
-                        ? Colors.green.withOpacity(0.1)
-                        : Colors.red.withOpacity(0.1),
+                        ? const Color(0xFF6F8F5E).withOpacity(0.1)
+                        : const Color(0xFF8B5A3C).withOpacity(0.1),
                     borderRadius: BorderRadius.circular(4),
                   ),
                   child: Text(
                     trend,
                     style: TextStyle(
-                      color: isPositive ? Colors.green : Colors.red,
+                      color: isPositive ? const Color(0xFF6F8F5E) : const Color(0xFF8B5A3C),
                       fontSize: 10,
                       fontWeight: FontWeight.bold,
                     ),
@@ -266,7 +266,7 @@ class _PymeMetricsScreenState extends State<PymeMetricsScreen> {
                 Text(
                   trend,
                   style: TextStyle(
-                    color: Colors.grey[500],
+                    color: const Color(0xFF2F3F2A).withOpacity(0.5),
                     fontSize: 10,
                   ),
                 ),
@@ -278,7 +278,7 @@ class _PymeMetricsScreenState extends State<PymeMetricsScreen> {
               Text(
                 value,
                 style: GoogleFonts.poppins(
-                  color: Colors.black87,
+                  color: const Color(0xFF2F3F2A),
                   fontSize: 24,
                   fontWeight: FontWeight.bold,
                 ),
@@ -286,7 +286,7 @@ class _PymeMetricsScreenState extends State<PymeMetricsScreen> {
               Text(
                 title,
                 style: GoogleFonts.poppins(
-                  color: Colors.grey[600],
+                  color: const Color(0xFF2F3F2A).withOpacity(0.7),
                   fontSize: 12,
                 ),
                 maxLines: 1,
@@ -313,7 +313,7 @@ class _PymeMetricsScreenState extends State<PymeMetricsScreen> {
         const SizedBox(height: 8),
         Text(
           label,
-          style: TextStyle(color: Colors.grey[600], fontSize: 10),
+          style: TextStyle(color: const Color(0xFF2F3F2A).withOpacity(0.7), fontSize: 10),
         ),
       ],
     );
@@ -329,11 +329,11 @@ class _PymeMetricsScreenState extends State<PymeMetricsScreen> {
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: const Color(0xFFF4F1EA),
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: const Color(0xFF2F3F2A).withOpacity(0.1),
             blurRadius: 5,
             offset: const Offset(0, 2),
           ),
@@ -357,7 +357,7 @@ class _PymeMetricsScreenState extends State<PymeMetricsScreen> {
                 Text(
                   title,
                   style: GoogleFonts.poppins(
-                    color: Colors.black87,
+                    color: const Color(0xFF2F3F2A),
                     fontWeight: FontWeight.w500,
                   ),
                 ),
@@ -365,14 +365,14 @@ class _PymeMetricsScreenState extends State<PymeMetricsScreen> {
                 Text(
                   subtitle,
                   style: GoogleFonts.poppins(
-                    color: Colors.grey[600],
+                    color: const Color(0xFF2F3F2A).withOpacity(0.7),
                     fontSize: 12,
                   ),
                 ),
               ],
             ),
           ),
-          Icon(Icons.chevron_right, color: Colors.grey[400]),
+          Icon(Icons.chevron_right, color: const Color(0xFF2F3F2A).withOpacity(0.5)),
         ],
       ),
     );

@@ -31,13 +31,15 @@ class _PymeProductsScreenState extends State<PymeProductsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF7F9FC),
+      backgroundColor: const Color(0xFFF4F1EA),
       appBar: AppBar(
         title: Text(
           'Mis Productos',
           style: GoogleFonts.poppins(fontWeight: FontWeight.bold),
         ),
         elevation: 0,
+        backgroundColor: const Color(0xFF2F3F2A),
+        foregroundColor: const Color(0xFFF4F1EA),
       ),
       body: _products.isEmpty
           ? Center(
@@ -45,12 +47,12 @@ class _PymeProductsScreenState extends State<PymeProductsScreen> {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Icon(Icons.inventory_2_outlined,
-                      size: 64, color: Colors.grey[400]),
+                      size: 64, color: const Color(0xFF2F3F2A).withOpacity(0.5)),
                   const SizedBox(height: 16),
                   Text(
                     'No tienes productos registrados.',
                     style: GoogleFonts.poppins(
-                      color: Colors.grey[600],
+                      color: const Color(0xFF2F3F2A).withOpacity(0.7),
                       fontSize: 16,
                     ),
                   ),
@@ -86,14 +88,14 @@ class _PymeProductsScreenState extends State<PymeProductsScreen> {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     ListTile(
-                      leading: const Icon(Icons.inventory_2, color: Color(0xFF0056D2)),
+                      leading: const Icon(Icons.inventory_2, color: Color(0xFF6F8F5E)),
                       title: Text('Producto', style: GoogleFonts.poppins(fontWeight: FontWeight.w600)),
                       subtitle: Text('Artículo físico con stock', style: GoogleFonts.poppins(fontSize: 12)),
                       onTap: () => Navigator.pop(context, false),
                     ),
                     const Divider(),
                     ListTile(
-                      leading: const Icon(Icons.calendar_today, color: Color(0xFF0056D2)),
+                      leading: const Icon(Icons.calendar_today, color: Color(0xFF6F8F5E)),
                       title: Text('Servicio', style: GoogleFonts.poppins(fontWeight: FontWeight.w600)),
                       subtitle: Text('Actividad con reserva de hora', style: GoogleFonts.poppins(fontSize: 12)),
                       onTap: () => Navigator.pop(context, true),
@@ -113,12 +115,12 @@ class _PymeProductsScreenState extends State<PymeProductsScreen> {
             }
           }
         },
-        backgroundColor: const Color(0xFF0056D2),
-        icon: const Icon(Icons.add, color: Colors.white),
+        backgroundColor: const Color(0xFF6F8F5E),
+        icon: const Icon(Icons.add, color: Color(0xFFF4F1EA)),
         label: Text(
           'Nuevo Item',
           style: GoogleFonts.poppins(
-              fontWeight: FontWeight.bold, color: Colors.white),
+              fontWeight: FontWeight.bold, color: const Color(0xFFF4F1EA)),
         ),
       ),
     );
@@ -128,11 +130,11 @@ class _PymeProductsScreenState extends State<PymeProductsScreen> {
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: const Color(0xFFFFFFFF),
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: const Color(0xFF2F3F2A).withOpacity(0.1),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -161,9 +163,9 @@ class _PymeProductsScreenState extends State<PymeProductsScreen> {
                     errorBuilder: (_, __, ___) => Container(
                       width: 100,
                       height: 100,
-                      color: Colors.grey[200],
+                      color: const Color(0xFFF4F1EA),
                       child: Icon(Icons.image_not_supported,
-                          color: Colors.grey[400]),
+                          color: const Color(0xFF2F3F2A).withOpacity(0.3)),
                     ),
                   ),
                 ),
@@ -182,7 +184,7 @@ class _PymeProductsScreenState extends State<PymeProductsScreen> {
                               style: GoogleFonts.poppins(
                                 fontWeight: FontWeight.bold,
                                 fontSize: 16,
-                                color: Colors.black87,
+                                color: const Color(0xFF2F3F2A),
                               ),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
@@ -201,16 +203,16 @@ class _PymeProductsScreenState extends State<PymeProductsScreen> {
                                     mainAxisSize: MainAxisSize.min,
                                     children: [
                                       ListTile(
-                                        leading: const Icon(Icons.edit, color: Colors.blue),
-                                        title: Text('Editar', style: GoogleFonts.poppins()),
+                                        leading: const Icon(Icons.edit, color: Color(0xFF6F8F5E)),
+                                        title: Text('Editar', style: GoogleFonts.poppins(color: const Color(0xFF2F3F2A))),
                                         onTap: () {
                                           Navigator.pop(context);
                                           // TODO: Navigate to edit screen
                                         },
                                       ),
                                       ListTile(
-                                        leading: const Icon(Icons.delete, color: Colors.red),
-                                        title: Text('Eliminar', style: GoogleFonts.poppins()),
+                                        leading: const Icon(Icons.delete, color: Color(0xFF8B5A3C)),
+                                        title: Text('Eliminar', style: GoogleFonts.poppins(color: const Color(0xFF2F3F2A))),
                                         onTap: () {
                                           Navigator.pop(context);
                                           // TODO: Implement delete logic
@@ -227,11 +229,11 @@ class _PymeProductsScreenState extends State<PymeProductsScreen> {
                             child: Container(
                               padding: const EdgeInsets.all(4),
                               decoration: BoxDecoration(
-                                color: Colors.grey[100],
+                                color: const Color(0xFFF4F1EA),
                                 borderRadius: BorderRadius.circular(8),
                               ),
-                              child: const Icon(Icons.more_vert,
-                                  size: 20, color: Colors.grey),
+                              child: Icon(Icons.more_vert,
+                                  size: 20, color: const Color(0xFF2F3F2A).withOpacity(0.6)),
                             ),
                           ),
                         ],
@@ -240,7 +242,7 @@ class _PymeProductsScreenState extends State<PymeProductsScreen> {
                       Text(
                         product.category,
                         style: GoogleFonts.poppins(
-                          color: Colors.grey[500],
+                          color: const Color(0xFF2F3F2A).withOpacity(0.6),
                           fontSize: 12,
                         ),
                       ),
@@ -251,13 +253,13 @@ class _PymeProductsScreenState extends State<PymeProductsScreen> {
                             padding: const EdgeInsets.symmetric(
                                 horizontal: 8, vertical: 4),
                             decoration: BoxDecoration(
-                              color: const Color(0xFFE0F7FA),
+                              color: const Color(0xFF6F8F5E).withOpacity(0.1),
                               borderRadius: BorderRadius.circular(6),
                             ),
                             child: Text(
                               'Stock: ${product.stock}',
                               style: GoogleFonts.poppins(
-                                color: const Color(0xFF006064),
+                                color: const Color(0xFF6F8F5E),
                                 fontSize: 12,
                                 fontWeight: FontWeight.w600,
                               ),
@@ -267,7 +269,7 @@ class _PymeProductsScreenState extends State<PymeProductsScreen> {
                           Text(
                             '\$${product.price.toStringAsFixed(0)}',
                             style: GoogleFonts.poppins(
-                              color: const Color(0xFF0056D2),
+                              color: const Color(0xFF2F3F2A),
                               fontSize: 18,
                               fontWeight: FontWeight.bold,
                             ),

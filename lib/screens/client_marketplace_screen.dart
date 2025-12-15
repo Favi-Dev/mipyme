@@ -63,7 +63,7 @@ class _ClientMarketplaceScreenState extends State<ClientMarketplaceScreen> {
                   borderRadius: BorderRadius.circular(12),
                 ),
                 filled: true,
-                fillColor: Colors.white,
+                fillColor: const Color(0xFFF4F1EA),
               ),
               onChanged: (value) {
                 _searchQuery = value;
@@ -144,7 +144,7 @@ class _ClientMarketplaceScreenState extends State<ClientMarketplaceScreen> {
               width: double.infinity,
               fit: BoxFit.cover,
               errorBuilder: (_, __, ___) => Container(
-                color: Colors.grey[300],
+                color: const Color(0xFF2F3F2A).withOpacity(0.1),
                 child: const Center(child: Icon(Icons.image_not_supported)),
               ),
             ),
@@ -163,7 +163,7 @@ class _ClientMarketplaceScreenState extends State<ClientMarketplaceScreen> {
                 Text(
                   '\$${product.price.toStringAsFixed(0)}',
                   style: const TextStyle(
-                    color: Color(0xFF0056D2),
+                    color: Color(0xFF6F8F5E),
                     fontWeight: FontWeight.bold,
                   ),
                 ),

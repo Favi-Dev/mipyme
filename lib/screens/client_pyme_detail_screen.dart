@@ -87,7 +87,7 @@ class _ClientPymeDetailScreenState extends State<ClientPymeDetailScreen> {
                 _buildShareOption(
                   icon: Icons.message, // WhatsApp icon usually
                   label: 'WhatsApp',
-                  color: Colors.green,
+                  color: const Color(0xFF6F8F5E),
                   onTap: () {
                     Navigator.pop(context);
                     // Generates a link like https://mipyme.app/pyme/pyme1
@@ -98,7 +98,7 @@ class _ClientPymeDetailScreenState extends State<ClientPymeDetailScreen> {
                 _buildShareOption(
                   icon: Icons.email,
                   label: 'Correo',
-                  color: const Color(0xFFBC4749), // Café
+                  color: const Color(0xFF8B5A3C), // Café
                   onTap: () {
                     Navigator.pop(context);
                     final String link = 'https://mipyme.app/pyme/${VitrinaData.name.replaceAll(' ', '').toLowerCase()}';
@@ -108,7 +108,7 @@ class _ClientPymeDetailScreenState extends State<ClientPymeDetailScreen> {
                 _buildShareOption(
                   icon: Icons.more_horiz,
                   label: 'Más',
-                  color: const Color(0xFFA7C957), // Verde Claro
+                  color: const Color(0xFF6F8F5E), // Verde Claro
                   onTap: () {
                     Navigator.pop(context);
                     // Standard share would go here
@@ -125,7 +125,7 @@ class _ClientPymeDetailScreenState extends State<ClientPymeDetailScreen> {
   Widget _buildShareOption({
     required IconData icon,
     required String label,
-    Color color = Colors.grey,
+    Color color = const Color(0xFF2F3F2A),
     required VoidCallback onTap,
   }) {
     final theme = Theme.of(context);
@@ -218,7 +218,7 @@ class _ClientPymeDetailScreenState extends State<ClientPymeDetailScreen> {
                                 borderRadius: BorderRadius.circular(10),
                                 boxShadow: !isMonthly ? [
                                   BoxShadow(
-                                    color: Colors.black.withValues(alpha: 0.05),
+                                    color: const Color(0xFF2F3F2A).withOpacity(0.1),
                                     blurRadius: 4,
                                   )
                                 ] : null,
@@ -244,7 +244,7 @@ class _ClientPymeDetailScreenState extends State<ClientPymeDetailScreen> {
                                 borderRadius: BorderRadius.circular(10),
                                 boxShadow: isMonthly ? [
                                   BoxShadow(
-                                    color: Colors.black.withValues(alpha: 0.05),
+                                    color: const Color(0xFF2F3F2A).withOpacity(0.1),
                                     blurRadius: 4,
                                   )
                                 ] : null,
@@ -321,7 +321,7 @@ class _ClientPymeDetailScreenState extends State<ClientPymeDetailScreen> {
                   LinearProgressIndicator(
                     value: VitrinaData.currentDonations / VitrinaData.donationGoal,
                     backgroundColor: theme.colorScheme.surfaceContainerHighest,
-                    color: const Color(0xFFFFD700), // Gold for progress
+                    color: const Color(0xFF6F8F5E), // Light Green for progress
                     minHeight: 10,
                     borderRadius: BorderRadius.circular(5),
                   ),
@@ -333,7 +333,7 @@ class _ClientPymeDetailScreenState extends State<ClientPymeDetailScreen> {
                         '\$${VitrinaData.currentDonations.toStringAsFixed(0)}',
                         style: theme.textTheme.bodyMedium?.copyWith(
                           fontWeight: FontWeight.bold,
-                          color: const Color(0xFFFFD700), // Gold
+                          color: const Color(0xFF6F8F5E), // Light Green
                         ),
                       ),
                       Text(
@@ -380,12 +380,12 @@ class _ClientPymeDetailScreenState extends State<ClientPymeDetailScreen> {
                             content: Text(isMonthly 
                               ? '¡Gracias por suscribirte con \$${selectedAmount}/mes!' 
                               : '¡Gracias por tu donación de \$${selectedAmount}!'),
-                            backgroundColor: Colors.green,
+                            backgroundColor: const Color(0xFF6F8F5E),
                           ),
                         );
                       },
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF386641), // Verde Hoja Profundo
+                        backgroundColor: const Color(0xFF2F3F2A), // Verde Hoja Profundo
                         padding: const EdgeInsets.symmetric(vertical: 16),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12),
@@ -395,7 +395,7 @@ class _ClientPymeDetailScreenState extends State<ClientPymeDetailScreen> {
                         isMonthly ? 'Suscribirse Mensualmente' : 'Realizar Donación',
                         style: theme.textTheme.titleMedium?.copyWith(
                           fontWeight: FontWeight.bold,
-                          color: Colors.white,
+                          color: const Color(0xFFF4F1EA),
                         ),
                       ),
                     ),
@@ -435,14 +435,14 @@ class _ClientPymeDetailScreenState extends State<ClientPymeDetailScreen> {
                 scrolledUnderElevation: 0,
                 backgroundColor: theme.colorScheme.surface,
                 leading: IconButton(
-                  icon: const Icon(Icons.arrow_back, color: Colors.white),
+                  icon: const Icon(Icons.arrow_back, color: Color(0xFFF4F1EA)),
                   onPressed: () => Navigator.pop(context),
                 ),
                 actions: [
                   IconButton(
                     icon: Icon(
                       _isFollowing ? Icons.favorite : Icons.favorite_border,
-                      color: _isFollowing ? theme.colorScheme.primary : Colors.white,
+                      color: _isFollowing ? theme.colorScheme.primary : const Color(0xFFF4F1EA),
                     ),
                     onPressed: () {
                       setState(() {
@@ -455,14 +455,14 @@ class _ClientPymeDetailScreenState extends State<ClientPymeDetailScreen> {
                                 ? '¡Ahora sigues a ${VitrinaData.name}!'
                                 : 'Dejaste de seguir a ${VitrinaData.name}',
                           ),
-                          backgroundColor: _isFollowing ? theme.colorScheme.primary : Colors.grey,
+                          backgroundColor: _isFollowing ? theme.colorScheme.primary : const Color(0xFF8B5A3C),
                           duration: const Duration(seconds: 2),
                         ),
                       );
                     },
                   ),
                   IconButton(
-                    icon: const Icon(Icons.share, color: Colors.white),
+                    icon: const Icon(Icons.share, color: Color(0xFFF4F1EA)),
                     onPressed: _showShareOptions,
                   ),
                 ],
@@ -470,13 +470,13 @@ class _ClientPymeDetailScreenState extends State<ClientPymeDetailScreen> {
                   title: Text(
                     VitrinaData.name,
                     style: theme.textTheme.titleLarge?.copyWith(
-                      color: Colors.white,
+                      color: const Color(0xFFF4F1EA),
                       fontWeight: FontWeight.bold,
                       shadows: [
-                        const Shadow(
-                          offset: Offset(0, 1),
+                        Shadow(
+                          offset: const Offset(0, 1),
                           blurRadius: 3.0,
-                          color: Colors.black54,
+                          color: const Color(0xFF2F3F2A).withOpacity(0.54),
                         ),
                       ],
                     ),
@@ -494,14 +494,14 @@ class _ClientPymeDetailScreenState extends State<ClientPymeDetailScreen> {
                               VitrinaData.coverImageUrl,
                               fit: BoxFit.cover,
                             ),
-                      const DecoratedBox(
+                      DecoratedBox(
                         decoration: BoxDecoration(
                           gradient: LinearGradient(
                             begin: Alignment.topCenter,
                             end: Alignment.bottomCenter,
                             colors: [
                               Colors.transparent,
-                              Colors.black54,
+                              const Color(0xFF2F3F2A).withOpacity(0.54),
                             ],
                           ),
                         ),
@@ -543,16 +543,16 @@ class _ClientPymeDetailScreenState extends State<ClientPymeDetailScreen> {
                           width: double.infinity,
                           child: ElevatedButton.icon(
                             onPressed: _showDonationModal,
-                            icon: const Icon(Icons.volunteer_activism, color: Colors.white),
+                            icon: const Icon(Icons.volunteer_activism, color: Color(0xFFF4F1EA)),
                             label: Text(
                               'Donar a esta Fundación',
                               style: theme.textTheme.labelLarge?.copyWith(
                                 fontWeight: FontWeight.bold,
-                                color: Colors.white,
+                                color: const Color(0xFFF4F1EA),
                               ),
                             ),
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: const Color(0xFF386641), // Verde Hoja Profundo
+                              backgroundColor: const Color(0xFF2F3F2A), // Verde Hoja Profundo
                               padding: const EdgeInsets.symmetric(vertical: 12),
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(12),
@@ -655,19 +655,19 @@ class _ClientPymeDetailScreenState extends State<ClientPymeDetailScreen> {
                           _buildContactButton(
                             Icons.language,
                             'Sitio Web',
-                            Colors.blueAccent,
+                            const Color(0xFF6F8F5E),
                             () => _launchUrl('https://www.google.com'),
                           ),
                           _buildContactButton(
                             Icons.camera_alt,
                             'Instagram',
-                            Colors.purpleAccent,
+                            const Color(0xFF8B5A3C),
                             () => _launchUrl('https://www.instagram.com'),
                           ),
                           _buildContactButton(
                             Icons.message,
                             'WhatsApp',
-                            Colors.green,
+                            const Color(0xFF6F8F5E),
                             () => _launchUrl('https://wa.me/56912345678'),
                           ),
                         ],
@@ -695,20 +695,20 @@ class _ClientPymeDetailScreenState extends State<ClientPymeDetailScreen> {
             },
             child: Container(
               padding: const EdgeInsets.all(4),
-              decoration: const BoxDecoration(
-                color: Colors.white,
+              decoration: BoxDecoration(
+                color: const Color(0xFFF4F1EA),
                 shape: BoxShape.circle,
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black12,
+                    color: const Color(0xFF2F3F2A).withOpacity(0.12),
                     blurRadius: 8,
-                    offset: Offset(0, 4),
+                    offset: const Offset(0, 4),
                   ),
                 ],
               ),
               child: CircleAvatar(
                 radius: 40,
-                backgroundColor: Colors.white,
+                backgroundColor: const Color(0xFFF4F1EA),
                 backgroundImage: VitrinaData.logoUrl.startsWith('http')
                     ? NetworkImage(VitrinaData.logoUrl)
                     : AssetImage(VitrinaData.logoUrl) as ImageProvider,
@@ -748,17 +748,17 @@ class _ClientPymeDetailScreenState extends State<ClientPymeDetailScreen> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Icon(offer.icon, color: Colors.white, size: 32),
+              Icon(offer.icon, color: const Color(0xFFF4F1EA), size: 32),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
-                  color: Colors.black26,
+                  color: const Color(0xFF2F3F2A).withOpacity(0.26),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: const Text(
                   'DISPONIBLE',
                   style: TextStyle(
-                    color: Colors.white,
+                    color: Color(0xFFF4F1EA),
                     fontSize: 10,
                     fontWeight: FontWeight.bold,
                   ),
@@ -770,31 +770,31 @@ class _ClientPymeDetailScreenState extends State<ClientPymeDetailScreen> {
           Text(
             offer.title,
             style: theme.textTheme.titleMedium?.copyWith(
-              color: Colors.white,
+              color: const Color(0xFFF4F1EA),
               fontWeight: FontWeight.bold,
             ),
           ),
           const SizedBox(height: 4),
           Text(
             offer.description,
-            style: theme.textTheme.bodySmall?.copyWith(color: Colors.white.withOpacity(0.9)),
+            style: theme.textTheme.bodySmall?.copyWith(color: const Color(0xFFF4F1EA).withOpacity(0.9)),
           ),
           const SizedBox(height: 12),
           Container(
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.2),
+              color: const Color(0xFFF4F1EA).withOpacity(0.2),
               borderRadius: BorderRadius.circular(8),
             ),
             child: Row(
               children: [
-                const Icon(Icons.info_outline, color: Colors.white, size: 16),
+                const Icon(Icons.info_outline, color: Color(0xFFF4F1EA), size: 16),
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
                     'Usa tu cupón mensual aquí',
                     style: theme.textTheme.bodySmall?.copyWith(
-                      color: Colors.white,
+                      color: const Color(0xFFF4F1EA),
                       fontSize: 10,
                     ),
                   ),
@@ -816,7 +816,7 @@ class _ClientPymeDetailScreenState extends State<ClientPymeDetailScreen> {
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
+            color: const Color(0xFF2F3F2A).withOpacity(0.1),
             blurRadius: 8,
             offset: const Offset(0, 4),
           ),
@@ -981,8 +981,8 @@ class _ClientPymeDetailScreenState extends State<ClientPymeDetailScreen> {
                       }
                     },
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: product.isService ? theme.colorScheme.primary : const Color(0xFF386641), // Verde Hoja Profundo
-                      foregroundColor: Colors.white,
+                      backgroundColor: product.isService ? theme.colorScheme.primary : const Color(0xFF2F3F2A), // Verde Hoja Profundo
+                      foregroundColor: const Color(0xFFF4F1EA),
                       padding: EdgeInsets.zero,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(8),

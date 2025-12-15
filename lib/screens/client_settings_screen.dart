@@ -16,12 +16,12 @@ class _ClientSettingsScreenState extends State<ClientSettingsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF7F9FC),
+      backgroundColor: const Color(0xFF2F3F2A),
       appBar: AppBar(
         title: Text('Configuración', style: GoogleFonts.poppins(fontWeight: FontWeight.bold)),
         elevation: 0,
-        backgroundColor: const Color(0xFF0056D2),
-        foregroundColor: Colors.white,
+        backgroundColor: const Color(0xFF2F3F2A),
+        foregroundColor: const Color(0xFFF4F1EA),
       ),
       body: ListView(
         padding: const EdgeInsets.all(16),
@@ -48,10 +48,10 @@ class _ClientSettingsScreenState extends State<ClientSettingsScreen> {
                 );
               },
               style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.white,
-                foregroundColor: Colors.red,
+                backgroundColor: const Color(0xFFF4F1EA),
+                foregroundColor: const Color(0xFF2F3F2A),
                 elevation: 0,
-                side: const BorderSide(color: Colors.red),
+                side: const BorderSide(color: Color(0xFF2F3F2A)),
                 padding: const EdgeInsets.symmetric(vertical: 16),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
               ),
@@ -68,7 +68,7 @@ class _ClientSettingsScreenState extends State<ClientSettingsScreen> {
       padding: const EdgeInsets.only(bottom: 12, left: 4),
       child: Text(
         title,
-        style: GoogleFonts.poppins(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.black87),
+        style: GoogleFonts.poppins(fontSize: 18, fontWeight: FontWeight.bold, color: const Color(0xFFF4F1EA)),
       ),
     );
   }
@@ -77,16 +77,17 @@ class _ClientSettingsScreenState extends State<ClientSettingsScreen> {
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: const Color(0xFFF4F1EA),
         borderRadius: BorderRadius.circular(12),
-        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 5)],
+        boxShadow: [BoxShadow(color: const Color(0xFF2F3F2A).withOpacity(0.1), blurRadius: 5)],
       ),
       child: SwitchListTile(
-        title: Text(title, style: GoogleFonts.poppins(fontWeight: FontWeight.w600)),
-        subtitle: Text(subtitle, style: GoogleFonts.poppins(fontSize: 12, color: Colors.grey)),
+        title: Text(title, style: GoogleFonts.poppins(fontWeight: FontWeight.w600, color: const Color(0xFF2F3F2A))),
+        subtitle: Text(subtitle, style: GoogleFonts.poppins(fontSize: 12, color: const Color(0xFF6E6E6A))),
         value: value,
         onChanged: onChanged,
-        activeColor: const Color(0xFF0056D2),
+        activeColor: const Color(0xFF2F3F2A),
+        trackColor: MaterialStateProperty.resolveWith((states) => states.contains(MaterialState.selected) ? const Color(0xFF6F8F5E) : null),
       ),
     );
   }
@@ -95,16 +96,24 @@ class _ClientSettingsScreenState extends State<ClientSettingsScreen> {
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: const Color(0xFFF4F1EA),
         borderRadius: BorderRadius.circular(12),
-        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 5)],
+        boxShadow: [BoxShadow(color: const Color(0xFF2F3F2A).withOpacity(0.1), blurRadius: 5)],
       ),
       child: ListTile(
-        leading: Icon(icon, color: const Color(0xFF0056D2)),
-        title: Text(title, style: GoogleFonts.poppins(fontWeight: FontWeight.w600)),
-        trailing: const Icon(Icons.arrow_forward_ios, size: 16, color: Colors.grey),
+        leading: Container(
+          padding: const EdgeInsets.all(8),
+          decoration: BoxDecoration(
+            color: const Color(0xFF2F3F2A).withOpacity(0.1),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Icon(icon, color: const Color(0xFF2F3F2A)),
+        ),
+        title: Text(title, style: GoogleFonts.poppins(fontWeight: FontWeight.w600, color: const Color(0xFF2F3F2A))),
+        trailing: const Icon(Icons.arrow_forward_ios, size: 16, color: Color(0xFF2F3F2A)),
         onTap: onTap,
       ),
     );
   }
+
 }

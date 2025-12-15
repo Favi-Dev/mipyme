@@ -87,10 +87,12 @@ class _PymeAddEventScreenState extends State<PymeAddEventScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF7F9FC),
+      backgroundColor: const Color(0xFFF4F1EA),
       appBar: AppBar(
         title: Text('Nuevo Evento', style: GoogleFonts.poppins(fontWeight: FontWeight.bold)),
         elevation: 0,
+        backgroundColor: const Color(0xFFF4F1EA),
+        foregroundColor: const Color(0xFF2F3F2A),
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
@@ -133,24 +135,24 @@ class _PymeAddEventScreenState extends State<PymeAddEventScreen> {
                       child: Container(
                         padding: const EdgeInsets.all(16),
                         decoration: BoxDecoration(
-                          color: Colors.white,
+                          color: const Color(0xFFFFFFFF),
                           borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: Colors.grey[300]!),
+                          border: Border.all(color: const Color(0xFF2F3F2A).withOpacity(0.1)),
                         ),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text('Fecha', style: GoogleFonts.poppins(color: Colors.grey[600], fontSize: 12)),
+                            Text('Fecha', style: GoogleFonts.poppins(color: const Color(0xFF2F3F2A).withOpacity(0.7), fontSize: 12)),
                             const SizedBox(height: 4),
                             Row(
                               children: [
-                                const Icon(Icons.calendar_today, size: 20, color: Color(0xFF0056D2)),
+                                const Icon(Icons.calendar_today, size: 20, color: Color(0xFF6F8F5E)),
                                 const SizedBox(width: 8),
                                 Text(
                                   _selectedDate == null 
                                       ? 'Seleccionar' 
                                       : '${_selectedDate!.day}/${_selectedDate!.month}/${_selectedDate!.year}',
-                                  style: GoogleFonts.poppins(fontWeight: FontWeight.w600),
+                                  style: GoogleFonts.poppins(fontWeight: FontWeight.w600, color: const Color(0xFF2F3F2A)),
                                 ),
                               ],
                             ),
@@ -166,24 +168,24 @@ class _PymeAddEventScreenState extends State<PymeAddEventScreen> {
                       child: Container(
                         padding: const EdgeInsets.all(16),
                         decoration: BoxDecoration(
-                          color: Colors.white,
+                          color: const Color(0xFFFFFFFF),
                           borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: Colors.grey[300]!),
+                          border: Border.all(color: const Color(0xFF2F3F2A).withOpacity(0.1)),
                         ),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text('Hora', style: GoogleFonts.poppins(color: Colors.grey[600], fontSize: 12)),
+                            Text('Hora', style: GoogleFonts.poppins(color: const Color(0xFF2F3F2A).withOpacity(0.7), fontSize: 12)),
                             const SizedBox(height: 4),
                             Row(
                               children: [
-                                const Icon(Icons.access_time, size: 20, color: Color(0xFF0056D2)),
+                                const Icon(Icons.access_time, size: 20, color: Color(0xFF6F8F5E)),
                                 const SizedBox(width: 8),
                                 Text(
                                   _selectedTime == null 
                                       ? 'Seleccionar' 
                                       : '${_selectedTime!.hour}:${_selectedTime!.minute.toString().padLeft(2, '0')}',
-                                  style: GoogleFonts.poppins(fontWeight: FontWeight.w600),
+                                  style: GoogleFonts.poppins(fontWeight: FontWeight.w600, color: const Color(0xFF2F3F2A)),
                                 ),
                               ],
                             ),
@@ -202,7 +204,7 @@ class _PymeAddEventScreenState extends State<PymeAddEventScreen> {
                 child: ElevatedButton(
                   onPressed: _saveEvent,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF0056D2),
+                    backgroundColor: const Color(0xFF6F8F5E),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
@@ -212,7 +214,7 @@ class _PymeAddEventScreenState extends State<PymeAddEventScreen> {
                     style: GoogleFonts.poppins(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
-                      color: Colors.white,
+                      color: const Color(0xFFF4F1EA),
                     ),
                   ),
                 ),
@@ -236,21 +238,22 @@ class _PymeAddEventScreenState extends State<PymeAddEventScreen> {
       validator: (value) => value?.isEmpty ?? true ? 'Campo requerido' : null,
       decoration: InputDecoration(
         labelText: label,
-        prefixIcon: Icon(icon, color: Colors.grey[600]),
+        labelStyle: TextStyle(color: const Color(0xFF2F3F2A).withOpacity(0.7)),
+        prefixIcon: Icon(icon, color: const Color(0xFF2F3F2A).withOpacity(0.7)),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: Colors.grey[300]!),
+          borderSide: BorderSide(color: const Color(0xFF2F3F2A).withOpacity(0.1)),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: Colors.grey[300]!),
+          borderSide: BorderSide(color: const Color(0xFF2F3F2A).withOpacity(0.1)),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: Color(0xFF0056D2), width: 2),
+          borderSide: const BorderSide(color: Color(0xFF6F8F5E), width: 2),
         ),
         filled: true,
-        fillColor: Colors.white,
+        fillColor: const Color(0xFFFFFFFF),
       ),
     );
   }

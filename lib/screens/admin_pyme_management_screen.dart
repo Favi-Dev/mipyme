@@ -61,7 +61,7 @@ class AdminPymeManagementScreen extends StatelessWidget {
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: const Color(0xFF2F3F2A).withOpacity(0.1),
             blurRadius: 5,
             offset: const Offset(0, 2),
           ),

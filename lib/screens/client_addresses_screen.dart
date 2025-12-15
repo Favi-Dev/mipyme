@@ -135,7 +135,7 @@ class ClientAddressesScreen extends StatelessWidget {
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: const Color(0xFF2F3F2A).withOpacity(0.1),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),

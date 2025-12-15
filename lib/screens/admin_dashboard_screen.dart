@@ -101,21 +101,21 @@ class AdminDashboardScreen extends StatelessWidget {
               'Nueva Pyme registrada: "Café Central"',
               'Hace 5 min',
               Icons.add_business,
-              Colors.green,
+              const Color(0xFF6F8F5E),
             ),
             _buildActivityItem(
               context,
               'Usuario reportado: @juanperez',
               'Hace 20 min',
               Icons.report,
-              Colors.orange,
+              const Color(0xFF8B5A3C),
             ),
             _buildActivityItem(
               context,
               'Soporte solicitado: "Error en login"',
               'Hace 1 hora',
               Icons.support_agent,
-              Colors.blue,
+              const Color(0xFF6F8F5E),
             ),
           ],
         ),
@@ -132,7 +132,7 @@ class AdminDashboardScreen extends StatelessWidget {
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: const Color(0xFF2F3F2A).withOpacity(0.1),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -179,7 +179,7 @@ class AdminDashboardScreen extends StatelessWidget {
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: const Color(0xFF2F3F2A).withOpacity(0.1),
             blurRadius: 5,
             offset: const Offset(0, 2),
           ),

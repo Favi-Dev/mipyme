@@ -8,13 +8,18 @@ class PymeProfileScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF7F9FC),
+      backgroundColor: const Color(0xFFF4F1EA),
       appBar: AppBar(
         title: Text(
           'Mi Perfil',
-          style: GoogleFonts.poppins(fontWeight: FontWeight.bold),
+          style: GoogleFonts.poppins(
+            fontWeight: FontWeight.bold,
+            color: const Color(0xFF2F3F2A),
+          ),
         ),
         elevation: 0,
+        backgroundColor: const Color(0xFFF4F1EA),
+        foregroundColor: const Color(0xFF2F3F2A),
       ),
       body: ListView(
         padding: const EdgeInsets.all(16),
@@ -79,8 +84,8 @@ class PymeProfileScreen extends StatelessWidget {
               );
             },
             style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.red[50],
-              foregroundColor: Colors.red,
+              backgroundColor: const Color(0xFF8B5A3C).withOpacity(0.1),
+              foregroundColor: const Color(0xFF8B5A3C),
               elevation: 0,
               padding: const EdgeInsets.symmetric(vertical: 16),
               shape: RoundedRectangleBorder(
@@ -104,11 +109,11 @@ class PymeProfileScreen extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: const Color(0xFFFFFFFF),
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: const Color(0xFF2F3F2A).withOpacity(0.1),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -118,8 +123,8 @@ class PymeProfileScreen extends StatelessWidget {
         children: [
           CircleAvatar(
             radius: 30,
-            backgroundColor: Colors.blue[100],
-            child: const Icon(Icons.store, size: 30, color: Color(0xFF0056D2)),
+            backgroundColor: const Color(0xFF6F8F5E).withOpacity(0.2),
+            child: const Icon(Icons.store, size: 30, color: Color(0xFF6F8F5E)),
           ),
           const SizedBox(width: 16),
           Expanded(
@@ -131,12 +136,13 @@ class PymeProfileScreen extends StatelessWidget {
                   style: GoogleFonts.poppins(
                     fontWeight: FontWeight.bold,
                     fontSize: 18,
+                    color: const Color(0xFF2F3F2A),
                   ),
                 ),
                 Text(
                   'admin@minegocio.cl',
                   style: GoogleFonts.poppins(
-                    color: Colors.grey[600],
+                    color: const Color(0xFF2F3F2A).withOpacity(0.7),
                     fontSize: 14,
                   ),
                 ),
@@ -155,7 +161,7 @@ class PymeProfileScreen extends StatelessWidget {
         title,
         style: GoogleFonts.poppins(
           fontWeight: FontWeight.w600,
-          color: Colors.grey[800],
+          color: const Color(0xFF2F3F2A),
           fontSize: 16,
         ),
       ),
@@ -171,11 +177,11 @@ class PymeProfileScreen extends StatelessWidget {
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: const Color(0xFFFFFFFF),
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.02),
+            color: const Color(0xFF2F3F2A).withOpacity(0.05),
             blurRadius: 4,
             offset: const Offset(0, 2),
           ),
@@ -185,25 +191,26 @@ class PymeProfileScreen extends StatelessWidget {
         leading: Container(
           padding: const EdgeInsets.all(8),
           decoration: BoxDecoration(
-            color: Colors.blue[50],
+            color: const Color(0xFF6F8F5E).withOpacity(0.1),
             borderRadius: BorderRadius.circular(8),
           ),
-          child: Icon(icon, color: const Color(0xFF0056D2), size: 20),
+          child: Icon(icon, color: const Color(0xFF6F8F5E), size: 20),
         ),
         title: Text(
           title,
           style: GoogleFonts.poppins(
             fontWeight: FontWeight.w500,
             fontSize: 14,
+            color: const Color(0xFF2F3F2A),
           ),
         ),
         subtitle: subtitle != null
             ? Text(
                 subtitle,
-                style: GoogleFonts.poppins(fontSize: 12, color: Colors.grey),
+                style: GoogleFonts.poppins(fontSize: 12, color: const Color(0xFF2F3F2A).withOpacity(0.5)),
               )
             : null,
-        trailing: const Icon(Icons.chevron_right, color: Colors.grey),
+        trailing: Icon(Icons.chevron_right, color: const Color(0xFF2F3F2A).withOpacity(0.5)),
         onTap: onTap,
       ),
     );

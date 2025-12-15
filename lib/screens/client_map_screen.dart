@@ -145,7 +145,7 @@ class _ClientMapScreenState extends State<ClientMapScreen> {
                 borderRadius: BorderRadius.circular(16),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.1),
+                    color: const Color(0xFF2F3F2A).withOpacity(0.1),
                     blurRadius: 10,
                     offset: const Offset(0, 4),
                   ),
@@ -179,7 +179,7 @@ class _ClientMapScreenState extends State<ClientMapScreen> {
                         border: Border.all(color: theme.colorScheme.surface, width: 2),
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.black.withValues(alpha: 0.3),
+                            color: const Color(0xFF2F3F2A).withOpacity(0.3),
                             blurRadius: 6,
                             offset: const Offset(0, 3),
                           ),
@@ -187,7 +187,7 @@ class _ClientMapScreenState extends State<ClientMapScreen> {
                       ),
                       child: Icon(
                         pin['icon'],
-                        color: Colors.white,
+                        color: const Color(0xFFF4F1EA),
                         size: 24,
                       ),
                     ),
@@ -199,7 +199,7 @@ class _ClientMapScreenState extends State<ClientMapScreen> {
                         borderRadius: BorderRadius.circular(8),
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.black.withValues(alpha: 0.2),
+                            color: const Color(0xFF2F3F2A).withOpacity(0.2),
                             blurRadius: 4,
                           ),
                         ],
@@ -240,7 +240,7 @@ class _ClientMapScreenState extends State<ClientMapScreen> {
           borderRadius: BorderRadius.circular(24),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: 0.1),
+              color: const Color(0xFF2F3F2A).withOpacity(0.1),
               blurRadius: 20,
             ),
           ],

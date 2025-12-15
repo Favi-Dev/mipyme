@@ -15,29 +15,29 @@ class ClientSupportScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF7F9FC),
+      backgroundColor: const Color(0xFF2F3F2A),
       appBar: AppBar(
         title: Text('Ayuda y Soporte', style: GoogleFonts.poppins(fontWeight: FontWeight.bold)),
         elevation: 0,
-        backgroundColor: const Color(0xFF0056D2),
-        foregroundColor: Colors.white,
+        backgroundColor: const Color(0xFF2F3F2A),
+        foregroundColor: const Color(0xFFF4F1EA),
       ),
       body: Padding(
         padding: const EdgeInsets.all(24.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            const Icon(Icons.support_agent, size: 80, color: Color(0xFF0056D2)),
+            const Icon(Icons.support_agent, size: 80, color: Color(0xFFF4F1EA)),
             const SizedBox(height: 24),
             Text(
               '¿Necesitas ayuda?',
-              style: GoogleFonts.poppins(fontSize: 24, fontWeight: FontWeight.bold),
+              style: GoogleFonts.poppins(fontSize: 24, fontWeight: FontWeight.bold, color: const Color(0xFFF4F1EA)),
             ),
             const SizedBox(height: 8),
             Text(
               'Estamos aquí para ayudarte con cualquier problema o duda que tengas sobre SoyPlus.',
               textAlign: TextAlign.center,
-              style: GoogleFonts.poppins(color: Colors.grey[600]),
+              style: GoogleFonts.poppins(color: const Color(0xFFF4F1EA).withOpacity(0.8)),
             ),
             const SizedBox(height: 40),
             _buildContactCard(
@@ -66,11 +66,11 @@ class ClientSupportScreen extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: const Color(0xFFF4F1EA),
           borderRadius: BorderRadius.circular(16),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.05),
+              color: const Color(0xFF2F3F2A).withOpacity(0.1),
               blurRadius: 10,
               offset: const Offset(0, 4),
             ),
@@ -81,10 +81,10 @@ class ClientSupportScreen extends StatelessWidget {
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: const Color(0xFFFFF0F0),
+                color: const Color(0xFF2F3F2A).withOpacity(0.1),
                 borderRadius: BorderRadius.circular(12),
               ),
-              child: Icon(icon, color: const Color(0xFF0056D2), size: 28),
+              child: Icon(icon, color: const Color(0xFF2F3F2A), size: 28),
             ),
             const SizedBox(width: 16),
             Expanded(
@@ -93,16 +93,16 @@ class ClientSupportScreen extends StatelessWidget {
                 children: [
                   Text(
                     title,
-                    style: GoogleFonts.poppins(fontWeight: FontWeight.bold, fontSize: 16),
+                    style: GoogleFonts.poppins(fontWeight: FontWeight.bold, fontSize: 16, color: const Color(0xFF2F3F2A)),
                   ),
                   Text(
                     subtitle,
-                    style: GoogleFonts.poppins(color: Colors.grey[600], fontSize: 14),
+                    style: GoogleFonts.poppins(color: const Color(0xFF2F3F2A).withOpacity(0.7), fontSize: 14),
                   ),
                 ],
               ),
             ),
-            const Icon(Icons.arrow_forward_ios, size: 16, color: Colors.grey),
+            Icon(Icons.arrow_forward_ios, size: 16, color: const Color(0xFF2F3F2A).withOpacity(0.5)),
           ],
         ),
       ),

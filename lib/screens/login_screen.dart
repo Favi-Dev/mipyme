@@ -40,10 +40,12 @@ class _LoginScreenState extends State<LoginScreen> {
           break;
         case UserRole.pyme:
           VitrinaData.isFoundationUser = false;
+          VitrinaData.setCategory('Comercio/retail');
           destination = const PymeAppShell();
           break;
         case UserRole.foundation:
           VitrinaData.isFoundationUser = true;
+          VitrinaData.setCategory('Educación y cultura');
           destination = const PymeAppShell();
           break;
         case UserRole.admin:
@@ -59,7 +61,7 @@ class _LoginScreenState extends State<LoginScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Credenciales incorrectas'),
-          backgroundColor: Colors.redAccent,
+          backgroundColor: Color(0xFF8B5A3C),
         ),
       );
     }
@@ -69,7 +71,7 @@ class _LoginScreenState extends State<LoginScreen> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Scaffold(
-      backgroundColor: const Color(0xFFFEF2DA),
+      backgroundColor: const Color(0xFFFDF1D9),
       body: Center(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(24.0),
@@ -80,26 +82,63 @@ class _LoginScreenState extends State<LoginScreen> {
               const SizedBox(height: 24),
               Text(
                 'Únete a SoyPlus',
-                style: theme.textTheme.bodyMedium,
+                style: GoogleFonts.poppins(
+                  color: const Color(0xFF2F3F2A),
+                  fontSize: 18,
+                  fontWeight: FontWeight.w500,
+                ),
               ),
               const SizedBox(height: 48),
               TextField(
                 controller: _emailController,
-                decoration: const InputDecoration(
+                style: const TextStyle(color: Color(0xFF2F3F2A)),
+                decoration: InputDecoration(
                   labelText: 'Correo Electrónico',
-                  prefixIcon: Icon(Icons.email),
+                  labelStyle: TextStyle(color: const Color(0xFF2F3F2A).withOpacity(0.7)),
+                  prefixIcon: const Icon(Icons.email, color: Color(0xFF2F3F2A)),
+                  filled: true,
+                  fillColor: const Color(0xFFFFFFFF),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(color: const Color(0xFF2F3F2A).withOpacity(0.1)),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(color: const Color(0xFF2F3F2A).withOpacity(0.1)),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: const BorderSide(color: Color(0xFF6F8F5E), width: 2),
+                  ),
                 ),
               ),
               const SizedBox(height: 16),
               TextField(
                 controller: _passwordController,
                 obscureText: _obscurePassword,
+                style: const TextStyle(color: Color(0xFF2F3F2A)),
                 decoration: InputDecoration(
                   labelText: 'Contraseña',
-                  prefixIcon: const Icon(Icons.lock),
+                  labelStyle: TextStyle(color: const Color(0xFF2F3F2A).withOpacity(0.7)),
+                  prefixIcon: const Icon(Icons.lock, color: Color(0xFF2F3F2A)),
+                  filled: true,
+                  fillColor: const Color(0xFFFFFFFF),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(color: const Color(0xFF2F3F2A).withOpacity(0.1)),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(color: const Color(0xFF2F3F2A).withOpacity(0.1)),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: const BorderSide(color: Color(0xFF6F8F5E), width: 2),
+                  ),
                   suffixIcon: IconButton(
                     icon: Icon(
                       _obscurePassword ? Icons.visibility : Icons.visibility_off,
+                      color: const Color(0xFF2F3F2A).withOpacity(0.6),
                     ),
                     onPressed: () {
                       setState(() {
@@ -115,16 +154,30 @@ class _LoginScreenState extends State<LoginScreen> {
                 height: 50,
                 child: ElevatedButton(
                   onPressed: _isLoading ? null : _login,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF6F8F5E),
+                    foregroundColor: const Color(0xFFF4F1EA),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    elevation: 2,
+                  ),
                   child: _isLoading
-                      ? SizedBox(
+                      ? const SizedBox(
                           width: 24,
                           height: 24,
                           child: CircularProgressIndicator(
                             strokeWidth: 2,
-                            color: theme.colorScheme.onPrimary,
+                            color: Color(0xFFF4F1EA),
                           ),
                         )
-                      : const Text('Iniciar Sesión'),
+                      : Text(
+                          'Iniciar Sesión',
+                          style: GoogleFonts.poppins(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
                 ),
               ),
               const SizedBox(height: 24),
@@ -133,7 +186,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 children: [
                   Text(
                     '¿No tienes cuenta? ',
-                    style: theme.textTheme.bodyMedium,
+                    style: GoogleFonts.poppins(color: const Color(0xFF2F3F2A)),
                   ),
                   TextButton(
                     onPressed: () {
@@ -145,8 +198,8 @@ class _LoginScreenState extends State<LoginScreen> {
                     },
                     child: Text(
                       'Regístrate',
-                      style: theme.textTheme.labelLarge?.copyWith(
-                        color: theme.colorScheme.primary,
+                      style: GoogleFonts.poppins(
+                        color: const Color(0xFF6F8F5E),
                         fontWeight: FontWeight.bold,
                       ),
                     ),
@@ -159,7 +212,10 @@ class _LoginScreenState extends State<LoginScreen> {
                 children: [
                   Text(
                     'Accesos Rápidos (Demo)',
-                    style: theme.textTheme.bodySmall,
+                    style: GoogleFonts.poppins(
+                      color: const Color(0xFF2F3F2A).withOpacity(0.6),
+                      fontSize: 12,
+                    ),
                   ),
                   const SizedBox(height: 12),
                   Row(
@@ -169,7 +225,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         context,
                         'Cliente',
                         Icons.person,
-                        theme.colorScheme.primary,
+                        const Color(0xFF6F8F5E),
                         () => Navigator.pushReplacement(
                           context,
                           MaterialPageRoute(builder: (context) => const ClientAppShell()),
@@ -180,7 +236,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         context,
                         'Pyme',
                         Icons.storefront,
-                        theme.colorScheme.secondary,
+                        const Color(0xFF8B5A3C),
                         () {
                           VitrinaData.setCategory('Comercio/retail');
                           VitrinaData.isFoundationUser = false;
@@ -195,7 +251,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         context,
                         'Fundación',
                         Icons.volunteer_activism,
-                        theme.colorScheme.tertiary,
+                        const Color(0xFF2F3F2A),
                         () {
                           VitrinaData.setCategory('Educación y cultura');
                           VitrinaData.isFoundationUser = true;
@@ -217,7 +273,6 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   Widget _buildQuickAccessButton(BuildContext context, String label, IconData icon, Color color, VoidCallback onTap) {
-    final theme = Theme.of(context);
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(12),
@@ -225,7 +280,7 @@ class _LoginScreenState extends State<LoginScreen> {
         width: 80,
         padding: const EdgeInsets.symmetric(vertical: 12),
         decoration: BoxDecoration(
-          color: theme.cardColor,
+          color: const Color(0xFFFFFFFF),
           borderRadius: BorderRadius.circular(12),
           border: Border.all(color: color.withOpacity(0.3)),
           boxShadow: [
@@ -242,9 +297,10 @@ class _LoginScreenState extends State<LoginScreen> {
             const SizedBox(height: 4),
             Text(
               label,
-              style: theme.textTheme.labelSmall?.copyWith(
+              style: GoogleFonts.poppins(
                 color: color,
                 fontWeight: FontWeight.w600,
+                fontSize: 11,
               ),
             ),
           ],

@@ -49,9 +49,9 @@ class _PymeAppShellState extends State<PymeAppShell> {
       body: _screens[_selectedIndex],
       bottomNavigationBar: BottomNavigationBar(
         type: BottomNavigationBarType.fixed,
-        backgroundColor: Theme.of(context).cardColor,
-        selectedItemColor: Theme.of(context).colorScheme.primary,
-        unselectedItemColor: Colors.grey,
+        backgroundColor: const Color(0xFFF4F1EA),
+        selectedItemColor: const Color(0xFF6F8F5E),
+        unselectedItemColor: const Color(0xFF2F3F2A).withOpacity(0.5),
         items: VitrinaData.isFoundation
             ? const <BottomNavigationBarItem>[
                 BottomNavigationBarItem(

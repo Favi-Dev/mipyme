@@ -83,26 +83,26 @@ class _PymeValidationScannerScreenState
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        backgroundColor: Colors.white,
-        title: Text('Confirmar Canje', style: GoogleFonts.poppins(color: Colors.black87, fontWeight: FontWeight.bold)),
+        backgroundColor: const Color(0xFFF4F1EA),
+        title: Text('Confirmar Canje', style: GoogleFonts.poppins(color: const Color(0xFF2F3F2A), fontWeight: FontWeight.bold)),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             Text(
               '¿Desea aplicar el descuento de \$10.000?',
-              style: GoogleFonts.poppins(color: Colors.black87, fontSize: 16),
+              style: GoogleFonts.poppins(color: const Color(0xFF2F3F2A), fontSize: 16),
             ),
             const SizedBox(height: 8),
             Text(
               'Esta acción consumirá el cupón mensual del cliente.',
-              style: GoogleFonts.poppins(color: const Color(0xFF0056D2), fontSize: 12),
+              style: GoogleFonts.poppins(color: const Color(0xFF6F8F5E), fontSize: 12),
             ),
           ],
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Cancelar', style: TextStyle(color: Colors.grey)),
+            child: Text('Cancelar', style: TextStyle(color: const Color(0xFF2F3F2A).withOpacity(0.6))),
           ),
           ElevatedButton(
             onPressed: () {
@@ -114,8 +114,8 @@ class _PymeValidationScannerScreenState
               Navigator.pop(context);
               _showResultDialog(true, code, 'Descuento de \$10.000 aplicado correctamente.');
             },
-            style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF0056D2)),
-            child: const Text('Confirmar', style: TextStyle(color: Colors.white)),
+            style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF6F8F5E)),
+            child: const Text('Confirmar', style: TextStyle(color: Color(0xFFF4F1EA))),
           ),
         ],
       ),
@@ -126,21 +126,21 @@ class _PymeValidationScannerScreenState
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        backgroundColor: Colors.white,
+        backgroundColor: const Color(0xFFF4F1EA),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             Icon(
               success ? Icons.check_circle : Icons.error,
-              color: success ? Colors.green : Colors.redAccent,
+              color: success ? const Color(0xFF6F8F5E) : const Color(0xFF8B5A3C),
               size: 64,
             ),
             const SizedBox(height: 16),
             Text(
               success ? '¡Validación Exitosa!' : 'Error',
               style: GoogleFonts.poppins(
-                color: Colors.black87,
+                color: const Color(0xFF2F3F2A),
                 fontSize: 20,
                 fontWeight: FontWeight.bold,
               ),
@@ -149,7 +149,7 @@ class _PymeValidationScannerScreenState
             Text(
               message,
               textAlign: TextAlign.center,
-              style: GoogleFonts.poppins(color: Colors.grey[600]),
+              style: GoogleFonts.poppins(color: const Color(0xFF2F3F2A).withOpacity(0.7)),
             ),
           ],
         ),
@@ -161,7 +161,7 @@ class _PymeValidationScannerScreenState
                 _codeController.clear();
               }
             },
-            child: const Text('Aceptar', style: TextStyle(color: Colors.black87)),
+            child: Text('Aceptar', style: TextStyle(color: const Color(0xFF2F3F2A))),
           ),
         ],
       ),
@@ -171,18 +171,18 @@ class _PymeValidationScannerScreenState
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF7F9FC),
+      backgroundColor: const Color(0xFFF4F1EA),
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: const Color(0xFF2F3F2A),
         elevation: 0,
         title: Text(
           'Validar Cupón Mensual',
           style: GoogleFonts.poppins(
-            color: Colors.black87,
+            color: const Color(0xFFF4F1EA),
             fontWeight: FontWeight.bold,
           ),
         ),
-        iconTheme: const IconThemeData(color: Colors.black87),
+        iconTheme: const IconThemeData(color: Color(0xFFF4F1EA)),
       ),
       body: SingleChildScrollView(
         child: Padding(
@@ -192,7 +192,7 @@ class _PymeValidationScannerScreenState
             children: [
               Text(
                 'Escanea el QR mensual del cliente',
-                style: GoogleFonts.poppins(color: Colors.grey[600], fontSize: 16),
+                style: GoogleFonts.poppins(color: const Color(0xFF2F3F2A).withOpacity(0.7), fontSize: 16),
               ),
               const SizedBox(height: 24),
               // Scanner UI Simulation
@@ -205,10 +205,10 @@ class _PymeValidationScannerScreenState
                     decoration: BoxDecoration(
                       color: Colors.black,
                       borderRadius: BorderRadius.circular(20),
-                      border: Border.all(color: Colors.grey[300]!, width: 1),
+                      border: Border.all(color: const Color(0xFF2F3F2A).withOpacity(0.2), width: 1),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withOpacity(0.1),
+                          color: Colors.black.withOpacity(0.3),
                           blurRadius: 20,
                           offset: const Offset(0, 10),
                         ),
@@ -223,7 +223,7 @@ class _PymeValidationScannerScreenState
                             child: Icon(
                               Icons.qr_code_2,
                               size: 200,
-                              color: Colors.white.withOpacity(0.1),
+                              color: const Color(0xFFF4F1EA).withOpacity(0.1),
                             ),
                           ),
                           // Scanning line animation
@@ -237,10 +237,10 @@ class _PymeValidationScannerScreenState
                                 child: Container(
                                   height: 2,
                                   decoration: BoxDecoration(
-                                    color: const Color(0xFF0056D2),
+                                    color: const Color(0xFF6F8F5E),
                                     boxShadow: [
                                       BoxShadow(
-                                        color: const Color(0xFF0056D2).withOpacity(0.5),
+                                        color: const Color(0xFF6F8F5E).withOpacity(0.5),
                                         blurRadius: 10,
                                         spreadRadius: 2,
                                       ),
@@ -267,7 +267,7 @@ class _PymeValidationScannerScreenState
                       child: Center(
                         child: IconButton(
                           icon: const Icon(Icons.play_circle_fill,
-                              size: 64, color: Colors.white),
+                              size: 64, color: Color(0xFFF4F1EA)),
                           onPressed: () {
                             setState(() {
                               _isScanning = true;
@@ -293,51 +293,51 @@ class _PymeValidationScannerScreenState
                 },
                 icon: Icon(
                   _isScanning ? Icons.pause : Icons.play_arrow,
-                  color: const Color(0xFF0056D2),
+                  color: const Color(0xFF6F8F5E),
                 ),
                 label: Text(
                   _isScanning ? 'Pausar Escáner' : 'Activar Escáner',
-                  style: const TextStyle(color: Color(0xFF0056D2)),
+                  style: const TextStyle(color: Color(0xFF6F8F5E)),
                 ),
               ),
               const SizedBox(height: 32),
               Row(
                 children: [
                   Expanded(
-                    child: Divider(color: Colors.grey[300]),
+                    child: Divider(color: const Color(0xFFF4F1EA).withOpacity(0.2)),
                   ),
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 16),
                     child: Text(
                       'O ingresa el código',
-                      style: TextStyle(color: Colors.grey[500]),
+                      style: TextStyle(color: const Color(0xFFF4F1EA).withOpacity(0.6)),
                     ),
                   ),
                   Expanded(
-                    child: Divider(color: Colors.grey[300]),
+                    child: Divider(color: const Color(0xFFF4F1EA).withOpacity(0.2)),
                   ),
                 ],
               ),
               const SizedBox(height: 32),
               TextField(
                 controller: _codeController,
-                style: const TextStyle(color: Colors.black87, fontSize: 18),
+                style: const TextStyle(color: Color(0xFF2F3F2A), fontSize: 18),
                 textAlign: TextAlign.center,
                 textCapitalization: TextCapitalization.characters,
                 decoration: InputDecoration(
                   hintText: 'EJ: CUPON-NOV',
-                  hintStyle: TextStyle(color: Colors.grey[400]),
+                  hintStyle: TextStyle(color: const Color(0xFF2F3F2A).withOpacity(0.4)),
                   filled: true,
-                  fillColor: Colors.white,
+                  fillColor: const Color(0xFFF4F1EA),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
                     borderSide: BorderSide.none,
                   ),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
-                    borderSide: const BorderSide(color: Color(0xFF0056D2)),
+                    borderSide: const BorderSide(color: Color(0xFF6F8F5E)),
                   ),
-                  prefixIcon: const Icon(Icons.keyboard, color: Colors.grey),
+                  prefixIcon: const Icon(Icons.keyboard, color: Color(0xFF2F3F2A)),
                 ),
               ),
               const SizedBox(height: 16),
@@ -351,8 +351,8 @@ class _PymeValidationScannerScreenState
                     }
                   },
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF0056D2),
-                    foregroundColor: Colors.white,
+                    backgroundColor: const Color(0xFF6F8F5E),
+                    foregroundColor: const Color(0xFFF4F1EA),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
@@ -371,13 +371,13 @@ class _PymeValidationScannerScreenState
                   onPressed: () {
                     _validateCode('PRO123'); // Simulate successful scan
                   },
-                  icon: const Icon(Icons.qr_code_scanner, color: Color(0xFF0056D2)),
+                  icon: const Icon(Icons.qr_code_scanner, color: Color(0xFF6F8F5E)),
                   label: const Text(
                     'Simular Escaneo Exitoso',
-                    style: TextStyle(color: Color(0xFF0056D2)),
+                    style: TextStyle(color: Color(0xFF6F8F5E)),
                   ),
                   style: OutlinedButton.styleFrom(
-                    side: const BorderSide(color: Color(0xFF0056D2)),
+                    side: const BorderSide(color: Color(0xFF6F8F5E)),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
@@ -394,7 +394,7 @@ class _PymeValidationScannerScreenState
   List<Widget> _buildCornerMarkers() {
     const double size = 40;
     const double thickness = 4;
-    const Color color = Color(0xFF0056D2);
+    const Color color = Color(0xFF6F8F5E);
 
     return [
       // Top Left

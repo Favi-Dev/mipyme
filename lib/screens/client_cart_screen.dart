@@ -134,7 +134,7 @@ class _ClientCartScreenState extends State<ClientCartScreen> {
                       shape: BoxShape.circle,
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withOpacity(0.05),
+                          color: const Color(0xFF2F3F2A).withOpacity(0.1),
                           blurRadius: 20,
                           offset: const Offset(0, 10),
                         ),
@@ -188,7 +188,7 @@ class _ClientCartScreenState extends State<ClientCartScreen> {
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: const Color(0xFF2F3F2A).withOpacity(0.1),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -320,7 +320,7 @@ class _ClientCartScreenState extends State<ClientCartScreen> {
         borderRadius: const BorderRadius.vertical(top: Radius.circular(30)),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: const Color(0xFF2F3F2A).withOpacity(0.1),
             offset: const Offset(0, -4),
             blurRadius: 20,
           ),
@@ -343,7 +343,7 @@ class _ClientCartScreenState extends State<ClientCartScreen> {
                   Text(
                     '-\$${cartService.discount.toStringAsFixed(0)}',
                     style: theme.textTheme.bodyMedium?.copyWith(
-                      color: Colors.green,
+                      color: const Color(0xFF6F8F5E),
                       fontWeight: FontWeight.w600,
                     ),
                   ),
@@ -413,7 +413,7 @@ class _ClientCartScreenState extends State<ClientCartScreen> {
                           SnackBar(
                             content: Text('¡Pago exitoso! Tu reserva ha sido confirmada.',
                                 style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.onPrimary)),
-                            backgroundColor: Colors.green,
+                            backgroundColor: const Color(0xFF6F8F5E),
                           ),
                         );
                         if (context.mounted) {

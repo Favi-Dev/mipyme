@@ -86,7 +86,7 @@ class _PymeEventsScreenState extends State<PymeEventsScreen> {
                 _buildShareOption(
                   icon: Icons.message,
                   label: 'WhatsApp',
-                  color: Colors.green,
+                  color: const Color(0xFF6F8F5E),
                   onTap: () {
                     Navigator.pop(context);
                     final text = '¡Te invito al evento *${event.name}*!%0A%0A📅 $date%0A📍 $location%0A%0AInscríbete aquí: $link';
@@ -96,7 +96,7 @@ class _PymeEventsScreenState extends State<PymeEventsScreen> {
                 _buildShareOption(
                   icon: Icons.email,
                   label: 'Correo',
-                  color: Colors.red,
+                  color: const Color(0xFF8B5A3C),
                   onTap: () {
                     Navigator.pop(context);
                     final subject = 'Invitación: ${event.name}';
@@ -131,7 +131,7 @@ class _PymeEventsScreenState extends State<PymeEventsScreen> {
             child: Icon(icon, color: color, size: 28),
           ),
           const SizedBox(height: 8),
-          Text(label, style: GoogleFonts.poppins(fontSize: 12)),
+          Text(label, style: GoogleFonts.poppins(fontSize: 12, color: const Color(0xFF2F3F2A))),
         ],
       ),
     );
@@ -140,13 +140,15 @@ class _PymeEventsScreenState extends State<PymeEventsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF7F9FC),
+      backgroundColor: const Color(0xFFF4F1EA),
       appBar: AppBar(
         title: Text(
           'Mis Eventos',
           style: GoogleFonts.poppins(fontWeight: FontWeight.bold),
         ),
         elevation: 0,
+        backgroundColor: const Color(0xFFF4F1EA),
+        foregroundColor: const Color(0xFF2F3F2A),
       ),
       body: _events.isEmpty
           ? Center(
@@ -154,12 +156,12 @@ class _PymeEventsScreenState extends State<PymeEventsScreen> {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Icon(Icons.event_available,
-                      size: 64, color: Colors.grey[400]),
+                      size: 64, color: const Color(0xFF2F3F2A).withOpacity(0.5)),
                   const SizedBox(height: 16),
                   Text(
                     'No tienes eventos registrados.',
                     style: GoogleFonts.poppins(
-                      color: Colors.grey[600],
+                      color: const Color(0xFF2F3F2A).withOpacity(0.7),
                       fontSize: 16,
                     ),
                   ),
@@ -184,29 +186,37 @@ class _PymeEventsScreenState extends State<PymeEventsScreen> {
           );
           _loadEvents();
         },
-        backgroundColor: const Color(0xFF0056D2),
-        icon: const Icon(Icons.add),
+        backgroundColor: const Color(0xFF6F8F5E),
+        icon: const Icon(Icons.add, color: Color(0xFFF4F1EA)),
         label: Text(
           'Nuevo Evento',
-          style: GoogleFonts.poppins(fontWeight: FontWeight.w600),
+          style: GoogleFonts.poppins(fontWeight: FontWeight.w600, color: const Color(0xFFF4F1EA)),
         ),
       ),
     );
   }
 
   Widget _buildEventCard(Product event) {
-    final date = event.customAttributes['event_date'] ?? 'Fecha no definida';
+    String date = event.customAttributes['event_date'] ?? 'Fecha no definida';
+    // Try to format date if it's ISO format
+    try {
+      if (date.contains('T')) {
+        final parsedDate = DateTime.parse(date);
+        date = "${parsedDate.day}/${parsedDate.month}/${parsedDate.year}";
+      }
+    } catch (_) {}
+
     final time = event.customAttributes['event_time'] ?? 'Hora no definida';
     final location = event.customAttributes['event_location'] ?? 'Ubicación no definida';
 
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: const Color(0xFFFFFFFF),
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: const Color(0xFF2F3F2A).withOpacity(0.1),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -224,8 +234,8 @@ class _PymeEventsScreenState extends State<PymeEventsScreen> {
               fit: BoxFit.cover,
               errorBuilder: (_, __, ___) => Container(
                 height: 150,
-                color: Colors.grey[200],
-                child: const Icon(Icons.event, size: 50, color: Colors.grey),
+                color: const Color(0xFF2F3F2A).withOpacity(0.1),
+                child: Icon(Icons.event, size: 50, color: const Color(0xFF2F3F2A).withOpacity(0.5)),
               ),
             ),
           ),
@@ -249,13 +259,13 @@ class _PymeEventsScreenState extends State<PymeEventsScreen> {
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                       decoration: BoxDecoration(
-                        color: Colors.blue[50],
+                        color: const Color(0xFF6F8F5E).withOpacity(0.1),
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Text(
                         'Evento',
                         style: GoogleFonts.poppins(
-                          color: const Color(0xFF0056D2),
+                          color: const Color(0xFF6F8F5E),
                           fontSize: 12,
                           fontWeight: FontWeight.bold,
                         ),
@@ -275,7 +285,7 @@ class _PymeEventsScreenState extends State<PymeEventsScreen> {
                               mainAxisSize: MainAxisSize.min,
                               children: [
                                 ListTile(
-                                  leading: const Icon(Icons.edit, color: Colors.blue),
+                                  leading: const Icon(Icons.edit, color: Color(0xFF6F8F5E)),
                                   title: Text('Editar Evento', style: GoogleFonts.poppins()),
                                   onTap: () {
                                     Navigator.pop(context);
@@ -283,7 +293,7 @@ class _PymeEventsScreenState extends State<PymeEventsScreen> {
                                   },
                                 ),
                                 ListTile(
-                                  leading: const Icon(Icons.share, color: Colors.green),
+                                  leading: const Icon(Icons.share, color: Color(0xFF6F8F5E)),
                                   title: Text('Compartir', style: GoogleFonts.poppins()),
                                   onTap: () {
                                     Navigator.pop(context);
@@ -291,7 +301,7 @@ class _PymeEventsScreenState extends State<PymeEventsScreen> {
                                   },
                                 ),
                                 ListTile(
-                                  leading: const Icon(Icons.delete, color: Colors.red),
+                                  leading: const Icon(Icons.delete, color: Color(0xFF8B5A3C)),
                                   title: Text('Eliminar', style: GoogleFonts.poppins()),
                                   onTap: () {
                                     Navigator.pop(context);
@@ -306,7 +316,7 @@ class _PymeEventsScreenState extends State<PymeEventsScreen> {
                           ),
                         );
                       },
-                      child: const Icon(Icons.more_vert, color: Colors.grey),
+                      child: Icon(Icons.more_vert, color: const Color(0xFF2F3F2A).withOpacity(0.5)),
                     ),
                   ],
                 ),
@@ -314,32 +324,38 @@ class _PymeEventsScreenState extends State<PymeEventsScreen> {
                 Text(
                   event.description,
                   style: GoogleFonts.poppins(
-                    color: Colors.grey[600],
+                    color: const Color(0xFF2F3F2A).withOpacity(0.7),
                     fontSize: 14,
                   ),
                 ),
                 const SizedBox(height: 16),
                 Row(
                   children: [
-                    const Icon(Icons.calendar_today, size: 16, color: Colors.grey),
+                    Icon(Icons.calendar_today, size: 16, color: const Color(0xFF2F3F2A).withOpacity(0.5)),
                     const SizedBox(width: 8),
-                    Text(
-                      date,
-                      style: GoogleFonts.poppins(fontSize: 14),
+                    Flexible(
+                      child: Text(
+                        date,
+                        style: GoogleFonts.poppins(fontSize: 14),
+                        overflow: TextOverflow.ellipsis,
+                      ),
                     ),
                     const SizedBox(width: 16),
-                    const Icon(Icons.access_time, size: 16, color: Colors.grey),
+                    Icon(Icons.access_time, size: 16, color: const Color(0xFF2F3F2A).withOpacity(0.5)),
                     const SizedBox(width: 8),
-                    Text(
-                      time,
-                      style: GoogleFonts.poppins(fontSize: 14),
+                    Flexible(
+                      child: Text(
+                        time,
+                        style: GoogleFonts.poppins(fontSize: 14),
+                        overflow: TextOverflow.ellipsis,
+                      ),
                     ),
                   ],
                 ),
                 const SizedBox(height: 8),
                 Row(
                   children: [
-                    const Icon(Icons.location_on, size: 16, color: Colors.grey),
+                    Icon(Icons.location_on, size: 16, color: const Color(0xFF2F3F2A).withOpacity(0.5)),
                     const SizedBox(width: 8),
                     Text(
                       location,

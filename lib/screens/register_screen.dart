@@ -85,11 +85,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Scaffold(
+      backgroundColor: const Color(0xFFF4F1EA),
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: theme.colorScheme.onSurface),
+          icon: const Icon(Icons.arrow_back, color: Color(0xFF2F3F2A)),
           onPressed: () => Navigator.pop(context),
         ),
       ),
@@ -101,12 +102,19 @@ class _RegisterScreenState extends State<RegisterScreen> {
             children: [
               Text(
                 'Crear Cuenta',
-                style: theme.textTheme.headlineMedium,
+                style: GoogleFonts.poppins(
+                  color: const Color(0xFF2F3F2A),
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
               const SizedBox(height: 8),
               Text(
                 'Únete a la comunidad SoyPlus',
-                style: theme.textTheme.bodyMedium,
+                style: GoogleFonts.poppins(
+                  color: const Color(0xFF2F3F2A).withOpacity(0.7),
+                  fontSize: 14,
+                ),
               ),
               const SizedBox(height: 32),
               // Role Selection
@@ -140,6 +148,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
               const SizedBox(height: 24),
               TextField(
                 controller: _nameController,
+                style: const TextStyle(color: Color(0xFF2F3F2A)),
                 decoration: _inputDecoration(
                   (_selectedRole == UserRole.pyme || _selectedRole == UserRole.foundation) ? 'Nombre del Representante' : 'Nombre Completo',
                   Icons.person_outline,
@@ -149,18 +158,22 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 const SizedBox(height: 16),
                 TextField(
                   controller: _companyNameController,
+                  style: const TextStyle(color: Color(0xFF2F3F2A)),
                   decoration: _inputDecoration(_selectedRole == UserRole.foundation ? 'Nombre de la Fundación' : 'Nombre de la Empresa', Icons.store),
                 ),
                 const SizedBox(height: 16),
                 TextField(
                   controller: _businessNameController,
+                  style: const TextStyle(color: Color(0xFF2F3F2A)),
                   decoration: _inputDecoration('Razón Social', Icons.business),
                 ),
                 if (_selectedRole == UserRole.pyme) ...[
                   const SizedBox(height: 16),
                   DropdownButtonFormField<String>(
                     value: _selectedCategory,
+                    style: const TextStyle(color: Color(0xFF2F3F2A)),
                     decoration: _inputDecoration('Categoría', Icons.category),
+                    dropdownColor: const Color(0xFFFFFFFF),
                     items: ProductService.categories.map((String category) {
                       return DropdownMenuItem<String>(
                         value: category,
@@ -178,16 +191,19 @@ class _RegisterScreenState extends State<RegisterScreen> {
               const SizedBox(height: 16),
               TextField(
                 controller: _emailController,
+                style: const TextStyle(color: Color(0xFF2F3F2A)),
                 decoration: _inputDecoration('Correo Electrónico', Icons.email_outlined),
               ),
               const SizedBox(height: 16),
               TextField(
                 controller: _passwordController,
                 obscureText: _obscurePassword,
+                style: const TextStyle(color: Color(0xFF2F3F2A)),
                 decoration: _inputDecoration('Contraseña', Icons.lock_outline).copyWith(
                   suffixIcon: IconButton(
                     icon: Icon(
                       _obscurePassword ? Icons.visibility : Icons.visibility_off,
+                      color: const Color(0xFF2F3F2A).withOpacity(0.6),
                     ),
                     onPressed: () {
                       setState(() {
@@ -201,6 +217,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
               TextField(
                 controller: _confirmPasswordController,
                 obscureText: _obscurePassword,
+                style: const TextStyle(color: Color(0xFF2F3F2A)),
                 decoration: _inputDecoration('Confirmar Contraseña', Icons.lock_outline),
               ),
               const SizedBox(height: 32),
@@ -209,16 +226,30 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 height: 50,
                 child: ElevatedButton(
                   onPressed: _isLoading ? null : _register,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF6F8F5E),
+                    foregroundColor: const Color(0xFFF4F1EA),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    elevation: 2,
+                  ),
                   child: _isLoading
-                      ? SizedBox(
+                      ? const SizedBox(
                           width: 24,
                           height: 24,
                           child: CircularProgressIndicator(
                             strokeWidth: 2,
-                            color: theme.colorScheme.onPrimary,
+                            color: Color(0xFFF4F1EA),
                           ),
                         )
-                      : const Text('Registrarse'),
+                      : Text(
+                          'Registrarse',
+                          style: GoogleFonts.poppins(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
                 ),
               ),
             ],
@@ -229,22 +260,21 @@ class _RegisterScreenState extends State<RegisterScreen> {
   }
 
   Widget _buildRoleOption(String label, IconData icon, UserRole role) {
-    final theme = Theme.of(context);
     final isSelected = _selectedRole == role;
     return GestureDetector(
       onTap: () => setState(() => _selectedRole = role),
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 16),
         decoration: BoxDecoration(
-          color: isSelected ? theme.colorScheme.primary : theme.cardColor,
+          color: isSelected ? const Color(0xFF6F8F5E) : const Color(0xFFFFFFFF),
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
-            color: isSelected ? theme.colorScheme.primary : theme.disabledColor.withOpacity(0.2),
+            color: isSelected ? const Color(0xFF6F8F5E) : const Color(0xFF2F3F2A).withOpacity(0.1),
           ),
           boxShadow: [
             if (!isSelected)
               BoxShadow(
-                color: theme.shadowColor.withOpacity(0.05),
+                color: const Color(0xFF2F3F2A).withOpacity(0.05),
                 blurRadius: 4,
                 offset: const Offset(0, 2),
               ),
@@ -254,15 +284,16 @@ class _RegisterScreenState extends State<RegisterScreen> {
           children: [
             Icon(
               icon,
-              color: isSelected ? theme.colorScheme.onPrimary : theme.colorScheme.onSurface.withOpacity(0.6),
+              color: isSelected ? const Color(0xFFF4F1EA) : const Color(0xFF2F3F2A).withOpacity(0.6),
               size: 32,
             ),
             const SizedBox(height: 8),
             Text(
               label,
-              style: theme.textTheme.labelLarge?.copyWith(
-                color: isSelected ? theme.colorScheme.onPrimary : theme.colorScheme.onSurface.withOpacity(0.6),
+              style: GoogleFonts.poppins(
+                color: isSelected ? const Color(0xFFF4F1EA) : const Color(0xFF2F3F2A).withOpacity(0.6),
                 fontWeight: FontWeight.bold,
+                fontSize: 12,
               ),
             ),
           ],
@@ -274,7 +305,22 @@ class _RegisterScreenState extends State<RegisterScreen> {
   InputDecoration _inputDecoration(String label, IconData icon) {
     return InputDecoration(
       labelText: label,
-      prefixIcon: Icon(icon),
+      labelStyle: TextStyle(color: const Color(0xFF2F3F2A).withOpacity(0.7)),
+      prefixIcon: Icon(icon, color: const Color(0xFF2F3F2A).withOpacity(0.7)),
+      filled: true,
+      fillColor: const Color(0xFFFFFFFF),
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide(color: const Color(0xFF2F3F2A).withOpacity(0.1)),
+      ),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide(color: const Color(0xFF2F3F2A).withOpacity(0.1)),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: const BorderSide(color: Color(0xFF6F8F5E), width: 2),
+      ),
     );
   }
 }
