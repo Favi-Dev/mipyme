@@ -16,12 +16,12 @@ class _ClientSettingsScreenState extends State<ClientSettingsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF2F3F2A),
+      backgroundColor: const Color(0xFFF4F1EA),
       appBar: AppBar(
         title: Text('Configuración', style: GoogleFonts.poppins(fontWeight: FontWeight.bold)),
         elevation: 0,
-        backgroundColor: const Color(0xFF2F3F2A),
-        foregroundColor: const Color(0xFFF4F1EA),
+        backgroundColor: const Color(0xFFF4F1EA),
+        foregroundColor: const Color(0xFF2F3F2A),
       ),
       body: ListView(
         padding: const EdgeInsets.all(16),
@@ -48,7 +48,7 @@ class _ClientSettingsScreenState extends State<ClientSettingsScreen> {
                 );
               },
               style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFFF4F1EA),
+                backgroundColor: const Color(0xFFFFFFFF),
                 foregroundColor: const Color(0xFF2F3F2A),
                 elevation: 0,
                 side: const BorderSide(color: Color(0xFF2F3F2A)),
@@ -68,7 +68,7 @@ class _ClientSettingsScreenState extends State<ClientSettingsScreen> {
       padding: const EdgeInsets.only(bottom: 12, left: 4),
       child: Text(
         title,
-        style: GoogleFonts.poppins(fontSize: 18, fontWeight: FontWeight.bold, color: const Color(0xFFF4F1EA)),
+        style: GoogleFonts.poppins(fontSize: 18, fontWeight: FontWeight.bold, color: const Color(0xFF2F3F2A)),
       ),
     );
   }
@@ -77,7 +77,7 @@ class _ClientSettingsScreenState extends State<ClientSettingsScreen> {
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
-        color: const Color(0xFFF4F1EA),
+        color: const Color(0xFFFFFFFF),
         borderRadius: BorderRadius.circular(12),
         boxShadow: [BoxShadow(color: const Color(0xFF2F3F2A).withOpacity(0.1), blurRadius: 5)],
       ),
@@ -96,7 +96,7 @@ class _ClientSettingsScreenState extends State<ClientSettingsScreen> {
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
-        color: const Color(0xFFF4F1EA),
+        color: const Color(0xFFFFFFFF),
         borderRadius: BorderRadius.circular(12),
         boxShadow: [BoxShadow(color: const Color(0xFF2F3F2A).withOpacity(0.1), blurRadius: 5)],
       ),

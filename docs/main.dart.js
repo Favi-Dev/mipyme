@@ -98941,16 +98941,16 @@ $S:228}
 A.pQ.prototype={
 a7(){return new A.Ue()}}
 A.Ue.prototype={
-D(a){var s=this,r=null,q=A.dS(r,r,r,!0,B.c,r,1,r,r,0,!1,r,!1,B.o,r,r,r,!0,r,r,r,r,r,A.l("Configuraci\xf3n",r,r,r,r,A.au().$1$fontWeight(B.p),r,r,r),r,r,r,1,r,!0),p=s.Q6("General"),o=s.PA("Notificaciones","Recibir alertas de ofertas y pedidos",s.d,new A.are(s)),n=s.PA("Modo Oscuro","Cambiar la apariencia de la app",s.e,new A.arf(s)),m=s.Q6("Cuenta"),l=s.Fz("Editar Perfil",B.jc,new A.arg()),k=s.Fz("Cambiar Contrase\xf1a",B.jb,new A.arh()),j=s.Fz("Privacidad y Seguridad",B.N6,new A.ari()),i=A.eu(r,r,B.o,r,r,r,0,r,r,B.c,r,r,B.cw,r,new A.bz(A.Z(12),B.t),B.kU,r,r,r,r)
-return A.d0(q,B.c,A.jv(A.b([p,o,n,B.a6,m,l,k,j,B.dG,A.bG(A.fj(!1,A.l("Cerrar Sesi\xf3n",r,r,r,r,A.au().$1$fontWeight(B.p),r,r,r),r,r,r,r,r,r,new A.arj(a),r,i),r,1/0)],t.p),r,B.a7,r,r,B.R,!1),r,r,r)},
+D(a){var s=this,r=null,q=A.dS(r,r,r,!0,B.o,r,1,r,r,0,!1,r,!1,B.c,r,r,r,!0,r,r,r,r,r,A.l("Configuraci\xf3n",r,r,r,r,A.au().$1$fontWeight(B.p),r,r,r),r,r,r,1,r,!0),p=s.Q6("General"),o=s.PA("Notificaciones","Recibir alertas de ofertas y pedidos",s.d,new A.are(s)),n=s.PA("Modo Oscuro","Cambiar la apariencia de la app",s.e,new A.arf(s)),m=s.Q6("Cuenta"),l=s.Fz("Editar Perfil",B.jc,new A.arg()),k=s.Fz("Cambiar Contrase\xf1a",B.jb,new A.arh()),j=s.Fz("Privacidad y Seguridad",B.N6,new A.ari()),i=A.eu(r,r,B.q,r,r,r,0,r,r,B.c,r,r,B.cw,r,new A.bz(A.Z(12),B.t),B.kU,r,r,r,r)
+return A.d0(q,B.o,A.jv(A.b([p,o,n,B.a6,m,l,k,j,B.dG,A.bG(A.fj(!1,A.l("Cerrar Sesi\xf3n",r,r,r,r,A.au().$1$fontWeight(B.p),r,r,r),r,r,r,r,r,r,new A.arj(a),r,i),r,1/0)],t.p),r,B.a7,r,r,B.R,!1),r,r,r)},
 Q6(a){var s=null
-return new A.am(B.qq,A.l(a,s,s,s,s,A.au().$3$color$fontSize$fontWeight(B.o,18,B.p),s,s,s),s)},
+return new A.am(B.qq,A.l(a,s,s,s,s,A.au().$3$color$fontSize$fontWeight(B.c,18,B.p),s,s,s),s)},
 PA(a,b,c,d){var s=null,r=A.Z(12),q=A.b([new A.ax(0,B.C,A.t(B.d.N(25.5),B.c.j()>>>16&255,B.c.j()>>>8&255,B.c.j()&255),B.l,5)],t.V),p=A.l(a,s,s,s,s,A.au().$2$color$fontWeight(B.c,B.a4),s,s,s)
-return A.aj(s,A.aNn(B.c,d,A.l(b,s,s,s,s,A.au().$2$color$fontSize(B.dp,12),s,s,s),p,new A.aW(new A.ar9(),t.b),c),B.i,s,s,new A.ah(B.o,s,s,r,q,s,B.w),s,s,B.dv,s,s,s,s)},
+return A.aj(s,A.aNn(B.c,d,A.l(b,s,s,s,s,A.au().$2$color$fontSize(B.dp,12),s,s,s),p,new A.aW(new A.ar9(),t.b),c),B.i,s,s,new A.ah(B.q,s,s,r,q,s,B.w),s,s,B.dv,s,s,s,s)},
 Fz(a,b,c){var s,r=null,q=A.Z(12),p=B.d.N(25.5),o=A.b([new A.ax(0,B.C,A.t(p,B.c.j()>>>16&255,B.c.j()>>>8&255,B.c.j()&255),B.l,5)],t.V)
 p=A.t(p,B.c.j()>>>16&255,B.c.j()>>>8&255,B.c.j()&255)
 s=A.Z(8)
-return A.aj(r,A.eH(!1,r,r,r,!0,r,r,!0,r,A.aj(r,A.aL(b,B.c,r,r),B.i,r,r,new A.ah(p,r,r,s,r,r,B.w),r,r,r,B.bD,r,r,r),r,c,!1,r,r,r,r,r,A.l(a,r,r,r,r,A.au().$2$color$fontWeight(B.c,B.a4),r,r,r),B.NH,r),B.i,r,r,new A.ah(B.o,r,r,q,o,r,B.w),r,r,B.dv,r,r,r,r)}}
+return A.aj(r,A.eH(!1,r,r,r,!0,r,r,!0,r,A.aj(r,A.aL(b,B.c,r,r),B.i,r,r,new A.ah(p,r,r,s,r,r,B.w),r,r,r,B.bD,r,r,r),r,c,!1,r,r,r,r,r,A.l(a,r,r,r,r,A.au().$2$color$fontWeight(B.c,B.a4),r,r,r),B.NH,r),B.i,r,r,new A.ah(B.q,r,r,q,o,r,B.w),r,r,B.dv,r,r,r,r)}}
 A.are.prototype={
 $1(a){var s=this.a
 return s.R(new A.ard(s,a))},

@@ -1,3 +1,5 @@
+import 'offer_data.dart';
+
 class VitrinaData {
   static String name = 'Zapatería Los Robles';
   static String category = 'Comercio/retail'; // Categorías: Comercio/retail, Alimentos y gastronomía, Servicios profesionales, Salud, belleza y bienestar, Oficios y manufactura, Educación y cultura, Transporte y logística
@@ -7,6 +9,7 @@ class VitrinaData {
 
   static void setCategory(String newCategory) {
     category = newCategory;
+    OfferData.loadOffersForCategory(newCategory);
     // Reset donation data
     donationGoal = 0;
     currentDonations = 0;
