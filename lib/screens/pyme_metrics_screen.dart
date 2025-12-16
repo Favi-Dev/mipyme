@@ -198,7 +198,7 @@ class _PymeMetricsScreenState extends State<PymeMetricsScreen> {
                   icon: Icons.edit,
                   color: const Color(0xFF8B5A3C),
                   title: 'Oferta actualizada',
-                  subtitle: 'Exclusivo App Soy Pro - Ayer',
+                  subtitle: 'Exclusivo App SoyPlus - Ayer',
                 ),
                 _buildActivityItem(
                   icon: Icons.check_circle_outline,
