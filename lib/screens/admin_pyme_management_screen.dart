@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import '../services/admin_service.dart';
-import 'admin_pyme_detail_screen.dart';
+import 'admin_user_detail_screen.dart';
 
 class AdminPymeManagementScreen extends StatelessWidget {
   final String? roleFilter;
@@ -165,8 +165,8 @@ class _PymeTile extends StatelessWidget {
           Navigator.push(
             context,
             MaterialPageRoute(
-              builder: (context) => AdminPymeDetailScreen(
-                pymeData: pyme,
+              builder: (context) => AdminUserDetailScreen(
+                userData: pyme,
               ),
             ),
           );

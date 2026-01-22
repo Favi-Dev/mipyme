@@ -3,6 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
 import '../services/admin_service.dart';
+import 'admin_user_detail_screen.dart';
 
 class AdminUserManagementScreen extends StatefulWidget {
   const AdminUserManagementScreen({super.key});
@@ -178,33 +179,11 @@ class _AdminUserManagementScreenState extends State<AdminUserManagementScreen> {
   }
 
   void _showUserDetails(BuildContext context, Map<String, dynamic> user) {
-     String dateStr = 'N/A';
-     if (user['createdAt'] != null) {
-       if (user['createdAt'] is Timestamp) {
-         dateStr = DateFormat('dd/MM/yyyy HH:mm').format((user['createdAt'] as Timestamp).toDate());
-       } else if (user['createdAt'] is DateTime) {
-         dateStr = DateFormat('dd/MM/yyyy HH:mm').format(user['createdAt']);
-       }
-     }
-
-     showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text(user['name'] ?? 'Detalles'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text('Email: ${user['email']}'),
-            Text('Rol: ${user['role']}'),
-            Text('Creado: $dateStr'),
-            Text('Estado: ${user['isSuspended'] == true ? 'Suspendido' : 'Activo'}'),
-          ],
-        ),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cerrar')),
-        ],
-      ),
-    );
+     Navigator.push(
+       context,
+       MaterialPageRoute(
+         builder: (context) => AdminUserDetailScreen(userData: user),
+       ),
+     );
   }
 }
