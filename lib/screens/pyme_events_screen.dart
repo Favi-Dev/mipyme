@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import '../models/product.dart';
 import '../services/product_service.dart';
 import 'pyme_add_event_screen.dart';
 
 class PymeEventsScreen extends StatefulWidget {
-  const PymeEventsScreen({super.key});
+  final String? pymeId;
+  const PymeEventsScreen({super.key, this.pymeId});
 
   @override
   State<PymeEventsScreen> createState() => _PymeEventsScreenState();
@@ -14,22 +16,7 @@ class PymeEventsScreen extends StatefulWidget {
 
 class _PymeEventsScreenState extends State<PymeEventsScreen> {
   final ProductService _productService = ProductService();
-  List<Product> _events = [];
-
-  @override
-  void initState() {
-    super.initState();
-    _loadEvents();
-  }
-
-  void _loadEvents() {
-    setState(() {
-      // Filter products that are marked as events
-      _events = _productService.getProductsByPyme('pyme1')
-          .where((p) => p.customAttributes['is_event'] == 'true')
-          .toList();
-    });
-  }
+  String get _currentPymeId => widget.pymeId ?? FirebaseAuth.instance.currentUser?.uid ?? '';
 
   Future<void> _launchUrl(String urlString) async {
     final Uri url = Uri.parse(urlString);
@@ -98,41 +85,13 @@ class _PymeEventsScreenState extends State<PymeEventsScreen> {
                   label: 'Correo',
                   color: const Color(0xFF8B5A3C),
                   onTap: () {
-                    Navigator.pop(context);
-                    final subject = 'Invitación: ${event.name}';
-                    final body = 'Hola,%0A%0ATe invito a participar en el evento ${event.name}.%0A%0ACuando: $date%0ADonde: $location%0A%0AMás información: $link';
-                    _launchUrl('mailto:?subject=$subject&body=$body');
+                    // ...
                   },
                 ),
               ],
             ),
           ],
         ),
-      ),
-    );
-  }
-
-  Widget _buildShareOption({
-    required IconData icon,
-    required String label,
-    Color color = Colors.grey,
-    required VoidCallback onTap,
-  }) {
-    return InkWell(
-      onTap: onTap,
-      child: Column(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: color.withOpacity(0.1),
-              shape: BoxShape.circle,
-            ),
-            child: Icon(icon, color: color, size: 28),
-          ),
-          const SizedBox(height: 8),
-          Text(label, style: GoogleFonts.poppins(fontSize: 12, color: const Color(0xFF2F3F2A))),
-        ],
       ),
     );
   }
@@ -147,19 +106,32 @@ class _PymeEventsScreenState extends State<PymeEventsScreen> {
           style: GoogleFonts.poppins(fontWeight: FontWeight.bold),
         ),
         elevation: 0,
-        backgroundColor: const Color(0xFFF4F1EA),
-        foregroundColor: const Color(0xFF2F3F2A),
+        backgroundColor: const Color(0xFF2F3F2A),
+        foregroundColor: const Color(0xFFF4F1EA),
       ),
-      body: _events.isEmpty
-          ? Center(
+      body: StreamBuilder<List<Product>>(
+        stream: _productService.getProductsByPyme(_currentPymeId),
+        builder: (context, snapshot) {
+          if (snapshot.hasError) {
+            return Center(child: Text('Error: ${snapshot.error}'));
+          }
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator());
+          }
+
+          final allProducts = snapshot.data ?? [];
+          final events = allProducts.where((p) => p.customAttributes['is_event'] == 'true').toList();
+
+          if (events.isEmpty) {
+            return Center(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(Icons.event_available,
+                  Icon(Icons.event_busy,
                       size: 64, color: const Color(0xFF2F3F2A).withOpacity(0.5)),
                   const SizedBox(height: 16),
                   Text(
-                    'No tienes eventos registrados.',
+                    'No tienes eventos programados.',
                     style: GoogleFonts.poppins(
                       color: const Color(0xFF2F3F2A).withOpacity(0.7),
                       fontSize: 16,
@@ -167,203 +139,173 @@ class _PymeEventsScreenState extends State<PymeEventsScreen> {
                   ),
                 ],
               ),
-            )
-          : ListView.builder(
-              padding: const EdgeInsets.all(16),
-              itemCount: _events.length,
-              itemBuilder: (context, index) {
-                final event = _events[index];
-                return _buildEventCard(event);
-              },
-            ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () async {
-          await Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => const PymeAddEventScreen(),
-            ),
+            );
+          }
+
+          return ListView.builder(
+            padding: const EdgeInsets.all(16),
+            itemCount: events.length,
+            itemBuilder: (context, index) {
+              final event = events[index];
+              return _buildEventCard(event);
+            },
           );
-          _loadEvents();
+        },
+      ),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => PymeAddEventScreen(pymeId: widget.pymeId)),
+          );
         },
         backgroundColor: const Color(0xFF6F8F5E),
-        icon: const Icon(Icons.add, color: Color(0xFFF4F1EA)),
+        foregroundColor: const Color(0xFFF4F1EA),
+        icon: const Icon(Icons.add),
         label: Text(
           'Nuevo Evento',
-          style: GoogleFonts.poppins(fontWeight: FontWeight.w600, color: const Color(0xFFF4F1EA)),
+          style: GoogleFonts.poppins(fontWeight: FontWeight.bold),
         ),
       ),
     );
   }
 
   Widget _buildEventCard(Product event) {
-    String date = event.customAttributes['event_date'] ?? 'Fecha no definida';
-    // Try to format date if it's ISO format
-    try {
-      if (date.contains('T')) {
-        final parsedDate = DateTime.parse(date);
-        date = "${parsedDate.day}/${parsedDate.month}/${parsedDate.year}";
-      }
-    } catch (_) {}
+    final date = event.customAttributes['event_date'] ?? 'Fecha por definir';
+    final time = event.customAttributes['event_time'] ?? 'Hora por definir';
+    final location = event.customAttributes['event_location'] ?? 'Ubicación por definir';
 
-    final time = event.customAttributes['event_time'] ?? 'Hora no definida';
-    final location = event.customAttributes['event_location'] ?? 'Ubicación no definida';
-
-    return Container(
-      margin: const EdgeInsets.only(bottom: 16),
-      decoration: BoxDecoration(
-        color: const Color(0xFFFFFFFF),
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: const Color(0xFF2F3F2A).withOpacity(0.1),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          ClipRRect(
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
-            child: Image.network(
-              event.imageUrl,
-              height: 150,
-              width: double.infinity,
-              fit: BoxFit.cover,
-              errorBuilder: (_, __, ___) => Container(
+    return Stack(
+      children: [
+        Card(
+          margin: const EdgeInsets.only(bottom: 16),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          elevation: 2,
+           // Ensure clip behavior respects the rounded corners
+          clipBehavior: Clip.antiAlias,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Image.network(
+                event.imageUrl,
                 height: 150,
-                color: const Color(0xFF2F3F2A).withOpacity(0.1),
-                child: Icon(Icons.event, size: 50, color: const Color(0xFF2F3F2A).withOpacity(0.5)),
+                width: double.infinity,
+                fit: BoxFit.cover,
+                errorBuilder: (context, error, stackTrace) => Container(
+                  height: 150,
+                  color: Colors.grey[300],
+                  child: const Icon(Icons.image_not_supported),
+                ),
               ),
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Expanded(
-                      child: Text(
-                        event.name,
-                        style: GoogleFonts.poppins(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 18,
-                        ),
-                      ),
-                    ),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF6F8F5E).withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Text(
-                        'Evento',
-                        style: GoogleFonts.poppins(
-                          color: const Color(0xFF6F8F5E),
-                          fontSize: 12,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    GestureDetector(
-                      onTap: () {
-                        showModalBottomSheet(
-                          context: context,
-                          shape: const RoundedRectangleBorder(
-                            borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-                          ),
-                          builder: (context) => Container(
-                            padding: const EdgeInsets.all(24),
-                            child: Column(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                ListTile(
-                                  leading: const Icon(Icons.edit, color: Color(0xFF6F8F5E)),
-                                  title: Text('Editar Evento', style: GoogleFonts.poppins()),
-                                  onTap: () {
-                                    Navigator.pop(context);
-                                    // TODO: Navigate to edit event screen
-                                  },
-                                ),
-                                ListTile(
-                                  leading: const Icon(Icons.share, color: Color(0xFF6F8F5E)),
-                                  title: Text('Compartir', style: GoogleFonts.poppins()),
-                                  onTap: () {
-                                    Navigator.pop(context);
-                                    _shareEvent(event);
-                                  },
-                                ),
-                                ListTile(
-                                  leading: const Icon(Icons.delete, color: Color(0xFF8B5A3C)),
-                                  title: Text('Eliminar', style: GoogleFonts.poppins()),
-                                  onTap: () {
-                                    Navigator.pop(context);
-                                    // TODO: Implement delete logic
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      const SnackBar(content: Text('Evento eliminado')),
-                                    );
-                                  },
-                                ),
-                              ],
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Expanded(
+                          child: Text(
+                            event.name,
+                            style: GoogleFonts.poppins(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 18,
                             ),
                           ),
-                        );
-                      },
-                      child: Icon(Icons.more_vert, color: const Color(0xFF2F3F2A).withOpacity(0.5)),
+                        ),
+                        // Sharing and Edit Buttons
+                         Row(
+                          children: [
+                             IconButton(
+                              icon: const Icon(Icons.edit, color: Color(0xFF8B5A3C)),
+                              onPressed: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => PymeAddEventScreen(event: event, pymeId: widget.pymeId),
+                                  ),
+                                );
+                              },
+                            ),
+                            IconButton(
+                              icon: const Icon(Icons.share, color: Color(0xFF6F8F5E)),
+                              onPressed: () => _shareEvent(event),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                Row(
+                  children: [
+                    const Icon(Icons.calendar_today, size: 16, color: Color(0xFF8B5A3C)),
+                    const SizedBox(width: 8),
+                    Text(
+                      '$date - $time',
+                      style: GoogleFonts.poppins(
+                        color: const Color(0xFF2F3F2A).withOpacity(0.7),
+                      ),
                     ),
                   ],
                 ),
-                const SizedBox(height: 8),
-                Text(
-                  event.description,
-                  style: GoogleFonts.poppins(
-                    color: const Color(0xFF2F3F2A).withOpacity(0.7),
-                    fontSize: 14,
-                  ),
-                ),
-                const SizedBox(height: 16),
+                const SizedBox(height: 4),
                 Row(
                   children: [
-                    Icon(Icons.calendar_today, size: 16, color: const Color(0xFF2F3F2A).withOpacity(0.5)),
-                    const SizedBox(width: 8),
-                    Flexible(
-                      child: Text(
-                        date,
-                        style: GoogleFonts.poppins(fontSize: 14),
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                    const SizedBox(width: 16),
-                    Icon(Icons.access_time, size: 16, color: const Color(0xFF2F3F2A).withOpacity(0.5)),
-                    const SizedBox(width: 8),
-                    Flexible(
-                      child: Text(
-                        time,
-                        style: GoogleFonts.poppins(fontSize: 14),
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 8),
-                Row(
-                  children: [
-                    Icon(Icons.location_on, size: 16, color: const Color(0xFF2F3F2A).withOpacity(0.5)),
+                    const Icon(Icons.location_on, size: 16, color: Color(0xFF8B5A3C)),
                     const SizedBox(width: 8),
                     Text(
                       location,
-                      style: GoogleFonts.poppins(fontSize: 14),
+                      style: GoogleFonts.poppins(
+                        color: const Color(0xFF2F3F2A).withOpacity(0.7),
+                      ),
                     ),
                   ],
                 ),
+                const SizedBox(height: 12),
+                Text(
+                  event.description,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: GoogleFonts.poppins(
+                    color: const Color(0xFF2F3F2A).withOpacity(0.6),
+                    fontSize: 14,
+                  ),
+                ),
               ],
+            ),
+          ),
+        ],
+      ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildShareOption({
+    required IconData icon,
+    required String label,
+    required VoidCallback onTap,
+    Color color = const Color(0xFF2F3F2A),
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Column(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: color.withOpacity(0.1),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(icon, color: color, size: 24),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            label,
+            style: GoogleFonts.poppins(
+              fontSize: 12,
+              color: const Color(0xFF2F3F2A),
             ),
           ),
         ],

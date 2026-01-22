@@ -1,11 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../services/auth_service.dart';
+import '../services/client_service.dart';
+import '../services/seeding_service.dart';
 import '../client_app_shell.dart';
 import '../pyme_app_shell.dart';
 import '../admin_app_shell.dart';
 import 'register_screen.dart';
+import 'subscription_blocker_screen.dart';
+import 'guest_foundations_screen.dart';
 import '../models/vitrina_data.dart';
+import '../models/user_profile.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -17,6 +22,7 @@ class LoginScreen extends StatefulWidget {
 class _LoginScreenState extends State<LoginScreen> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
+  final AuthService _authService = AuthService();
   bool _isLoading = false;
   bool _obscurePassword = true;
 
@@ -26,17 +32,22 @@ class _LoginScreenState extends State<LoginScreen> {
     final email = _emailController.text.trim();
     final password = _passwordController.text.trim();
 
-    final role = await AuthService.login(email, password);
+    final userProfile = await _authService.login(email, password);
 
     if (!mounted) return;
 
     setState(() => _isLoading = false);
 
-    if (role != null) {
+    if (userProfile != null) {
       Widget destination;
-      switch (role) {
+      switch (userProfile.role) {
         case UserRole.client:
-          destination = const ClientAppShell();
+          // Check subscription status for clients
+          if (userProfile.isSubscribed) {
+            destination = const ClientAppShell();
+          } else {
+            destination = const SubscriptionBlockerScreen();
+          }
           break;
         case UserRole.pyme:
           VitrinaData.isFoundationUser = false;
@@ -80,12 +91,24 @@ class _LoginScreenState extends State<LoginScreen> {
             children: [
               Image.asset('assets/images/LOGOSOYPLUS.jpg', height: 200),
               const SizedBox(height: 24),
-              Text(
-                'Únete a SoyPlus',
-                style: GoogleFonts.poppins(
-                  color: const Color(0xFF2F3F2A),
-                  fontSize: 18,
-                  fontWeight: FontWeight.w500,
+              RichText(
+                textAlign: TextAlign.center,
+                text: TextSpan(
+                  style: GoogleFonts.poppins(
+                    color: const Color(0xFF2F3F2A),
+                    fontSize: 20,
+                  ),
+                  children: [
+                    const TextSpan(text: '¡Bienvenido de nuevo a '),
+                    TextSpan(
+                      text: 'SoyPlus',
+                      style: GoogleFonts.poppins(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 28,
+                      ),
+                    ),
+                    const TextSpan(text: '!'),
+                  ],
                 ),
               ),
               const SizedBox(height: 48),
@@ -206,104 +229,49 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                 ],
               ),
-              const SizedBox(height: 20),
-              // Quick Access Demo Buttons
-              Column(
-                children: [
-                  Text(
-                    'Accesos Rápidos (Demo)',
-                    style: GoogleFonts.poppins(
-                      color: const Color(0xFF2F3F2A).withOpacity(0.6),
-                      fontSize: 12,
+              const SizedBox(height: 16),
+              TextButton.icon(
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const GuestFoundationsScreen(),
                     ),
+                  );
+                },
+                icon: const Icon(Icons.volunteer_activism, color: Color(0xFF8B5A3C)),
+                label: Text(
+                  'Donar como Invitado',
+                  style: GoogleFonts.poppins(
+                    color: const Color(0xFF8B5A3C),
+                    fontWeight: FontWeight.bold,
                   ),
-                  const SizedBox(height: 12),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      _buildQuickAccessButton(
-                        context,
-                        'Cliente',
-                        Icons.person,
-                        const Color(0xFF6F8F5E),
-                        () => Navigator.pushReplacement(
-                          context,
-                          MaterialPageRoute(builder: (context) => const ClientAppShell()),
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      _buildQuickAccessButton(
-                        context,
-                        'Pyme',
-                        Icons.storefront,
-                        const Color(0xFF8B5A3C),
-                        () {
-                          VitrinaData.setCategory('Comercio/retail');
-                          VitrinaData.isFoundationUser = false;
-                          Navigator.pushReplacement(
-                            context,
-                            MaterialPageRoute(builder: (context) => const PymeAppShell()),
-                          );
-                        },
-                      ),
-                      const SizedBox(width: 12),
-                      _buildQuickAccessButton(
-                        context,
-                        'Fundación',
-                        Icons.volunteer_activism,
-                        const Color(0xFF2F3F2A),
-                        () {
-                          VitrinaData.setCategory('Educación y cultura');
-                          VitrinaData.isFoundationUser = true;
-                          Navigator.pushReplacement(
-                            context,
-                            MaterialPageRoute(builder: (context) => const PymeAppShell()),
-                          );
-                        },
-                      ),
-                    ],
-                  ),
-                ],
+                ),
+              ),
+
+              const SizedBox(height: 20),
+              
+              // Dev Tool: Seeding Button
+              TextButton(
+                onPressed: () async {
+                  setState(() => _isLoading = true);
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Generando usuarios de prueba...')),
+                  );
+                  
+                  await SeedingService().seedUsers();
+                  
+                  if (mounted) {
+                    setState(() => _isLoading = false);
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Usuarios creados: admin@soyplus.cl, pyme@ejemplo.cl, fundacion@ejemplo.cl')),
+                    );
+                  }
+                },
+                child: const Text('Generar Datos de Prueba (Dev)', style: TextStyle(color: Colors.grey)),
               ),
             ],
           ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildQuickAccessButton(BuildContext context, String label, IconData icon, Color color, VoidCallback onTap) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(12),
-      child: Container(
-        width: 80,
-        padding: const EdgeInsets.symmetric(vertical: 12),
-        decoration: BoxDecoration(
-          color: const Color(0xFFFFFFFF),
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: color.withOpacity(0.3)),
-          boxShadow: [
-            BoxShadow(
-              color: color.withOpacity(0.1),
-              blurRadius: 8,
-              offset: const Offset(0, 2),
-            ),
-          ],
-        ),
-        child: Column(
-          children: [
-            Icon(icon, color: color, size: 24),
-            const SizedBox(height: 4),
-            Text(
-              label,
-              style: GoogleFonts.poppins(
-                color: color,
-                fontWeight: FontWeight.w600,
-                fontSize: 11,
-              ),
-            ),
-          ],
         ),
       ),
     );

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import '../models/product.dart';
 import '../models/vitrina_data.dart';
 import '../services/product_service.dart';
@@ -7,8 +8,9 @@ import '../services/product_service.dart';
 class PymeAddProductScreen extends StatefulWidget {
   final bool isService;
   final Product? product;
+  final String? pymeId;
 
-  const PymeAddProductScreen({super.key, required this.isService, this.product});
+  const PymeAddProductScreen({super.key, required this.isService, this.product, this.pymeId});
 
   @override
   State<PymeAddProductScreen> createState() => _PymeAddProductScreenState();
@@ -143,7 +145,7 @@ class _PymeAddProductScreenState extends State<PymeAddProductScreen> {
 
       final newProduct = Product(
         id: widget.product?.id ?? DateTime.now().millisecondsSinceEpoch.toString(),
-        pymeId: 'pyme1', // Mocked current pyme
+        pymeId: widget.pymeId ?? FirebaseAuth.instance.currentUser?.uid ?? '',
         name: _nameController.text,
         description: _descController.text,
         price: double.tryParse(_priceController.text) ?? 0,

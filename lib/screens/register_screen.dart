@@ -1,7 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:geocoding/geocoding.dart';
+import 'login_screen.dart';
+import 'donation_screen.dart';
 import '../services/auth_service.dart';
 import '../services/product_service.dart';
+import '../models/user_profile.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -24,6 +28,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final _websiteController = TextEditingController(); // Sitio Web
   final _legalStatusController = TextEditingController(); // N° Personalidad Jurídica (Fundación)
   
+  // Bank Account Controllers
+  final _bankNameController = TextEditingController();
+  final _bankAccountTypeController = TextEditingController();
+  final _bankAccountNumberController = TextEditingController();
+  final _bankAccountHolderRutController = TextEditingController();
+
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
@@ -32,6 +42,33 @@ class _RegisterScreenState extends State<RegisterScreen> {
   bool _obscurePassword = true;
   UserRole _selectedRole = UserRole.client;
   String? _selectedCategory;
+  String? _selectedBank;
+  String? _selectedAccountType;
+
+  final List<String> _banks = [
+    'Banco Estado',
+    'Banco de Chile',
+    'Banco Santander',
+    'Banco BCI',
+    'Banco Scotiabank',
+    'Banco Itaú',
+    'Banco Falabella',
+    'Banco Ripley',
+    'Banco Consorcio',
+    'Banco Security',
+    'Banco Internacional',
+    'Coopeuch',
+    'Tenpo',
+    'Mercado Pago',
+    'Mach',
+  ];
+
+  final List<String> _accountTypes = [
+    'Cuenta Corriente',
+    'Cuenta Vista / RUT',
+    'Cuenta de Ahorro',
+    'Chequera Electrónica',
+  ];
 
   void _register() async {
     if (_passwordController.text != _confirmPasswordController.text) {
@@ -69,6 +106,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
         _showError('Seleccione una categoría');
         return;
       }
+      // Bank Validation
+      if (_selectedBank == null || _selectedAccountType == null || _bankAccountNumberController.text.isEmpty) {
+        _showError('Complete los datos bancarios para recibir pagos');
+        return;
+      }
     } else if (_selectedRole == UserRole.foundation) {
       if (_rutController.text.isEmpty) {
         _showError('Ingrese el RUT de la Fundación');
@@ -94,6 +136,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
         _showError('Ingrese la Dirección Legal');
         return;
       }
+      // Bank Validation
+      if (_selectedBank == null || _selectedAccountType == null || _bankAccountNumberController.text.isEmpty) {
+        _showError('Complete los datos bancarios para recibir donaciones');
+        return;
+      }
     } else {
       // Cliente
       if (_runController.text.isEmpty) {
@@ -108,12 +155,71 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
     setState(() => _isLoading = true);
 
-    // In a real app, pass all these new fields to the backend
-    final success = await AuthService.register(
+    Map<String, dynamic> additionalData = {};
+    if (_selectedRole == UserRole.pyme) {
+      additionalData = {
+        'rut': _rutController.text,
+        'companyName': _companyNameController.text,
+        'commercialName': _commercialNameController.text,
+        'giro': _giroController.text,
+        'repRut': _repRutController.text,
+        'address': _addressController.text,
+        'website': _websiteController.text,
+        'category': _selectedCategory,
+        'bankName': _selectedBank,
+        'bankAccountType': _selectedAccountType,
+        'bankAccountNumber': _bankAccountNumberController.text,
+        'bankAccountHolderRut': _bankAccountHolderRutController.text.isNotEmpty 
+            ? _bankAccountHolderRutController.text 
+            : _rutController.text,
+      };
+    } else if (_selectedRole == UserRole.foundation) {
+      additionalData = {
+        'rut': _rutController.text,
+        'companyName': _companyNameController.text,
+        'legalStatus': _legalStatusController.text,
+        'repRut': _repRutController.text,
+        'address': _addressController.text,
+        'website': _websiteController.text,
+        'bankName': _selectedBank,
+        'bankAccountType': _selectedAccountType,
+        'bankAccountNumber': _bankAccountNumberController.text,
+        'bankAccountHolderRut': _bankAccountHolderRutController.text.isNotEmpty 
+            ? _bankAccountHolderRutController.text 
+            : _rutController.text,
+      };
+    } else {
+      additionalData = {
+        'run': _runController.text,
+      };
+    }
+
+    // Intentar obtener coordenadas para Pymes y Fundaciones
+    if (_selectedRole == UserRole.pyme || _selectedRole == UserRole.foundation) {
+      try {
+        // Añadir "Chile" para mejorar la precisión si no está incluido
+        String addressToSearch = _addressController.text;
+        if (!addressToSearch.toLowerCase().contains('chile')) {
+          addressToSearch += ', Chile';
+        }
+        
+        List<Location> locations = await locationFromAddress(addressToSearch);
+        if (locations.isNotEmpty) {
+          additionalData['latitude'] = locations.first.latitude;
+          additionalData['longitude'] = locations.first.longitude;
+        }
+      } catch (e) {
+        print('Error obteniendo coordenadas: $e');
+        // No bloqueamos el registro, pero no tendrá ubicación en el mapa
+      }
+    }
+
+    final success = await AuthService().register(
       _emailController.text,
       _passwordController.text,
       _nameController.text,
       _selectedRole,
+      additionalData: additionalData,
     );
 
     if (!mounted) return;
@@ -121,13 +227,26 @@ class _RegisterScreenState extends State<RegisterScreen> {
     setState(() => _isLoading = false);
 
     if (success) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Registro exitoso. Por favor inicia sesión.'),
-          backgroundColor: Colors.green,
-        ),
-      );
-      Navigator.pop(context); // Go back to login
+      if (_selectedRole == UserRole.client) {
+        // Auto-login logic would be ideal here, but for now we assume AuthService.register 
+        // might sign them in or we ask them to sign in. 
+        // However, the requirement is "immediate donation".
+        // If AuthService.register signs them in (Firebase usually does), we can proceed.
+        // Let's check AuthService.register. It uses createUserWithEmailAndPassword which signs in automatically.
+        
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => const DonationScreen(isInitialRegistration: true)),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Registro exitoso. Por favor inicia sesión.'),
+            backgroundColor: Colors.green,
+          ),
+        );
+        Navigator.pop(context); // Go back to login
+      }
     } else {
       _showError('Error en el registro');
     }
@@ -359,6 +478,57 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 ),
               ],
 
+              if (_selectedRole == UserRole.pyme || _selectedRole == UserRole.foundation) ...[
+                const SizedBox(height: 24),
+                _buildSectionTitle(_selectedRole == UserRole.foundation 
+                    ? 'Datos Bancarios (Para recibir donaciones)' 
+                    : 'Datos Bancarios (Para recibir pagos)'),
+                DropdownButtonFormField<String>(
+                  value: _selectedBank,
+                  decoration: _inputDecoration('Banco *', Icons.account_balance),
+                  items: _banks.map((String bank) {
+                    return DropdownMenuItem<String>(
+                      value: bank,
+                      child: Text(bank),
+                    );
+                  }).toList(),
+                  onChanged: (String? newValue) {
+                    setState(() {
+                      _selectedBank = newValue;
+                    });
+                  },
+                ),
+                const SizedBox(height: 16),
+                DropdownButtonFormField<String>(
+                  value: _selectedAccountType,
+                  decoration: _inputDecoration('Tipo de Cuenta *', Icons.credit_card),
+                  items: _accountTypes.map((String type) {
+                    return DropdownMenuItem<String>(
+                      value: type,
+                      child: Text(type),
+                    );
+                  }).toList(),
+                  onChanged: (String? newValue) {
+                    setState(() {
+                      _selectedAccountType = newValue;
+                    });
+                  },
+                ),
+                const SizedBox(height: 16),
+                TextField(
+                  controller: _bankAccountNumberController,
+                  keyboardType: TextInputType.number,
+                  style: const TextStyle(color: Color(0xFF2F3F2A)),
+                  decoration: _inputDecoration('Número de Cuenta *', Icons.numbers),
+                ),
+                const SizedBox(height: 16),
+                TextField(
+                  controller: _bankAccountHolderRutController,
+                  style: const TextStyle(color: Color(0xFF2F3F2A)),
+                  decoration: _inputDecoration('RUT Titular (Si es distinto al de la empresa)', Icons.badge),
+                ),
+              ],
+
               const SizedBox(height: 24),
               _buildSectionTitle('Cuenta'),
               TextField(
@@ -424,6 +594,36 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         ),
                 ),
               ),
+              const SizedBox(height: 16),
+              Center(
+                child: TextButton(
+                  onPressed: () {
+                    Navigator.of(context).pushReplacement(
+                      MaterialPageRoute(builder: (_) => const LoginScreen()),
+                    );
+                  },
+                  child: RichText(
+                    text: TextSpan(
+                      text: '¿Ya tienes cuenta? ',
+                      style: GoogleFonts.poppins(
+                        color: const Color(0xFF2F3F2A).withOpacity(0.7),
+                        fontSize: 14,
+                      ),
+                      children: [
+                        TextSpan(
+                          text: 'Inicia sesión aquí',
+                          style: GoogleFonts.poppins(
+                            color: const Color(0xFF6F8F5E),
+                            fontWeight: FontWeight.bold,
+                            fontSize: 14,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 24),
             ],
           ),
         ),

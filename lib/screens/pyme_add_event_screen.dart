@@ -1,10 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import '../models/product.dart';
 import '../services/product_service.dart';
 
 class PymeAddEventScreen extends StatefulWidget {
-  const PymeAddEventScreen({super.key});
+  final Product? event;
+  final String? pymeId;
+
+  const PymeAddEventScreen({
+    super.key, 
+    this.event,
+    this.pymeId,
+  });
 
   @override
   State<PymeAddEventScreen> createState() => _PymeAddEventScreenState();
@@ -12,15 +20,55 @@ class PymeAddEventScreen extends StatefulWidget {
 
 class _PymeAddEventScreenState extends State<PymeAddEventScreen> {
   final _formKey = GlobalKey<FormState>();
-  final _titleController = TextEditingController();
-  final _descriptionController = TextEditingController();
-  final _locationController = TextEditingController();
-  final _imageUrlController = TextEditingController();
+  late TextEditingController _titleController;
+  late TextEditingController _descriptionController;
+  late TextEditingController _locationController;
+  late TextEditingController _imageUrlController;
   
   DateTime? _selectedDate;
   TimeOfDay? _selectedTime;
 
   final ProductService _productService = ProductService();
+
+  @override
+  void initState() {
+    super.initState();
+    _titleController = TextEditingController(text: widget.event?.name ?? '');
+    _descriptionController = TextEditingController(text: widget.event?.description ?? '');
+    _imageUrlController = TextEditingController(text: widget.event?.imageUrl ?? '');
+    
+    // Parse location and date/time from customAttributes if editing
+    _locationController = TextEditingController(
+      text: widget.event?.customAttributes['event_location'] ?? ''
+    );
+    
+    if (widget.event != null) {
+       final dateStr = widget.event!.customAttributes['event_date'];
+       if (dateStr != null) {
+         try {
+           final parts = dateStr.split('/');
+           _selectedDate = DateTime(int.parse(parts[2]), int.parse(parts[1]), int.parse(parts[0]));
+         } catch (_) {}
+       }
+       
+       final timeStr = widget.event!.customAttributes['event_time'];
+       if (timeStr != null) {
+         try {
+           final parts = timeStr.split(':');
+           _selectedTime = TimeOfDay(hour: int.parse(parts[0]), minute: int.parse(parts[1]));
+         } catch (_) {}
+       }
+    }
+  }
+
+  @override
+  void dispose() {
+    _titleController.dispose();
+    _descriptionController.dispose();
+    _locationController.dispose();
+    _imageUrlController.dispose();
+    super.dispose();
+  }
 
   Future<void> _selectDate(BuildContext context) async {
     final DateTime? picked = await showDatePicker(
@@ -50,17 +98,25 @@ class _PymeAddEventScreenState extends State<PymeAddEventScreen> {
 
   void _saveEvent() {
     if (_formKey.currentState!.validate() && _selectedDate != null && _selectedTime != null) {
-      final newEvent = Product(
-        id: DateTime.now().millisecondsSinceEpoch.toString(),
-        pymeId: 'pyme1',
+      final user = FirebaseAuth.instance.currentUser;
+      // If pymeId is provided (Admin mode), use it. Otherwise use current user.
+      final targetPymeId = widget.pymeId ?? user?.uid;
+
+      if (targetPymeId == null) return;
+
+      final isEditing = widget.event != null;
+
+      final eventData = Product(
+        id: isEditing ? widget.event!.id : '', // Keep ID if editing
+        pymeId: targetPymeId,
         name: _titleController.text,
         description: _descriptionController.text,
-        price: 0, // Events are free or price is irrelevant for this display
+        price: 0, 
         imageUrl: _imageUrlController.text.isNotEmpty 
             ? _imageUrlController.text 
             : 'https://images.unsplash.com/photo-1501281668745-f7f57925c3b4?auto=format&fit=crop&w=500&q=60',
-        code: 'EVT-${DateTime.now().millisecondsSinceEpoch}',
-        stock: 100, // Unlimited or high capacity
+        code: isEditing ? widget.event!.code : 'EVT-${DateTime.now().millisecondsSinceEpoch}',
+        stock: 100, 
         category: 'Educación y cultura',
         isService: true,
         customAttributes: {
@@ -71,11 +127,18 @@ class _PymeAddEventScreenState extends State<PymeAddEventScreen> {
         },
       );
 
-      _productService.addProduct(newEvent);
+      if (isEditing) {
+        _productService.updateProduct(eventData);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Evento actualizado exitosamente')),
+        );
+      } else {
+        _productService.addProduct(eventData);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Evento creado exitosamente')),
+        );
+      }
       
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Evento creado exitosamente')),
-      );
       Navigator.pop(context);
     } else if (_selectedDate == null || _selectedTime == null) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -89,7 +152,7 @@ class _PymeAddEventScreenState extends State<PymeAddEventScreen> {
     return Scaffold(
       backgroundColor: const Color(0xFFF4F1EA),
       appBar: AppBar(
-        title: Text('Nuevo Evento', style: GoogleFonts.poppins(fontWeight: FontWeight.bold)),
+        title: Text(widget.event != null ? 'Editar Evento' : 'Nuevo Evento', style: GoogleFonts.poppins(fontWeight: FontWeight.bold)),
         elevation: 0,
         backgroundColor: const Color(0xFFF4F1EA),
         foregroundColor: const Color(0xFF2F3F2A),

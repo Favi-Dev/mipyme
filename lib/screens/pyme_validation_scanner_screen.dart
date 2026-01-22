@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'dart:async';
-import '../models/client_data.dart';
+import 'package:mobile_scanner/mobile_scanner.dart';
+import '../services/pyme_service.dart';
 
 class PymeValidationScannerScreen extends StatefulWidget {
   const PymeValidationScannerScreen({super.key});
@@ -14,80 +14,91 @@ class PymeValidationScannerScreen extends StatefulWidget {
 class _PymeValidationScannerScreenState
     extends State<PymeValidationScannerScreen>
     with SingleTickerProviderStateMixin {
-  final TextEditingController _codeController = TextEditingController();
-  late AnimationController _animationController;
-  late Animation<double> _animation;
+  final PymeService _pymeService = PymeService();
+  final MobileScannerController _scannerController = MobileScannerController();
   bool _isScanning = true;
-
-  @override
-  void initState() {
-    super.initState();
-    _animationController = AnimationController(
-      vsync: this,
-      duration: const Duration(seconds: 2),
-    )..repeat(reverse: true);
-
-    _animation = Tween<double>(begin: 0.0, end: 1.0).animate(
-      CurvedAnimation(parent: _animationController, curve: Curves.easeInOut),
-    );
-  }
+  bool _isProcessing = false;
 
   @override
   void dispose() {
-    _animationController.dispose();
-    _codeController.dispose();
+    _scannerController.dispose();
     super.dispose();
   }
 
-  void _validateCode(String code) {
-    // Simulate network delay
+  void _handleBarcode(BarcodeCapture capture) {
+    if (!_isScanning || _isProcessing) return;
+
+    final List<Barcode> barcodes = capture.barcodes;
+    for (final barcode in barcodes) {
+      if (barcode.rawValue != null) {
+        _validateCode(barcode.rawValue!);
+        break; // Process only the first code
+      }
+    }
+  }
+
+  Future<void> _validateCode(String userId) async {
+    setState(() {
+      _isProcessing = true;
+      _isScanning = false; // Pause scanning
+    });
+
+    try {
+      // Show loading
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) => const Center(child: CircularProgressIndicator()),
+      );
+
+      final userData = await _pymeService.getUserById(userId);
+      
+      Navigator.pop(context); // Close loading
+
+      if (userData == null) {
+        _showResultDialog(false, 'Usuario no encontrado', 'El código QR no corresponde a un usuario válido.');
+        return;
+      }
+
+      final isSubscribed = userData['isSubscribed'] ?? false;
+      final isRedeemed = userData['monthlyCouponRedeemed'] ?? false;
+
+      if (!isSubscribed) {
+        _showResultDialog(false, 'Sin Suscripción', 'El cliente no tiene una suscripción activa.');
+        return;
+      }
+
+      if (isRedeemed) {
+        _showResultDialog(false, 'Cupón Canjeado', 'Este cliente ya utilizó su cupón de este mes.');
+        return;
+      }
+
+      _showConfirmationDialog(userId, userData['name'] ?? 'Cliente');
+
+    } catch (e) {
+      if (mounted) {
+        Navigator.pop(context); // Close loading if open
+        _showResultDialog(false, 'Error', 'Ocurrió un error al validar: $e');
+      }
+    }
+  }
+
+  void _showConfirmationDialog(String userId, String clientName) {
     showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (context) => const Center(child: CircularProgressIndicator()),
-    );
-
-    Future.delayed(const Duration(seconds: 1), () {
-      Navigator.pop(context); // Close loading
-      if (mounted) {
-        setState(() {
-          _isScanning = false;
-          _animationController.stop();
-        });
-
-        // Simulate valid code check
-        // In a real app, this would check against a backend
-        bool isValidCode = code.isNotEmpty; 
-
-        if (!isValidCode) {
-          _showResultDialog(false, code, 'Código inválido');
-          return;
-        }
-
-        if (!ClientData.hasActiveSubscription) {
-           _showResultDialog(false, code, 'Cliente sin suscripción activa');
-           return;
-        }
-
-        if (ClientData.isMonthlyCouponRedeemed) {
-           _showResultDialog(false, code, 'Este cupón ya fue utilizado este mes.');
-           return;
-        }
-
-        _showConfirmationDialog(code);
-      }
-    });
-  }
-
-  void _showConfirmationDialog(String code) {
-    showDialog(
-      context: context,
       builder: (context) => AlertDialog(
         backgroundColor: const Color(0xFFF4F1EA),
         title: Text('Confirmar Canje', style: GoogleFonts.poppins(color: const Color(0xFF2F3F2A), fontWeight: FontWeight.bold)),
         content: Column(
           mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            Text(
+              'Cliente: $clientName',
+              style: GoogleFonts.poppins(fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 8),
             Text(
               '¿Desea aplicar el descuento de \$10.000?',
               style: GoogleFonts.poppins(color: const Color(0xFF2F3F2A), fontSize: 16),
@@ -101,30 +112,38 @@ class _PymeValidationScannerScreenState
         ),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text('Cancelar', style: TextStyle(color: const Color(0xFF2F3F2A).withOpacity(0.6))),
+            onPressed: () {
+              Navigator.pop(context);
+              _resetScanner();
+            },
+            child: Text('Cancelar', style: GoogleFonts.poppins(color: Colors.grey)),
           ),
           ElevatedButton(
-            onPressed: () {
-              // Redeem coupon
-              setState(() {
-                ClientData.isMonthlyCouponRedeemed = true;
-                ClientData.couponAmount = 0; // Set balance to 0
-              });
+            onPressed: () async {
               Navigator.pop(context);
-              _showResultDialog(true, code, 'Descuento de \$10.000 aplicado correctamente.');
+              await _processRedemption(userId);
             },
             style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF6F8F5E)),
-            child: const Text('Confirmar', style: TextStyle(color: Color(0xFFF4F1EA))),
+            child: Text('Confirmar', style: GoogleFonts.poppins(color: Colors.white)),
           ),
         ],
       ),
     );
   }
 
-  void _showResultDialog(bool success, String code, String message) {
+  Future<void> _processRedemption(String userId) async {
+    try {
+      await _pymeService.redeemCouponForUser(userId);
+      _showResultDialog(true, '¡Éxito!', 'El cupón ha sido canjeado correctamente.');
+    } catch (e) {
+      _showResultDialog(false, 'Error', 'No se pudo canjear el cupón: $e');
+    }
+  }
+
+  void _showResultDialog(bool success, String title, String message) {
     showDialog(
       context: context,
+      barrierDismissible: false,
       builder: (context) => AlertDialog(
         backgroundColor: const Color(0xFFF4F1EA),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
@@ -138,325 +157,222 @@ class _PymeValidationScannerScreenState
             ),
             const SizedBox(height: 16),
             Text(
-              success ? '¡Validación Exitosa!' : 'Error',
+              title,
               style: GoogleFonts.poppins(
-                color: const Color(0xFF2F3F2A),
                 fontSize: 20,
                 fontWeight: FontWeight.bold,
+                color: const Color(0xFF2F3F2A),
               ),
             ),
             const SizedBox(height: 8),
             Text(
               message,
               textAlign: TextAlign.center,
-              style: GoogleFonts.poppins(color: const Color(0xFF2F3F2A).withOpacity(0.7)),
+              style: GoogleFonts.poppins(color: const Color(0xFF2F3F2A)),
+            ),
+            const SizedBox(height: 24),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: () {
+                  Navigator.pop(context);
+                  _resetScanner();
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF2F3F2A),
+                  foregroundColor: const Color(0xFFF4F1EA),
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                ),
+                child: const Text('Volver a Escanear'),
+              ),
             ),
           ],
         ),
-        actions: [
-          TextButton(
-            onPressed: () {
-              Navigator.pop(context);
-              if (success) {
-                _codeController.clear();
-              }
-            },
-            child: Text('Aceptar', style: TextStyle(color: const Color(0xFF2F3F2A))),
-          ),
-        ],
       ),
     );
+  }
+
+  void _resetScanner() {
+    setState(() {
+      _isScanning = true;
+      _isProcessing = false;
+    });
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF4F1EA),
+      backgroundColor: Colors.black,
       appBar: AppBar(
-        backgroundColor: const Color(0xFF2F3F2A),
+        title: Text('Validar Cupón', style: GoogleFonts.poppins(fontWeight: FontWeight.bold)),
+        backgroundColor: Colors.transparent,
         elevation: 0,
-        title: Text(
-          'Validar Cupón Mensual',
-          style: GoogleFonts.poppins(
-            color: const Color(0xFFF4F1EA),
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        iconTheme: const IconThemeData(color: Color(0xFFF4F1EA)),
+        foregroundColor: Colors.white,
       ),
-      body: SingleChildScrollView(
-        child: Padding(
-          padding: const EdgeInsets.all(24.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              Text(
-                'Escanea el QR mensual del cliente',
-                style: GoogleFonts.poppins(color: const Color(0xFF2F3F2A).withOpacity(0.7), fontSize: 16),
-              ),
-              const SizedBox(height: 24),
-              // Scanner UI Simulation
-              Stack(
-                alignment: Alignment.center,
-                children: [
-                  Container(
-                    width: 280,
-                    height: 280,
-                    decoration: BoxDecoration(
-                      color: Colors.black,
-                      borderRadius: BorderRadius.circular(20),
-                      border: Border.all(color: const Color(0xFF2F3F2A).withOpacity(0.2), width: 1),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.3),
-                          blurRadius: 20,
-                          offset: const Offset(0, 10),
-                        ),
-                      ],
-                    ),
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(20),
-                      child: Stack(
-                        children: [
-                          // Camera placeholder pattern
-                          Center(
-                            child: Icon(
-                              Icons.qr_code_2,
-                              size: 200,
-                              color: const Color(0xFFF4F1EA).withOpacity(0.1),
-                            ),
-                          ),
-                          // Scanning line animation
-                          AnimatedBuilder(
-                            animation: _animation,
-                            builder: (context, child) {
-                              return Positioned(
-                                top: _animation.value * 260,
-                                left: 0,
-                                right: 0,
-                                child: Container(
-                                  height: 2,
-                                  decoration: BoxDecoration(
-                                    color: const Color(0xFF6F8F5E),
-                                    boxShadow: [
-                                      BoxShadow(
-                                        color: const Color(0xFF6F8F5E).withOpacity(0.5),
-                                        blurRadius: 10,
-                                        spreadRadius: 2,
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              );
-                            },
-                          ),
-                          // Corner markers
-                          ..._buildCornerMarkers(),
-                        ],
-                      ),
-                    ),
-                  ),
-                  if (!_isScanning)
-                    Container(
-                      width: 280,
-                      height: 280,
-                      decoration: BoxDecoration(
-                        color: Colors.black54,
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      child: Center(
-                        child: IconButton(
-                          icon: const Icon(Icons.play_circle_fill,
-                              size: 64, color: Color(0xFFF4F1EA)),
-                          onPressed: () {
-                            setState(() {
-                              _isScanning = true;
-                              _animationController.repeat(reverse: true);
-                            });
-                          },
-                        ),
-                      ),
-                    ),
-                ],
-              ),
-              const SizedBox(height: 16),
-              TextButton.icon(
-                onPressed: () {
-                  setState(() {
-                    _isScanning = !_isScanning;
-                    if (_isScanning) {
-                      _animationController.repeat(reverse: true);
-                    } else {
-                      _animationController.stop();
-                    }
-                  });
-                },
-                icon: Icon(
-                  _isScanning ? Icons.pause : Icons.play_arrow,
-                  color: const Color(0xFF6F8F5E),
-                ),
-                label: Text(
-                  _isScanning ? 'Pausar Escáner' : 'Activar Escáner',
-                  style: const TextStyle(color: Color(0xFF6F8F5E)),
-                ),
-              ),
-              const SizedBox(height: 32),
-              Row(
-                children: [
-                  Expanded(
-                    child: Divider(color: const Color(0xFFF4F1EA).withOpacity(0.2)),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    child: Text(
-                      'O ingresa el código',
-                      style: TextStyle(color: const Color(0xFFF4F1EA).withOpacity(0.6)),
-                    ),
-                  ),
-                  Expanded(
-                    child: Divider(color: const Color(0xFFF4F1EA).withOpacity(0.2)),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 32),
-              TextField(
-                controller: _codeController,
-                style: const TextStyle(color: Color(0xFF2F3F2A), fontSize: 18),
-                textAlign: TextAlign.center,
-                textCapitalization: TextCapitalization.characters,
-                decoration: InputDecoration(
-                  hintText: 'EJ: CUPON-NOV',
-                  hintStyle: TextStyle(color: const Color(0xFF2F3F2A).withOpacity(0.4)),
-                  filled: true,
-                  fillColor: const Color(0xFFF4F1EA),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide.none,
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: const BorderSide(color: Color(0xFF6F8F5E)),
-                  ),
-                  prefixIcon: const Icon(Icons.keyboard, color: Color(0xFF2F3F2A)),
-                ),
-              ),
-              const SizedBox(height: 16),
-              SizedBox(
-                width: double.infinity,
-                height: 50,
-                child: ElevatedButton(
-                  onPressed: () {
-                    if (_codeController.text.isNotEmpty) {
-                      _validateCode(_codeController.text);
-                    }
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF6F8F5E),
-                    foregroundColor: const Color(0xFFF4F1EA),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                  child: const Text(
-                    'Validar Cupón',
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 16),
-              SizedBox(
-                width: double.infinity,
-                height: 50,
-                child: OutlinedButton.icon(
-                  onPressed: () {
-                    _validateCode('PRO123'); // Simulate successful scan
-                  },
-                  icon: const Icon(Icons.qr_code_scanner, color: Color(0xFF6F8F5E)),
-                  label: const Text(
-                    'Simular Escaneo Exitoso',
-                    style: TextStyle(color: Color(0xFF6F8F5E)),
-                  ),
-                  style: OutlinedButton.styleFrom(
-                    side: const BorderSide(color: Color(0xFF6F8F5E)),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                ),
-              ),
-            ],
+      body: Stack(
+        children: [
+          MobileScanner(
+            controller: _scannerController,
+            onDetect: _handleBarcode,
           ),
-        ),
+          // Overlay
+          Container(
+            decoration: ShapeDecoration(
+              shape: QrScannerOverlayShape(
+                borderColor: const Color(0xFF6F8F5E),
+                borderRadius: 10,
+                borderLength: 30,
+                borderWidth: 10,
+                cutOutSize: 300,
+              ),
+            ),
+          ),
+          Positioned(
+            bottom: 40,
+            left: 0,
+            right: 0,
+            child: Center(
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                decoration: BoxDecoration(
+                  color: Colors.black54,
+                  borderRadius: BorderRadius.circular(30),
+                ),
+                child: Text(
+                  'Escanea el código QR del cliente',
+                  style: GoogleFonts.poppins(color: Colors.white),
+                ),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
+}
 
-  List<Widget> _buildCornerMarkers() {
-    const double size = 40;
-    const double thickness = 4;
-    const Color color = Color(0xFF6F8F5E);
+// Helper class for overlay (simplified version of what usually comes with scanner packages or custom)
+class QrScannerOverlayShape extends ShapeBorder {
+  final Color borderColor;
+  final double borderWidth;
+  final Color overlayColor;
+  final double borderRadius;
+  final double borderLength;
+  final double cutOutSize;
 
-    return [
-      // Top Left
-      Positioned(
-        top: 20,
-        left: 20,
-        child: Container(
-          width: size,
-          height: size,
-          decoration: const BoxDecoration(
-            border: Border(
-              top: BorderSide(color: color, width: thickness),
-              left: BorderSide(color: color, width: thickness),
+  QrScannerOverlayShape({
+    this.borderColor = Colors.red,
+    this.borderWidth = 10.0,
+    this.overlayColor = const Color.fromRGBO(0, 0, 0, 80),
+    this.borderRadius = 0,
+    this.borderLength = 40,
+    this.cutOutSize = 250,
+  });
+
+  @override
+  EdgeInsetsGeometry get dimensions => EdgeInsets.zero;
+
+  @override
+  Path getInnerPath(Rect rect, {TextDirection? textDirection}) {
+    return Path()
+      ..fillType = PathFillType.evenOdd
+      ..addPath(getOuterPath(rect), Offset.zero);
+  }
+
+  @override
+  Path getOuterPath(Rect rect, {TextDirection? textDirection}) {
+    Path getLeftTopPath(Rect rect) {
+      return Path()
+        ..moveTo(rect.left, rect.bottom)
+        ..lineTo(rect.left, rect.top)
+        ..lineTo(rect.right, rect.top);
+    }
+
+    return getLeftTopPath(rect);
+  }
+
+  @override
+  void paint(Canvas canvas, Rect rect, {TextDirection? textDirection}) {
+    final width = rect.width;
+    final height = rect.height;
+    final cutOutRect = Rect.fromCenter(
+      center: rect.center,
+      width: cutOutSize,
+      height: cutOutSize,
+    );
+
+    final backgroundPaint = Paint()
+      ..color = overlayColor
+      ..style = PaintingStyle.fill;
+
+    final borderPaint = Paint()
+      ..color = borderColor
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = borderWidth;
+
+    final boxPaint = Paint()
+      ..color = borderColor
+      ..style = PaintingStyle.fill;
+
+    canvas.drawPath(
+      Path.combine(
+        PathOperation.difference,
+        Path()..addRect(rect),
+        Path()
+          ..addRRect(
+            RRect.fromRectAndRadius(
+              cutOutRect,
+              Radius.circular(borderRadius),
             ),
           ),
-        ),
       ),
-      // Top Right
-      Positioned(
-        top: 20,
-        right: 20,
-        child: Container(
-          width: size,
-          height: size,
-          decoration: const BoxDecoration(
-            border: Border(
-              top: BorderSide(color: color, width: thickness),
-              right: BorderSide(color: color, width: thickness),
-            ),
-          ),
-        ),
-      ),
-      // Bottom Left
-      Positioned(
-        bottom: 20,
-        left: 20,
-        child: Container(
-          width: size,
-          height: size,
-          decoration: const BoxDecoration(
-            border: Border(
-              bottom: BorderSide(color: color, width: thickness),
-              left: BorderSide(color: color, width: thickness),
-            ),
-          ),
-        ),
-      ),
-      // Bottom Right
-      Positioned(
-        bottom: 20,
-        right: 20,
-        child: Container(
-          width: size,
-          height: size,
-          decoration: const BoxDecoration(
-            border: Border(
-              bottom: BorderSide(color: color, width: thickness),
-              right: BorderSide(color: color, width: thickness),
-            ),
-          ),
-        ),
-      ),
-    ];
+      backgroundPaint,
+    );
+
+    // Draw corners
+    final r = cutOutRect;
+    final bl = borderLength;
+
+    // Top left
+    canvas.drawPath(
+      Path()
+        ..moveTo(r.left, r.top + bl)
+        ..lineTo(r.left, r.top)
+        ..lineTo(r.left + bl, r.top),
+      borderPaint,
+    );
+    // Top right
+    canvas.drawPath(
+      Path()
+        ..moveTo(r.right - bl, r.top)
+        ..lineTo(r.right, r.top)
+        ..lineTo(r.right, r.top + bl),
+      borderPaint,
+    );
+    // Bottom right
+    canvas.drawPath(
+      Path()
+        ..moveTo(r.right, r.bottom - bl)
+        ..lineTo(r.right, r.bottom)
+        ..lineTo(r.right - bl, r.bottom),
+      borderPaint,
+    );
+    // Bottom left
+    canvas.drawPath(
+      Path()
+        ..moveTo(r.left + bl, r.bottom)
+        ..lineTo(r.left, r.bottom)
+        ..lineTo(r.left, r.bottom - bl),
+      borderPaint,
+    );
+  }
+
+  @override
+  ShapeBorder scale(double t) {
+    return QrScannerOverlayShape(
+      borderColor: borderColor,
+      borderWidth: borderWidth,
+      overlayColor: overlayColor,
+    );
   }
 }

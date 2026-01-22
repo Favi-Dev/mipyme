@@ -1,7 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_map/flutter_map.dart';
+import 'package:latlong2/latlong.dart';
+import 'package:geolocator/geolocator.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'client_pyme_detail_screen.dart';
-import '../models/vitrina_data.dart';
-import '../services/product_service.dart';
+import '../services/pyme_service.dart';
+import '../models/user_profile.dart';
+import 'dart:math';
 
 class ClientMapScreen extends StatefulWidget {
   const ClientMapScreen({super.key});
@@ -11,97 +16,74 @@ class ClientMapScreen extends StatefulWidget {
 }
 
 class _ClientMapScreenState extends State<ClientMapScreen> {
-  // Mock data for map pins
-  final List<Map<String, dynamic>> _mapPins = [
-    {
-      'id': '1',
-      'name': 'Zapatería Los Robles',
-      'category': 'Comercio',
-      'category_key': 'Comercio/retail',
-      'lat': 0.4,
-      'lng': 0.3,
-      'color': const Color(0xFF8D6E63),
-      'icon': Icons.shopping_bag,
-      'image': 'assets/images/logo el roble calzados.jpg',
-    },
-    {
-      'id': '2',
-      'name': 'Farmayuda',
-      'category': 'Salud',
-      'category_key': 'Salud, belleza y bienestar',
-      'lat': 0.6,
-      'lng': 0.7,
-      'color': const Color(0xFFE63946),
-      'icon': Icons.medical_services,
-      'image': 'assets/images/logo farmayuda.jpg',
-    },
-    {
-      'id': '3',
-      'name': 'Fundación Los Robles',
-      'category': 'Fundación',
-      'category_key': 'Educación y cultura',
-      'lat': 0.25,
-      'lng': 0.6,
-      'color': const Color(0xFF0056D2),
-      'icon': Icons.volunteer_activism,
-      'image': 'assets/images/Logo los robles.jpg',
-    },
-    {
-      'id': '4',
-      'name': 'Cafetería El Grano',
-      'category': 'Comida',
-      'category_key': 'Alimentos y gastronomía',
-      'lat': 0.5,
-      'lng': 0.4,
-      'color': Colors.orange,
-      'icon': Icons.restaurant,
-      'image': 'https://images.unsplash.com/photo-1509042239860-f550ce710b93?auto=format&fit=crop&w=500&q=60',
-    },
-    {
-      'id': '5',
-      'name': 'Estudio Jurídico Silva',
-      'category': 'Servicios',
-      'category_key': 'Servicios profesionales',
-      'lat': 0.3,
-      'lng': 0.2,
-      'color': Colors.blueGrey,
-      'icon': Icons.gavel,
-      'image': 'https://images.unsplash.com/photo-1589829085413-56de8ae18c73?auto=format&fit=crop&w=500&q=60',
-    },
-    {
-      'id': '6',
-      'name': 'Muebles Rústicos Chile',
-      'category': 'Oficios',
-      'category_key': 'Oficios y manufactura',
-      'lat': 0.7,
-      'lng': 0.3,
-      'color': Colors.brown,
-      'icon': Icons.handyman,
-      'image': 'https://images.unsplash.com/photo-1533090481720-856c6e3c1fdc?auto=format&fit=crop&w=500&q=60',
-    },
-    {
-      'id': '7',
-      'name': 'Fletes Rápidos Santiago',
-      'category': 'Logística',
-      'category_key': 'Transporte y logística',
-      'lat': 0.55,
-      'lng': 0.8,
-      'color': Colors.indigo,
-      'icon': Icons.local_shipping,
-      'image': 'https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?auto=format&fit=crop&w=500&q=60',
-    },
-    {
-      'id': '8',
-      'name': 'Metamorfosis',
-      'category': 'Reciclaje Textil',
-      'category_key': 'Metamorfosis',
-      'lat': 0.35,
-      'lng': 0.5,
-      'color': Colors.teal,
-      'icon': Icons.recycling,
-      'image': 'assets/images/metamorfosis.jpg',
-    },
-  ];
+  final PymeService _pymeService = PymeService();
+  final MapController _mapController = MapController();
+  LatLng _currentLocation = const LatLng(-33.4489, -70.6693); // Santiago default
+  bool _hasLocation = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _checkLocationPermission();
+  }
+
+  Future<void> _checkLocationPermission() async {
+    var status = await Permission.location.status;
+    if (!status.isGranted) {
+      status = await Permission.location.request();
+    }
+
+    if (status.isGranted) {
+      try {
+        Position position = await Geolocator.getCurrentPosition(
+            desiredAccuracy: LocationAccuracy.high);
+        setState(() {
+          _currentLocation = LatLng(position.latitude, position.longitude);
+          _hasLocation = true;
+        });
+        _mapController.move(_currentLocation, 15.0);
+      } catch (e) {
+        debugPrint('Error getting location: $e');
+      }
+    }
+  }
+
+  // Helper to generate deterministic position based on ID around current location
+  LatLng _getPosition(String id) {
+    final hash = id.hashCode;
+    final random = Random(hash);
+    // Generate random offset within ~2km
+    final latOffset = (random.nextDouble() - 0.5) * 0.04;
+    final lngOffset = (random.nextDouble() - 0.5) * 0.04;
+    
+    // Use Santiago center as base if no user location, otherwise user location
+    // This ensures pins are always visible near the "center" of action
+    final base = _hasLocation ? _currentLocation : const LatLng(-33.4489, -70.6693);
+    
+    return LatLng(base.latitude + latOffset, base.longitude + lngOffset);
+  }
+
+  // Helper to get style based on category
+  Map<String, dynamic> _getStyleForCategory(String? category) {
+    switch (category) {
+      case 'Comercio/retail':
+        return {'icon': Icons.shopping_bag, 'color': const Color(0xFF8D6E63)};
+      case 'Alimentos y gastronomía':
+        return {'icon': Icons.restaurant, 'color': Colors.orange};
+      case 'Servicios profesionales':
+        return {'icon': Icons.business_center, 'color': Colors.blueGrey};
+      case 'Salud, belleza y bienestar':
+        return {'icon': Icons.medical_services, 'color': const Color(0xFFE63946)};
+      case 'Oficios y manufactura':
+        return {'icon': Icons.handyman, 'color': Colors.brown};
+      case 'Educación y cultura':
+        return {'icon': Icons.school, 'color': const Color(0xFF0056D2)};
+      case 'Transporte y logistica':
+        return {'icon': Icons.local_shipping, 'color': Colors.indigo};
+      default:
+        return {'icon': Icons.store, 'color': Colors.teal};
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -109,29 +91,89 @@ class _ClientMapScreenState extends State<ClientMapScreen> {
     return Scaffold(
       body: Stack(
         children: [
-          // 1. Map Background
-          Positioned.fill(
-            child: Opacity(
-              opacity: 0.8,
-              child: Image.asset(
-                'assets/images/mapa.jpg',
-                fit: BoxFit.cover,
-                errorBuilder: (context, error, stackTrace) {
-                  return Container(
-                    color: theme.colorScheme.surfaceContainerHighest,
-                    child: Center(
-                      child: Text(
-                        'No se pudo cargar el mapa.\nReinicia la aplicación si acabas de agregar la imagen.',
-                        textAlign: TextAlign.center,
-                        style: theme.textTheme.bodyMedium?.copyWith(
-                          color: theme.colorScheme.onSurfaceVariant,
+          // 1. Map Widget
+          StreamBuilder<List<UserProfile>>(
+            stream: _pymeService.getAllPublicProfiles(),
+            builder: (context, snapshot) {
+              final pymes = snapshot.data ?? [];
+              
+              return FlutterMap(
+                mapController: _mapController,
+                options: MapOptions(
+                  initialCenter: _currentLocation,
+                  initialZoom: 15.0,
+                ),
+                children: [
+                  TileLayer(
+                    urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                    userAgentPackageName: 'com.example.mipyme',
+                  ),
+                  MarkerLayer(
+                    markers: [
+                      // User Location Marker
+                      if (_hasLocation)
+                        Marker(
+                          point: _currentLocation,
+                          width: 60,
+                          height: 60,
+                          child: Container(
+                            decoration: BoxDecoration(
+                              color: theme.colorScheme.primary.withOpacity(0.2),
+                              shape: BoxShape.circle,
+                              border: Border.all(color: theme.colorScheme.primary, width: 2),
+                            ),
+                            child: Icon(
+                              Icons.my_location,
+                              color: theme.colorScheme.primary,
+                              size: 30,
+                            ),
+                          ),
                         ),
-                      ),
-                    ),
-                  );
-                },
-              ),
-            ),
+                      
+                      // Pyme Markers
+                      ...pymes.map((pyme) {
+                        LatLng pos;
+                        if (pyme.latitude != null && pyme.longitude != null) {
+                          pos = LatLng(pyme.latitude!, pyme.longitude!);
+                        } else {
+                          pos = _getPosition(pyme.id);
+                        }
+
+                        final style = _getStyleForCategory(pyme.category);
+                        
+                        return Marker(
+                          point: pos,
+                          width: 50,
+                          height: 50,
+                          child: GestureDetector(
+                            onTap: () => _showPymePreview(context, pyme, style),
+                            child: Container(
+                              decoration: BoxDecoration(
+                                color: style['color'],
+                                shape: BoxShape.circle,
+                                border: Border.all(color: Colors.white, width: 2),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.black.withOpacity(0.3),
+                                    blurRadius: 6,
+                                    offset: const Offset(0, 3),
+                                  ),
+                                ],
+                              ),
+                              child: Icon(
+                                style['icon'],
+                                color: Colors.white,
+                                size: 24,
+                              ),
+                            ),
+                          ),
+                        );
+                      }),
+                    ],
+                  ),
+                ],
+              );
+            },
           ),
           
           // 2. Search Bar Overlay
@@ -161,66 +203,15 @@ class _ClientMapScreenState extends State<ClientMapScreen> {
               ),
             ),
           ),
-
-          // 3. Pins
-          ..._mapPins.map((pin) {
-            return Positioned(
-              top: MediaQuery.of(context).size.height * pin['lat'],
-              left: MediaQuery.of(context).size.width * pin['lng'],
-              child: GestureDetector(
-                onTap: () => _showPymePreview(context, pin),
-                child: Column(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        color: pin['color'],
-                        shape: BoxShape.circle,
-                        border: Border.all(color: theme.colorScheme.surface, width: 2),
-                        boxShadow: [
-                          BoxShadow(
-                            color: const Color(0xFF2F3F2A).withOpacity(0.3),
-                            blurRadius: 6,
-                            offset: const Offset(0, 3),
-                          ),
-                        ],
-                      ),
-                      child: Icon(
-                        pin['icon'],
-                        color: const Color(0xFFF4F1EA),
-                        size: 24,
-                      ),
-                    ),
-                    Container(
-                      margin: const EdgeInsets.only(top: 4),
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                      decoration: BoxDecoration(
-                        color: theme.colorScheme.surface,
-                        borderRadius: BorderRadius.circular(8),
-                        boxShadow: [
-                          BoxShadow(
-                            color: const Color(0xFF2F3F2A).withOpacity(0.2),
-                            blurRadius: 4,
-                          ),
-                        ],
-                      ),
-                      child: Text(
-                        pin['name'],
-                        style: theme.textTheme.bodySmall?.copyWith(
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            );
-          }),
         ],
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () {
-          // Center map or current location action
+          if (_hasLocation) {
+            _mapController.move(_currentLocation, 15.0);
+          } else {
+            _checkLocationPermission();
+          }
         },
         backgroundColor: theme.colorScheme.surface,
         child: Icon(Icons.my_location, color: theme.colorScheme.primary),
@@ -228,8 +219,12 @@ class _ClientMapScreenState extends State<ClientMapScreen> {
     );
   }
 
-  void _showPymePreview(BuildContext context, Map<String, dynamic> pin) {
+  void _showPymePreview(BuildContext context, UserProfile pyme, Map<String, dynamic> style) {
     final theme = Theme.of(context);
+    final name = pyme.name;
+    final category = pyme.category ?? 'Sin categoría';
+    final image = pyme.coverImageUrl;
+
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
@@ -256,21 +251,21 @@ class _ClientMapScreenState extends State<ClientMapScreen> {
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(12),
                   image: DecorationImage(
-                    image: pin['image'].startsWith('http')
-                        ? NetworkImage(pin['image'])
-                        : AssetImage(pin['image']) as ImageProvider,
+                    image: (image != null && image.startsWith('http'))
+                        ? NetworkImage(image)
+                        : AssetImage(image ?? 'assets/images/placeholder.jpg') as ImageProvider,
                     fit: BoxFit.cover,
                   ),
                 ),
               ),
               title: Text(
-                pin['name'],
+                name,
                 style: theme.textTheme.titleLarge?.copyWith(
                   fontWeight: FontWeight.bold,
                 ),
               ),
               subtitle: Text(
-                pin['category'],
+                category,
                 style: theme.textTheme.bodyMedium?.copyWith(
                   color: theme.colorScheme.onSurface.withOpacity(0.6),
                 ),
@@ -278,7 +273,7 @@ class _ClientMapScreenState extends State<ClientMapScreen> {
               trailing: IconButton(
                 icon: const Icon(Icons.arrow_forward_ios, size: 16),
                 onPressed: () {
-                  _navigateToPymeDetail(context, pin);
+                  _navigateToPymeDetail(context, pyme);
                 },
               ),
             ),
@@ -289,7 +284,7 @@ class _ClientMapScreenState extends State<ClientMapScreen> {
                   Expanded(
                     child: ElevatedButton(
                       onPressed: () {
-                        _navigateToPymeDetail(context, pin);
+                        _navigateToPymeDetail(context, pyme);
                       },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: theme.colorScheme.primary,
@@ -311,18 +306,15 @@ class _ClientMapScreenState extends State<ClientMapScreen> {
     );
   }
 
-  void _navigateToPymeDetail(BuildContext context, Map<String, dynamic> pin) {
-    // Update global state for the selected Pyme
-    if (pin.containsKey('category_key')) {
-      VitrinaData.setCategory(pin['category_key']);
-      ProductService().loadMockProductsForCategory(pin['category_key']);
-    }
-    
+  void _navigateToPymeDetail(BuildContext context, UserProfile pyme) {
     Navigator.pop(context); // Close bottom sheet
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => const ClientPymeDetailScreen(),
+        builder: (context) => ClientPymeDetailScreen(
+          pymeId: pyme.id,
+          pymeData: pyme,
+        ),
       ),
     );
   }

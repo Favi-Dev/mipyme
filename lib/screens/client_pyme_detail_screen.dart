@@ -1,15 +1,26 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
-import '../models/offer_data.dart';
-import '../models/vitrina_data.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+
+import '../models/user_profile.dart';
 import '../services/product_service.dart';
+import '../services/pyme_service.dart';
 import '../models/product.dart';
 import '../services/cart_service.dart';
 import '../widgets/supporter_counter.dart';
+import 'client_cart_screen.dart' as import_cart;
 
 class ClientPymeDetailScreen extends StatefulWidget {
-  const ClientPymeDetailScreen({super.key});
+  final String pymeId;
+  final UserProfile pymeData;
+
+  const ClientPymeDetailScreen({
+    super.key,
+    required this.pymeId,
+    required this.pymeData,
+  });
 
   @override
   State<ClientPymeDetailScreen> createState() => _ClientPymeDetailScreenState();
@@ -18,22 +29,15 @@ class ClientPymeDetailScreen extends StatefulWidget {
 class _ClientPymeDetailScreenState extends State<ClientPymeDetailScreen> {
   final ScrollController _scrollController = ScrollController();
   final ProductService _productService = ProductService();
-  bool _isFollowing = false;
-  List<Product> _products = [];
-
-  List<Product> get _eventProducts => _products.where((p) => p.customAttributes['is_event'] == 'true' || (VitrinaData.isFoundation && p.isService)).toList();
-  List<Product> get _standardProducts => _products.where((p) => p.customAttributes['is_event'] != 'true' && (!VitrinaData.isFoundation || !p.isService)).toList();
+  final PymeService _pymeService = PymeService();
+  final String? _userId = FirebaseAuth.instance.currentUser?.uid;
+  
+  bool get _isFoundation => widget.pymeData.role == UserRole.foundation;
+  String get _pymeName => widget.pymeData.name;
 
   @override
   void initState() {
     super.initState();
-    _loadProducts();
-  }
-
-  void _loadProducts() {
-    setState(() {
-      _products = _productService.getProductsByPyme('pyme1');
-    });
   }
 
   Future<void> _launchUrl(String urlString) async {
@@ -65,7 +69,7 @@ class _ClientPymeDetailScreenState extends State<ClientPymeDetailScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Compartir ${VitrinaData.name}',
+              'Compartir $_pymeName',
               style: theme.textTheme.titleLarge?.copyWith(
                 fontWeight: FontWeight.bold,
               ),
@@ -91,8 +95,8 @@ class _ClientPymeDetailScreenState extends State<ClientPymeDetailScreen> {
                   onTap: () {
                     Navigator.pop(context);
                     // Generates a link like https://mipyme.app/pyme/pyme1
-                    final String link = 'https://mipyme.app/pyme/${VitrinaData.name.replaceAll(' ', '').toLowerCase()}';
-                    _launchUrl('https://wa.me/?text=¡Hola!%20Te%20recomiendo%20ver%20*${VitrinaData.name}*%20en%20la%20app%20MiPyme.%0A%0AMira%20sus%20productos%20y%20ofertas%20aquí:%20$link');
+                    final String link = 'https://mipyme.app/pyme/${_pymeName.replaceAll(' ', '').toLowerCase()}';
+                    _launchUrl('https://wa.me/?text=¡Hola!%20Te%20recomiendo%20ver%20*$_pymeName*%20en%20la%20app%20MiPyme.%0A%0AMira%20sus%20productos%20y%20ofertas%20aquí:%20$link');
                   },
                 ),
                 _buildShareOption(
@@ -101,8 +105,8 @@ class _ClientPymeDetailScreenState extends State<ClientPymeDetailScreen> {
                   color: const Color(0xFF8B5A3C), // Café
                   onTap: () {
                     Navigator.pop(context);
-                    final String link = 'https://mipyme.app/pyme/${VitrinaData.name.replaceAll(' ', '').toLowerCase()}';
-                    _launchUrl('mailto:?subject=Te%20recomiendo%20${VitrinaData.name}&body=Hola,%0A%0AEchale%20un%20vistazo%20a%20${VitrinaData.name}.%20Tienen%20cosas%20increíbles.%0A%0AVer%20perfil:%20$link');
+                    final String link = 'https://mipyme.app/pyme/${_pymeName.replaceAll(' ', '').toLowerCase()}';
+                    _launchUrl('mailto:?subject=Te%20recomiendo%20$_pymeName&body=Hola,%0A%0AEchale%20un%20vistazo%20a%20$_pymeName.%20Tienen%20cosas%20increíbles.%0A%0AVer%20perfil:%20$link');
                   },
                 ),
                 _buildShareOption(
@@ -148,6 +152,19 @@ class _ClientPymeDetailScreenState extends State<ClientPymeDetailScreen> {
     );
   }
 
+
+
+  Stream<List<Map<String, dynamic>>> _getOffersStream() {
+    return FirebaseFirestore.instance
+        .collection('users')
+        .doc(widget.pymeId)
+        .collection('offers')
+        .snapshots()
+        .map((snapshot) {
+      return snapshot.docs.map((doc) => doc.data()).toList();
+    });
+  }
+
   void _showDonationModal() {
     final theme = Theme.of(context);
     showModalBottomSheet(
@@ -185,7 +202,7 @@ class _ClientPymeDetailScreenState extends State<ClientPymeDetailScreen> {
                   ),
                   const SizedBox(height: 24),
                   Text(
-                    'Donar a ${VitrinaData.name}',
+                    'Donar a $_pymeName',
                     style: theme.textTheme.headlineSmall?.copyWith(
                       fontWeight: FontWeight.bold,
                     ),
@@ -319,7 +336,7 @@ class _ClientPymeDetailScreenState extends State<ClientPymeDetailScreen> {
                   ),
                   const SizedBox(height: 8),
                   LinearProgressIndicator(
-                    value: VitrinaData.currentDonations / VitrinaData.donationGoal,
+                    value: (widget.pymeData.currentDonations ?? 0) / (widget.pymeData.donationGoal ?? 100000),
                     backgroundColor: theme.colorScheme.surfaceContainerHighest,
                     color: const Color(0xFF6F8F5E), // Light Green for progress
                     minHeight: 10,
@@ -330,14 +347,14 @@ class _ClientPymeDetailScreenState extends State<ClientPymeDetailScreen> {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text(
-                        '\$${VitrinaData.currentDonations.toStringAsFixed(0)}',
+                        '\$${(widget.pymeData.currentDonations ?? 0).toStringAsFixed(0)}',
                         style: theme.textTheme.bodyMedium?.copyWith(
                           fontWeight: FontWeight.bold,
                           color: const Color(0xFF6F8F5E), // Light Green
                         ),
                       ),
                       Text(
-                        'Meta: \$${VitrinaData.donationGoal.toStringAsFixed(0)}',
+                        'Meta: \$${(widget.pymeData.donationGoal ?? 100000).toStringAsFixed(0)}',
                         style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurfaceVariant),
                       ),
                     ],
@@ -419,6 +436,7 @@ class _ClientPymeDetailScreenState extends State<ClientPymeDetailScreen> {
 
   @override
   Widget build(BuildContext context) {
+
     final theme = Theme.of(context);
     return Scaffold(
       backgroundColor: theme.colorScheme.surface,
@@ -434,33 +452,66 @@ class _ClientPymeDetailScreenState extends State<ClientPymeDetailScreen> {
                 elevation: 0,
                 scrolledUnderElevation: 0,
                 backgroundColor: theme.colorScheme.surface,
-                leading: IconButton(
-                  icon: const Icon(Icons.arrow_back, color: Color(0xFFF4F1EA)),
-                  onPressed: () => Navigator.pop(context),
+                leading: Container(
+                  margin: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF2F3F2A).withOpacity(0.5),
+                    shape: BoxShape.circle,
+                  ),
+                  child: IconButton(
+                    icon: const Icon(Icons.arrow_back, color: Color(0xFFF4F1EA)),
+                    onPressed: () => Navigator.pop(context),
+                  ),
                 ),
                 actions: [
-                  IconButton(
-                    icon: Icon(
-                      _isFollowing ? Icons.favorite : Icons.favorite_border,
-                      color: _isFollowing ? theme.colorScheme.primary : const Color(0xFFF4F1EA),
+                  Container(
+                     margin: const EdgeInsets.symmetric(vertical: 8),
+                     decoration: BoxDecoration(
+                      color: const Color(0xFF2F3F2A).withOpacity(0.5),
+                      shape: BoxShape.circle,
                     ),
-                    onPressed: () {
-                      setState(() {
-                        _isFollowing = !_isFollowing;
-                      });
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text(
-                            _isFollowing
-                                ? '¡Ahora sigues a ${VitrinaData.name}!'
-                                : 'Dejaste de seguir a ${VitrinaData.name}',
-                          ),
-                          backgroundColor: _isFollowing ? theme.colorScheme.primary : const Color(0xFF8B5A3C),
-                          duration: const Duration(seconds: 2),
-                        ),
-                      );
-                    },
+                    child: IconButton(
+                        icon: const Icon(Icons.shopping_cart, color: Color(0xFFF4F1EA)),
+                        onPressed: () {
+                           // Navigate to Cart Screen (reusing the shell tab if possible, or pushing new)
+                           // Pushing new is safer for "direct access" from detail view
+                           Navigator.push(
+                             context, 
+                             MaterialPageRoute(builder: (context) => const import_cart.ClientCartScreen()),
+                           );
+                        },
+                      ),
                   ),
+                  const SizedBox(width: 8),
+                  if (_userId != null)
+                    StreamBuilder<bool>(
+                      stream: _pymeService.isFollowing(_userId!, widget.pymeId),
+                      builder: (context, snapshot) {
+                        final isFollowing = snapshot.data ?? false;
+                        return IconButton(
+                          icon: Icon(
+                            isFollowing ? Icons.favorite : Icons.favorite_border,
+                            color: isFollowing ? theme.colorScheme.primary : const Color(0xFFF4F1EA),
+                          ),
+                          onPressed: () async {
+                            await _pymeService.toggleFollow(_userId!, widget.pymeId);
+                            if (mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text(
+                                    !isFollowing
+                                        ? '¡Ahora sigues a $_pymeName!'
+                                        : 'Dejaste de seguir a $_pymeName',
+                                  ),
+                                  backgroundColor: !isFollowing ? theme.colorScheme.primary : const Color(0xFF8B5A3C),
+                                  duration: const Duration(seconds: 2),
+                                ),
+                              );
+                            }
+                          },
+                        );
+                      },
+                    ),
                   IconButton(
                     icon: const Icon(Icons.share, color: Color(0xFFF4F1EA)),
                     onPressed: _showShareOptions,
@@ -468,7 +519,7 @@ class _ClientPymeDetailScreenState extends State<ClientPymeDetailScreen> {
                 ],
                 flexibleSpace: FlexibleSpaceBar(
                   title: Text(
-                    VitrinaData.name,
+                    _pymeName,
                     style: theme.textTheme.titleLarge?.copyWith(
                       color: const Color(0xFFF4F1EA),
                       fontWeight: FontWeight.bold,
@@ -485,13 +536,13 @@ class _ClientPymeDetailScreenState extends State<ClientPymeDetailScreen> {
                   background: Stack(
                     fit: StackFit.expand,
                     children: [
-                      VitrinaData.coverImageUrl.startsWith('http')
+                      (widget.pymeData.coverImageUrl != null && widget.pymeData.coverImageUrl!.startsWith('http'))
                           ? Image.network(
-                              VitrinaData.coverImageUrl,
+                              widget.pymeData.coverImageUrl!,
                               fit: BoxFit.cover,
                             )
                           : Image.asset(
-                              VitrinaData.coverImageUrl,
+                              widget.pymeData.coverImageUrl ?? 'assets/images/placeholder.jpg',
                               fit: BoxFit.cover,
                             ),
                       DecoratedBox(
@@ -527,17 +578,17 @@ class _ClientPymeDetailScreenState extends State<ClientPymeDetailScreen> {
                               color: theme.colorScheme.onSurface,
                             ),
                           ),
-                          SupporterCounter(count: VitrinaData.supporterCount),
+                          SupporterCounter(count: 0),
                         ],
                       ),
                       const SizedBox(height: 8),
                       Text(
-                        VitrinaData.description,
+                        widget.pymeData.description ?? 'Sin descripción disponible.',
                         style: theme.textTheme.bodyMedium?.copyWith(
                           color: theme.colorScheme.onSurfaceVariant,
                         ),
                       ),
-                      if (VitrinaData.isFoundation) ...[
+                      if (_isFoundation) ...[
                         const SizedBox(height: 16),
                         SizedBox(
                           width: double.infinity,
@@ -564,75 +615,110 @@ class _ClientPymeDetailScreenState extends State<ClientPymeDetailScreen> {
                       const SizedBox(height: 24),
 
                       // Offers or Events
-                      if (!VitrinaData.isFoundation) ...[
-                        Text(
-                          'Ofertas Disponibles',
-                          style: theme.textTheme.titleLarge?.copyWith(
-                            fontWeight: FontWeight.bold,
-                            color: theme.colorScheme.onSurface,
-                          ),
-                        ),
-                        const SizedBox(height: 12),
-                        SingleChildScrollView(
-                          scrollDirection: Axis.horizontal,
-                          child: Row(
-                            children: OfferData.offers.map((offer) {
-                              return Padding(
-                                padding: const EdgeInsets.only(right: 12),
-                                child: _buildClientOfferCard(
-                                  offer: offer,
-                                ),
-                              );
-                            }).toList(),
-                          ),
-                        ),
-                        const SizedBox(height: 24),
-                      ] else if (_eventProducts.isNotEmpty) ...[
-                        Text(
-                          'Próximos Eventos',
-                          style: theme.textTheme.titleLarge?.copyWith(
-                            fontWeight: FontWeight.bold,
-                            color: theme.colorScheme.onSurface,
-                          ),
-                        ),
-                        const SizedBox(height: 12),
-                        SingleChildScrollView(
-                          scrollDirection: Axis.horizontal,
-                          child: Row(
-                            children: _eventProducts.map((product) {
-                              return Padding(
-                                padding: const EdgeInsets.only(right: 12),
-                                child: _buildProductCard(product),
-                              );
-                            }).toList(),
-                          ),
-                        ),
-                        const SizedBox(height: 24),
-                      ],
+                      StreamBuilder<List<Product>>(
+                        stream: _productService.getProductsByPyme(widget.pymeId),
+                        builder: (context, snapshot) {
+                          if (snapshot.connectionState == ConnectionState.waiting) {
+                            return const Center(child: CircularProgressIndicator());
+                          }
+                          if (snapshot.hasError) {
+                            return Center(child: Text('Error: ${snapshot.error}'));
+                          }
+                          
+                          final products = snapshot.data ?? [];
+                          final eventProducts = products.where((p) => p.customAttributes['is_event'] == 'true' || (_isFoundation && p.isService)).toList();
+                          final standardProducts = products.where((p) => p.customAttributes['is_event'] != 'true' && (!_isFoundation || !p.isService)).toList();
 
-                      // Products
-                      if (_standardProducts.isNotEmpty) ...[
-                        Text(
-                          'Productos',
-                          style: theme.textTheme.titleLarge?.copyWith(
-                            fontWeight: FontWeight.bold,
-                            color: theme.colorScheme.onSurface,
-                          ),
-                        ),
-                        const SizedBox(height: 12),
-                        SingleChildScrollView(
-                          scrollDirection: Axis.horizontal,
-                          child: Row(
-                            children: _standardProducts.map((product) {
-                              return Padding(
-                                padding: const EdgeInsets.only(right: 12),
-                                child: _buildProductCard(product),
-                              );
-                            }).toList(),
-                          ),
-                        ),
-                        const SizedBox(height: 24),
-                      ],
+                          return Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              if (!_isFoundation) ...[
+                                StreamBuilder<List<Map<String, dynamic>>>(
+                                  stream: _getOffersStream(),
+                                  builder: (context, offerSnapshot) {
+                                    if (!offerSnapshot.hasData || offerSnapshot.data!.isEmpty) {
+                                      return const SizedBox.shrink();
+                                    }
+                                    final offers = offerSnapshot.data!;
+                                    return Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          'Ofertas Disponibles',
+                                          style: theme.textTheme.titleLarge?.copyWith(
+                                            fontWeight: FontWeight.bold,
+                                            color: theme.colorScheme.onSurface,
+                                          ),
+                                        ),
+                                        const SizedBox(height: 12),
+                                        SingleChildScrollView(
+                                          scrollDirection: Axis.horizontal,
+                                          child: Row(
+                                            children: offers.map((offer) {
+                                              return Padding(
+                                                padding: const EdgeInsets.only(right: 12),
+                                                child: _buildClientOfferCard(
+                                                  offer: offer,
+                                                ),
+                                              );
+                                            }).toList(),
+                                          ),
+                                        ),
+                                        const SizedBox(height: 24),
+                                      ],
+                                    );
+                                  }
+                                ),
+                              ] else if (eventProducts.isNotEmpty) ...[
+                                Text(
+                                  'Próximos Eventos',
+                                  style: theme.textTheme.titleLarge?.copyWith(
+                                    fontWeight: FontWeight.bold,
+                                    color: theme.colorScheme.onSurface,
+                                  ),
+                                ),
+                                const SizedBox(height: 12),
+                                SingleChildScrollView(
+                                  scrollDirection: Axis.horizontal,
+                                  child: Row(
+                                    children: eventProducts.map((product) {
+                                      return Padding(
+                                        padding: const EdgeInsets.only(right: 12),
+                                        child: _buildProductCard(product),
+                                      );
+                                    }).toList(),
+                                  ),
+                                ),
+                                const SizedBox(height: 24),
+                              ],
+
+                              // Products
+                              if (standardProducts.isNotEmpty) ...[
+                                Text(
+                                  'Productos',
+                                  style: theme.textTheme.titleLarge?.copyWith(
+                                    fontWeight: FontWeight.bold,
+                                    color: theme.colorScheme.onSurface,
+                                  ),
+                                ),
+                                const SizedBox(height: 12),
+                                SingleChildScrollView(
+                                  scrollDirection: Axis.horizontal,
+                                  child: Row(
+                                    children: standardProducts.map((product) {
+                                      return Padding(
+                                        padding: const EdgeInsets.only(right: 12),
+                                        child: _buildProductCard(product),
+                                      );
+                                    }).toList(),
+                                  ),
+                                ),
+                                const SizedBox(height: 24),
+                              ],
+                            ],
+                          );
+                        },
+                      ),
 
                       // Info
                       Text(
@@ -643,9 +729,9 @@ class _ClientPymeDetailScreenState extends State<ClientPymeDetailScreen> {
                         ),
                       ),
                       const SizedBox(height: 12),
-                      _buildInfoRow(Icons.access_time, VitrinaData.hours),
+                      _buildInfoRow(Icons.access_time, widget.pymeData.hours ?? '09:00 - 18:00'),
                       const SizedBox(height: 12),
-                      _buildInfoRow(Icons.location_on, VitrinaData.location),
+                      _buildInfoRow(Icons.location_on, widget.pymeData.location ?? 'Sin dirección'),
                       const SizedBox(height: 24),
 
                       // Contact Buttons
@@ -656,19 +742,19 @@ class _ClientPymeDetailScreenState extends State<ClientPymeDetailScreen> {
                             Icons.language,
                             'Sitio Web',
                             const Color(0xFF6F8F5E),
-                            () => _launchUrl('https://www.google.com'),
+                            () => _launchUrl(widget.pymeData.webUrl ?? 'https://www.google.com'),
                           ),
                           _buildContactButton(
                             Icons.camera_alt,
                             'Instagram',
                             const Color(0xFF8B5A3C),
-                            () => _launchUrl('https://www.instagram.com'),
+                            () => _launchUrl(widget.pymeData.instagramHandle ?? 'https://www.instagram.com'),
                           ),
                           _buildContactButton(
                             Icons.message,
                             'WhatsApp',
                             const Color(0xFF6F8F5E),
-                            () => _launchUrl('https://wa.me/56912345678'),
+                            () => _launchUrl('https://wa.me/${widget.pymeData.whatsappNumber ?? '56912345678'}'),
                           ),
                         ],
                       ),
@@ -709,9 +795,9 @@ class _ClientPymeDetailScreenState extends State<ClientPymeDetailScreen> {
               child: CircleAvatar(
                 radius: 40,
                 backgroundColor: const Color(0xFFF4F1EA),
-                backgroundImage: VitrinaData.logoUrl.startsWith('http')
-                    ? NetworkImage(VitrinaData.logoUrl)
-                    : AssetImage(VitrinaData.logoUrl) as ImageProvider,
+                backgroundImage: (widget.pymeData.logoUrl != null && widget.pymeData.logoUrl!.startsWith('http'))
+                    ? NetworkImage(widget.pymeData.logoUrl!)
+                    : AssetImage(widget.pymeData.logoUrl ?? 'assets/images/placeholder.jpg') as ImageProvider,
               ),
             ),
           ),
@@ -722,21 +808,43 @@ class _ClientPymeDetailScreenState extends State<ClientPymeDetailScreen> {
 
 
 
-  Widget _buildClientOfferCard({required Offer offer}) {
+  Widget _buildClientOfferCard({required Map<String, dynamic> offer}) {
     final theme = Theme.of(context);
+    
+    // Parse color
+    Color cardColor = const Color(0xFFE76F51);
+    if (offer['color'] != null) {
+      try {
+        if (offer['color'] is int) {
+          cardColor = Color(offer['color']);
+        } else {
+          String hex = offer['color'].toString().replaceAll('#', '');
+          if (hex.length == 6) hex = 'FF$hex';
+          cardColor = Color(int.parse(hex, radix: 16));
+        }
+      } catch (_) {}
+    }
+
+    // Determine icon
+    IconData icon = Icons.local_offer;
+    final type = offer['type'];
+    if (type == '2x1') icon = Icons.people;
+    if (type == 'discount') icon = Icons.percent;
+    if (type == 'limited') icon = Icons.timer;
+
     return Container(
       width: 220,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         gradient: LinearGradient(
-          colors: [offer.color.withOpacity(0.9), offer.color.withOpacity(0.7)],
+          colors: [cardColor.withOpacity(0.9), cardColor.withOpacity(0.7)],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: offer.color.withOpacity(0.3),
+            color: cardColor.withOpacity(0.3),
             blurRadius: 8,
             offset: const Offset(0, 4),
           ),
@@ -748,7 +856,7 @@ class _ClientPymeDetailScreenState extends State<ClientPymeDetailScreen> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Icon(offer.icon, color: const Color(0xFFF4F1EA), size: 32),
+              Icon(icon, color: const Color(0xFFF4F1EA), size: 32),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
@@ -768,7 +876,7 @@ class _ClientPymeDetailScreenState extends State<ClientPymeDetailScreen> {
           ),
           const SizedBox(height: 12),
           Text(
-            offer.title,
+            offer['title'] ?? 'Oferta',
             style: theme.textTheme.titleMedium?.copyWith(
               color: const Color(0xFFF4F1EA),
               fontWeight: FontWeight.bold,
@@ -776,7 +884,7 @@ class _ClientPymeDetailScreenState extends State<ClientPymeDetailScreen> {
           ),
           const SizedBox(height: 4),
           Text(
-            offer.description,
+            offer['description'] ?? '',
             style: theme.textTheme.bodySmall?.copyWith(color: const Color(0xFFF4F1EA).withOpacity(0.9)),
           ),
           const SizedBox(height: 12),
@@ -806,6 +914,7 @@ class _ClientPymeDetailScreenState extends State<ClientPymeDetailScreen> {
       ),
     );
   }
+
 
   Widget _buildProductCard(Product product) {
     final theme = Theme.of(context);

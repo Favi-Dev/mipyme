@@ -1,9 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import '../models/offer_data.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import '../services/pyme_service.dart';
 
 class PymeOffersManagementScreen extends StatefulWidget {
-  const PymeOffersManagementScreen({super.key});
+  final String? pymeId;
+  const PymeOffersManagementScreen({super.key, this.pymeId});
 
   @override
   State<PymeOffersManagementScreen> createState() =>
@@ -12,36 +16,36 @@ class PymeOffersManagementScreen extends StatefulWidget {
 
 class _PymeOffersManagementScreenState
     extends State<PymeOffersManagementScreen> {
-  
-  void _addOffer(Offer offer) {
-    setState(() {
-      OfferData.offers.add(offer);
-    });
+  final PymeService _pymeService = PymeService();
+  String get _pymeId => widget.pymeId ?? FirebaseAuth.instance.currentUser?.uid ?? '';
+
+  Future<void> _addOffer(Map<String, dynamic> offerData) async {
+    if (_pymeId.isEmpty) return;
+    await _pymeService.createOffer(_pymeId, offerData);
   }
 
-  void _editOffer(Offer offer) {
-    setState(() {
-      final index = OfferData.offers.indexWhere((o) => o.id == offer.id);
-      if (index != -1) {
-        OfferData.offers[index] = offer;
-      }
-    });
+  Future<void> _editOffer(String id, Map<String, dynamic> offerData) async {
+    if (_pymeId.isEmpty) return;
+    await _pymeService.updateOffer(_pymeId, id, offerData);
   }
 
-  void _deleteOffer(String id) {
-    setState(() {
-      OfferData.offers.removeWhere((o) => o.id == id);
-    });
+  Future<void> _deleteOffer(String id) async {
+    if (_pymeId.isEmpty) return;
+    await _pymeService.deleteOffer(_pymeId, id);
   }
 
-  void _showOfferDialog({Offer? offer}) {
+  void _showOfferDialog({Map<String, dynamic>? offer, String? offerId}) {
     final isEditing = offer != null;
-    final titleController = TextEditingController(text: offer?.title ?? '');
-    final descController = TextEditingController(text: offer?.description ?? '');
+    final titleController = TextEditingController(text: offer?['title'] ?? '');
+    final descController = TextEditingController(text: offer?['description'] ?? '');
     
-    // Valores por defecto para nueva oferta
-    IconData selectedIcon = offer?.icon ?? Icons.local_offer;
-    Color selectedColor = offer?.color ?? const Color(0xFF6F8F5E);
+    // Default values
+    IconData selectedIcon = offer != null && offer['iconCodePoint'] != null
+        ? IconData(offer['iconCodePoint'], fontFamily: 'MaterialIcons') 
+        : Icons.local_offer;
+    Color selectedColor = offer != null && offer['colorValue'] != null
+        ? Color(offer['colorValue']) 
+        : const Color(0xFF6F8F5E);
 
     showDialog(
       context: context,
@@ -157,18 +161,18 @@ class _PymeOffersManagementScreenState
                 ),
                 onPressed: () {
                   if (titleController.text.isNotEmpty) {
-                    final newOffer = Offer(
-                      id: isEditing ? offer.id : DateTime.now().toString(),
-                      title: titleController.text,
-                      description: descController.text,
-                      icon: selectedIcon,
-                      color: selectedColor,
-                    );
+                    final newOfferData = {
+                      'title': titleController.text,
+                      'description': descController.text,
+                      'iconCodePoint': selectedIcon.codePoint,
+                      'colorValue': selectedColor.value,
+                      'createdAt': FieldValue.serverTimestamp(),
+                    };
                     
                     if (isEditing) {
-                      _editOffer(newOffer);
+                      _editOffer(offerId!, newOfferData);
                     } else {
-                      _addOffer(newOffer);
+                      _addOffer(newOfferData);
                     }
                     Navigator.pop(context);
                   }
@@ -203,8 +207,20 @@ class _PymeOffersManagementScreenState
         onPressed: () => _showOfferDialog(),
         child: const Icon(Icons.add, color: Color(0xFFF4F1EA)),
       ),
-      body: OfferData.offers.isEmpty
-          ? Center(
+      body: StreamBuilder<List<Map<String, dynamic>>>(
+        stream: _pymeService.getOffersByPyme(_pymeId),
+        builder: (context, snapshot) {
+          if (snapshot.hasError) {
+             return Center(child: Text('Error: ${snapshot.error}'));
+          }
+          if (snapshot.connectionState == ConnectionState.waiting) {
+             return const Center(child: CircularProgressIndicator());
+          }
+
+          final offers = snapshot.data ?? [];
+
+          if (offers.isEmpty) {
+             return Center(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
@@ -217,14 +233,19 @@ class _PymeOffersManagementScreenState
                   ),
                 ],
               ),
-            )
-          : ListView.builder(
+            );
+          }
+
+          return ListView.builder(
               padding: const EdgeInsets.all(16),
-              itemCount: OfferData.offers.length,
+              itemCount: offers.length,
               itemBuilder: (context, index) {
-                final offer = OfferData.offers[index];
+                final offer = offers[index];
+                final icon = IconData(offer['iconCodePoint'] ?? Icons.local_offer.codePoint, fontFamily: 'MaterialIcons');
+                final color = Color(offer['colorValue'] ?? 0xFF6F8F5E);
+                
                 return Dismissible(
-                  key: Key(offer.id),
+                  key: Key(offer['id']),
                   direction: DismissDirection.endToStart,
                   background: Container(
                     alignment: Alignment.centerRight,
@@ -232,7 +253,7 @@ class _PymeOffersManagementScreenState
                     color: const Color(0xFF8B5A3C),
                     child: const Icon(Icons.delete, color: Color(0xFFF4F1EA)),
                   ),
-                  onDismissed: (direction) => _deleteOffer(offer.id),
+                  onDismissed: (direction) => _deleteOffer(offer['id']),
                   child: Card(
                     color: const Color(0xFFFFFFFF),
                     margin: const EdgeInsets.only(bottom: 12),
@@ -244,13 +265,13 @@ class _PymeOffersManagementScreenState
                       leading: Container(
                         padding: const EdgeInsets.all(12),
                         decoration: BoxDecoration(
-                          color: offer.color.withOpacity(0.1),
+                          color: color.withOpacity(0.1),
                           borderRadius: BorderRadius.circular(12),
                         ),
-                        child: Icon(offer.icon, color: offer.color),
+                        child: Icon(icon, color: color),
                       ),
                       title: Text(
-                        offer.title,
+                        offer['title'] ?? '',
                         style: GoogleFonts.poppins(
                           color: const Color(0xFF2F3F2A),
                           fontWeight: FontWeight.bold,
@@ -259,19 +280,21 @@ class _PymeOffersManagementScreenState
                       subtitle: Padding(
                         padding: const EdgeInsets.only(top: 4),
                         child: Text(
-                          offer.description,
+                          offer['description'] ?? '',
                           style: GoogleFonts.poppins(color: const Color(0xFF2F3F2A).withOpacity(0.7)),
                         ),
                       ),
                       trailing: IconButton(
                         icon: Icon(Icons.edit, color: const Color(0xFF2F3F2A).withOpacity(0.5)),
-                        onPressed: () => _showOfferDialog(offer: offer),
+                        onPressed: () => _showOfferDialog(offer: offer, offerId: offer['id']),
                       ),
                     ),
                   ),
                 );
               },
-            ),
+            );
+        },
+      ),
     );
   }
 }

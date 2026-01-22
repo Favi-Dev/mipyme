@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import '../services/pyme_service.dart';
 import '../models/vitrina_data.dart';
+import '../models/user_profile.dart';
 import '../services/product_service.dart';
 import 'client_pyme_detail_screen.dart';
 import 'login_screen.dart';
@@ -18,6 +21,9 @@ class ClientProfileScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final user = FirebaseAuth.instance.currentUser;
+    final pymeService = PymeService();
+
     return Scaffold(
       body: SingleChildScrollView(
         child: Column(
@@ -41,7 +47,7 @@ class ClientProfileScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: 15),
                   Text(
-                    'Joaquin',
+                    user?.displayName ?? 'Usuario',
                     style: theme.textTheme.headlineMedium,
                   ),
                   const SizedBox(height: 5),
@@ -157,149 +163,73 @@ class ClientProfileScreen extends StatelessWidget {
             ),
             const SizedBox(height: 30),
             
-            // Supported Foundations Section
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 24.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Fundaciones que apoyas',
-                    style: theme.textTheme.titleLarge?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  GestureDetector(
-                    onTap: () {
-                      VitrinaData.setCategory('Educación y cultura');
-                      ProductService().loadMockProductsForCategory('Educación y cultura');
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const ClientPymeDetailScreen(),
-                        ),
-                      );
-                    },
-                    child: Container(
-                      padding: const EdgeInsets.all(16),
-                      decoration: BoxDecoration(
-                        color: theme.cardColor,
-                        borderRadius: BorderRadius.circular(16),
-                        boxShadow: [
-                          BoxShadow(
-                            color: const Color(0xFF2F3F2A).withOpacity(0.1),
-                            blurRadius: 10,
-                            offset: const Offset(0, 4),
-                          ),
-                        ],
-                      ),
-                      child: Row(
-                        children: [
-                          const CircleAvatar(
-                            backgroundImage: AssetImage('assets/images/Logo los robles.jpg'),
-                            radius: 24,
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  'Fundación Los Robles',
-                                  style: theme.textTheme.titleMedium?.copyWith(
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                                Text(
-                                  'Socio Activo',
-                                  style: theme.textTheme.bodySmall?.copyWith(
-                                    color: theme.colorScheme.primary,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                          Icon(Icons.volunteer_activism, color: theme.colorScheme.secondary),
-                        ],
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 24),
+            // Supported Pymes & Foundations
+            if (user != null)
+              StreamBuilder<List<String>>(
+                stream: pymeService.getFollowedPymeIds(user.uid),
+                builder: (context, snapshotIds) {
+                  if (!snapshotIds.hasData || snapshotIds.data!.isEmpty) {
+                    return const SizedBox.shrink();
+                  }
+                  final followedIds = snapshotIds.data!.toSet();
 
-            // Supported Pymes Section
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 24.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Pymes que apoyas',
-                    style: theme.textTheme.titleLarge?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  GestureDetector(
-                    onTap: () {
-                      VitrinaData.setCategory('Alimentos y gastronomía');
-                      ProductService().loadMockProductsForCategory('Alimentos y gastronomía');
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const ClientPymeDetailScreen(),
-                        ),
+                  return StreamBuilder<List<UserProfile>>(
+                    stream: pymeService.getAllPublicProfiles(),
+                    builder: (context, snapshotPymes) {
+                      if (!snapshotPymes.hasData) return const SizedBox.shrink();
+                      
+                      final allPymes = snapshotPymes.data!;
+                      final followedPymes = allPymes.where((p) => followedIds.contains(p.id)).toList();
+                      
+                      final foundations = followedPymes.where((p) => p.role == UserRole.foundation).toList();
+                      final pymes = followedPymes.where((p) => p.role == UserRole.pyme).toList();
+
+                      return Column(
+                        children: [
+                          if (foundations.isNotEmpty) ...[
+                            Padding(
+                              padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    'Fundaciones que apoyas',
+                                    style: theme.textTheme.titleLarge?.copyWith(
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 16),
+                                  ...foundations.map((f) => _buildSupportedCard(context, f, isFoundation: true)),
+                                ],
+                              ),
+                            ),
+                            const SizedBox(height: 24),
+                          ],
+                          if (pymes.isNotEmpty) ...[
+                            Padding(
+                              padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    'Pymes que apoyas',
+                                    style: theme.textTheme.titleLarge?.copyWith(
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 16),
+                                  ...pymes.map((p) => _buildSupportedCard(context, p, isFoundation: false)),
+                                ],
+                              ),
+                            ),
+                            const SizedBox(height: 24),
+                          ],
+                        ],
                       );
                     },
-                    child: Container(
-                      padding: const EdgeInsets.all(16),
-                      decoration: BoxDecoration(
-                        color: theme.cardColor,
-                        borderRadius: BorderRadius.circular(16),
-                        boxShadow: [
-                          BoxShadow(
-                            color: const Color(0xFF2F3F2A).withOpacity(0.1),
-                            blurRadius: 10,
-                            offset: const Offset(0, 4),
-                          ),
-                        ],
-                      ),
-                      child: Row(
-                        children: [
-                          const CircleAvatar(
-                            backgroundImage: NetworkImage('https://picsum.photos/id/1018/200/200'),
-                            radius: 24,
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  'Café Eclipse',
-                                  style: theme.textTheme.titleMedium?.copyWith(
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                                Text(
-                                  '3 cupones canjeados',
-                                  style: theme.textTheme.bodyMedium,
-                                ),
-                              ],
-                            ),
-                          ),
-                          const SupporterCounter(count: 128, isSmall: true),
-                        ],
-                      ),
-                    ),
-                  ),
-                ],
+                  );
+                },
               ),
-            ),
             const SizedBox(height: 20),
             _buildProfileOption(
               context,
@@ -349,6 +279,32 @@ class ClientProfileScreen extends StatelessWidget {
       trailing: Icon(Icons.arrow_forward_ios, color: theme.colorScheme.onSurface.withValues(alpha: 0.3), size: 16),
       onTap: onTap,
       contentPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+    );
+  }
+
+  Widget _buildSupportedCard(BuildContext context, UserProfile data, {required bool isFoundation}) {
+    final theme = Theme.of(context);
+    return Card(
+      margin: const EdgeInsets.only(bottom: 12),
+      child: ListTile(
+        leading: CircleAvatar(
+          backgroundImage: NetworkImage(data.logoUrl ?? 'https://via.placeholder.com/150'),
+        ),
+        title: Text(data.name),
+        subtitle: Text(data.category ?? (isFoundation ? 'Fundación' : 'Comercio')),
+        trailing: const Icon(Icons.favorite, color: Colors.red),
+        onTap: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => ClientPymeDetailScreen(
+                pymeId: data.id,
+                pymeData: data,
+              ),
+            ),
+          );
+        },
+      ),
     );
   }
 }

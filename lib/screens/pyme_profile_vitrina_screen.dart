@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import '../models/user_profile.dart';
 import '../models/offer_data.dart';
-import '../models/vitrina_data.dart';
 import 'pyme_offers_management_screen.dart';
 import 'pyme_vitrina_settings_screen.dart';
 import '../services/product_service.dart';
@@ -19,52 +21,17 @@ class PymeProfileVitrinaScreen extends StatefulWidget {
 class _PymeProfileVitrinaScreenState extends State<PymeProfileVitrinaScreen> {
   final ScrollController _scrollController = ScrollController();
   final ProductService _productService = ProductService();
-  List<Product> _products = [];
-  List<String> _availableCategories = [];
+  Stream<List<Product>>? _productsStream;
+  Stream<DocumentSnapshot>? _userStream;
 
   @override
   void initState() {
     super.initState();
-    _loadProducts();
-    _initializeCategories();
-  }
-
-  void _initializeCategories() {
-    if (VitrinaData.isFoundationUser) {
-      _availableCategories = ['Educación y cultura'];
-    } else {
-      _availableCategories = [
-        'Comercio/retail',
-        'Alimentos y gastronomía',
-        'Servicios profesionales',
-        'Salud, belleza y bienestar',
-        'Oficios y manufactura',
-        'Transporte y logística',
-        'Metamorfosis',
-      ];
+    final user = FirebaseAuth.instance.currentUser;
+    if (user != null) {
+      _productsStream = _productService.getProductsByPyme(user.uid);
+      _userStream = FirebaseFirestore.instance.collection('users').doc(user.uid).snapshots();
     }
-  }
-
-  void _loadProducts() {
-    // Ensure we load products matching the current VitrinaData category
-    _productService.loadMockProductsForCategory(VitrinaData.category);
-    setState(() {
-      _products = _productService.getProductsByPyme('pyme1');
-    });
-  }
-
-  Widget _buildCategoryTile(String category) {
-    return ListTile(
-      title: Text(category),
-      onTap: () {
-        setState(() {
-          VitrinaData.setCategory(category);
-          _productService.loadMockProductsForCategory(category);
-          _loadProducts();
-        });
-        Navigator.pop(context); // Close drawer
-      },
-    );
   }
 
   @override
@@ -78,112 +45,123 @@ class _PymeProfileVitrinaScreenState extends State<PymeProfileVitrinaScreen> {
     // Using a light theme aesthetic for this screen as requested
     final textTheme = Theme.of(context).textTheme;
 
-    return Scaffold(
-      backgroundColor: const Color(0xFFF4F1EA), // Warm White background
-      drawer: Drawer(
-        child: ListView(
-          padding: EdgeInsets.zero,
-          children: [
-            const DrawerHeader(
-              decoration: BoxDecoration(color: Color(0xFF2F3F2A)),
-              child: Text('Cambiar Categoría (Demo)', style: TextStyle(color: Color(0xFFF4F1EA), fontSize: 24)),
-            ),
-            ..._availableCategories.map((category) => _buildCategoryTile(category)),
-          ],
-        ),
-      ),
-      body: Stack(
-        children: [
-          CustomScrollView(
-            controller: _scrollController,
-            slivers: [
-              SliverAppBar(
-                expandedHeight: 250.0,
-                pinned: true,
-                floating: false,
-                elevation: 0,
-                scrolledUnderElevation: 0,
-                backgroundColor: const Color(0xFF2F3F2A),
-                actions: [
-                  IconButton(
-                    icon: const Icon(Icons.settings, color: Color(0xFFF4F1EA)),
-                    onPressed: () async {
-                      await Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) =>
-                              const PymeVitrinaSettingsScreen(),
-                        ),
-                      );
-                      setState(() {});
-                    },
-                  ),
-                ],
-                flexibleSpace: FlexibleSpaceBar(
-                  title: Text(
-                    VitrinaData.name,
-                    style: const TextStyle(
-                      color: Color(0xFFF4F1EA),
-                      fontWeight: FontWeight.bold,
-                      shadows: [
-                        Shadow(
-                          offset: Offset(0, 1),
-                          blurRadius: 3.0,
-                          color: Colors.black54,
-                        ),
-                      ],
-                    ),
-                  ),
-                  titlePadding: const EdgeInsets.only(left: 110, bottom: 16),
-                  background: Stack(
-                    fit: StackFit.expand,
-                    children: [
-                      VitrinaData.coverImageUrl.startsWith('http')
-                          ? Image.network(
-                              VitrinaData.coverImageUrl,
-                              fit: BoxFit.cover,
-                            )
-                          : Image.asset(
-                              VitrinaData.coverImageUrl,
-                              fit: BoxFit.cover,
+    return StreamBuilder<DocumentSnapshot>(
+      stream: _userStream,
+      builder: (context, snapshot) {
+        if (!snapshot.hasData) {
+          return const Scaffold(
+            backgroundColor: Color(0xFFF4F1EA),
+            body: Center(child: CircularProgressIndicator()),
+          );
+        }
+
+        final data = snapshot.data!.data() as Map<String, dynamic>?;
+        if (data == null) {
+          return const Scaffold(
+            backgroundColor: Color(0xFFF4F1EA),
+            body: Center(child: Text('No se encontró información del perfil')),
+          );
+        }
+
+        final profile = UserProfile.fromMap(data, snapshot.data!.id);
+
+        return Scaffold(
+          backgroundColor: const Color(0xFFF4F1EA), // Warm White background
+          body: Stack(
+            children: [
+              CustomScrollView(
+                controller: _scrollController,
+                slivers: [
+                  SliverAppBar(
+                    expandedHeight: 250.0,
+                    pinned: true,
+                    floating: false,
+                    elevation: 0,
+                    scrolledUnderElevation: 0,
+                    backgroundColor: const Color(0xFF2F3F2A),
+                    actions: [
+                      IconButton(
+                        icon: const Icon(Icons.settings, color: Color(0xFFF4F1EA)),
+                        onPressed: () async {
+                          await Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) =>
+                                  const PymeVitrinaSettingsScreen(),
                             ),
-                      // Gradient overlay for better text visibility
-                      const DecoratedBox(
-                        decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            begin: Alignment.topCenter,
-                            end: Alignment.bottomCenter,
-                            colors: [
-                              Colors.transparent,
-                              Colors.black54,
-                            ],
-                          ),
-                        ),
+                          );
+                          setState(() {});
+                        },
                       ),
                     ],
-                  ),
-                ),
-              ),
-              SliverToBoxAdapter(
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(16.0, 60.0, 16.0, 16.0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // Description Section
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    flexibleSpace: FlexibleSpaceBar(
+                      title: Text(
+                        profile.name,
+                        style: const TextStyle(
+                          color: Color(0xFFF4F1EA),
+                          fontWeight: FontWeight.bold,
+                          shadows: [
+                            Shadow(
+                              offset: Offset(0, 1),
+                              blurRadius: 3.0,
+                              color: Colors.black54,
+                            ),
+                          ],
+                        ),
+                      ),
+                      titlePadding: const EdgeInsets.only(left: 110, bottom: 16),
+                      background: Stack(
+                        fit: StackFit.expand,
                         children: [
-                          _buildSectionTitle('Descripción', const Color(0xFF2F3F2A)),
-                          SupporterCounter(count: VitrinaData.supporterCount),
+                          (profile.coverImageUrl != null && profile.coverImageUrl!.isNotEmpty)
+                              ? (profile.coverImageUrl!.startsWith('http')
+                                  ? Image.network(
+                                      profile.coverImageUrl!,
+                                      fit: BoxFit.cover,
+                                    )
+                                  : Image.asset(
+                                      profile.coverImageUrl!,
+                                      fit: BoxFit.cover,
+                                    ))
+                              : Container(color: Colors.grey[800]),
+                          // Gradient overlay for better text visibility
+                          const DecoratedBox(
+                            decoration: BoxDecoration(
+                              gradient: LinearGradient(
+                                begin: Alignment.topCenter,
+                                end: Alignment.bottomCenter,
+                                colors: [
+                                  Colors.transparent,
+                                  Colors.black54,
+                                ],
+                              ),
+                            ),
+                          ),
                         ],
                       ),
-                      const SizedBox(height: 8),
-                      Text(
-                        VitrinaData.description,
-                        style: textTheme.bodyMedium
-                            ?.copyWith(color: const Color(0xFF2F3F2A).withOpacity(0.7)),
-                      ),
+                    ),
+                  ),
+                  SliverToBoxAdapter(
+                    child: Padding(
+                      padding: const EdgeInsets.fromLTRB(16.0, 60.0, 16.0, 16.0),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          // Description Section
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              _buildSectionTitle('Descripción', const Color(0xFF2F3F2A)),
+                              // TODO: Connect supporter count to real data
+                              const SupporterCounter(count: 0), 
+                            ],
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            profile.description ?? 'Sin descripción',
+                            style: textTheme.bodyMedium
+                                ?.copyWith(color: const Color(0xFF2F3F2A).withOpacity(0.7)),
+                          ),
                       const SizedBox(height: 24),
 
                       // Offers Section
@@ -241,32 +219,43 @@ class _PymeProfileVitrinaScreenState extends State<PymeProfileVitrinaScreen> {
                                       const PymeProductsScreen(),
                                 ),
                               );
-                              _loadProducts();
                             },
                           ),
                         ],
                       ),
                       const SizedBox(height: 12),
-                      if (_products.isEmpty)
-                        Text('No hay productos registrados', style: TextStyle(color: const Color(0xFF2F3F2A).withOpacity(0.5)))
-                      else
-                        SingleChildScrollView(
-                          scrollDirection: Axis.horizontal,
-                          child: Row(
-                            children: _products.map((product) {
-                              return Padding(
-                                padding: const EdgeInsets.only(right: 12),
-                                child: _buildProductCard(product),
-                              );
-                            }).toList(),
-                          ),
-                        ),
+                      StreamBuilder<List<Product>>(
+                        stream: _productsStream,
+                        builder: (context, snapshot) {
+                          if (snapshot.connectionState == ConnectionState.waiting) {
+                            return const Center(child: CircularProgressIndicator());
+                          }
+                          if (snapshot.hasError) {
+                            return Text('Error: ${snapshot.error}');
+                          }
+                          final products = snapshot.data ?? [];
+                          if (products.isEmpty) {
+                            return Text('No hay productos registrados', style: TextStyle(color: const Color(0xFF2F3F2A).withValues(alpha: 0.5)));
+                          }
+                          return SingleChildScrollView(
+                            scrollDirection: Axis.horizontal,
+                            child: Row(
+                              children: products.map((product) {
+                                return Padding(
+                                  padding: const EdgeInsets.only(right: 12),
+                                  child: _buildProductCard(product),
+                                );
+                              }).toList(),
+                            ),
+                          );
+                        },
+                      ),
                       const SizedBox(height: 24),
 
                       // Hours Section
                       _buildSectionTitle('Horarios', const Color(0xFF2F3F2A)),
                       const SizedBox(height: 8),
-                      _buildInfoRow(Icons.access_time, VitrinaData.hours, const Color(0xFF2F3F2A).withOpacity(0.7)),
+                      _buildInfoRow(Icons.access_time, profile.hours ?? 'Por definir', const Color(0xFF2F3F2A).withOpacity(0.7)),
                       const SizedBox(height: 24),
 
                       // Contact Section
@@ -275,35 +264,38 @@ class _PymeProfileVitrinaScreenState extends State<PymeProfileVitrinaScreen> {
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceAround,
                         children: [
-                          _buildSocialButton(Icons.language, 'Web', () {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: Text('Ir a: ${VitrinaData.webUrl}'),
-                                backgroundColor: const Color(0xFF8B5A3C),
-                                behavior: SnackBarBehavior.floating,
-                              ),
-                            );
-                          }, const Color(0xFF2F3F2A)),
-                          _buildSocialButton(Icons.camera_alt, 'Instagram', () {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content:
-                                    Text('Ir a: ${VitrinaData.instagramHandle}'),
-                                backgroundColor: const Color(0xFF8B5A3C),
-                                behavior: SnackBarBehavior.floating,
-                              ),
-                            );
-                          }, const Color(0xFF2F3F2A)),
-                          _buildSocialButton(Icons.message, 'WhatsApp', () {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content:
-                                    Text('Ir a: ${VitrinaData.whatsappNumber}'),
-                                backgroundColor: const Color(0xFF6F8F5E),
-                                behavior: SnackBarBehavior.floating,
-                              ),
-                            );
-                          }, const Color(0xFF6F8F5E)),
+                          if (profile.webUrl != null && profile.webUrl!.isNotEmpty)
+                            _buildSocialButton(Icons.language, 'Web', () {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text('Ir a: ${profile.webUrl}'),
+                                  backgroundColor: const Color(0xFF8B5A3C),
+                                  behavior: SnackBarBehavior.floating,
+                                ),
+                              );
+                            }, const Color(0xFF2F3F2A)),
+                          if (profile.instagramHandle != null && profile.instagramHandle!.isNotEmpty)
+                            _buildSocialButton(Icons.camera_alt, 'Instagram', () {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content:
+                                      Text('Ir a: ${profile.instagramHandle}'),
+                                  backgroundColor: const Color(0xFF8B5A3C),
+                                  behavior: SnackBarBehavior.floating,
+                                ),
+                              );
+                            }, const Color(0xFF2F3F2A)),
+                          if (profile.whatsappNumber != null && profile.whatsappNumber!.isNotEmpty)
+                            _buildSocialButton(Icons.message, 'WhatsApp', () {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content:
+                                      Text('Ir a: ${profile.whatsappNumber}'),
+                                  backgroundColor: const Color(0xFF6F8F5E),
+                                  behavior: SnackBarBehavior.floating,
+                                ),
+                              );
+                            }, const Color(0xFF6F8F5E)),
                         ],
                       ),
                       const SizedBox(height: 24),
@@ -312,7 +304,7 @@ class _PymeProfileVitrinaScreenState extends State<PymeProfileVitrinaScreen> {
                       _buildSectionTitle('Ubicación', const Color(0xFF2F3F2A)),
                       const SizedBox(height: 8),
                       _buildInfoRow(
-                          Icons.location_on, VitrinaData.location, const Color(0xFF2F3F2A).withOpacity(0.7)),
+                          Icons.location_on, profile.location ?? 'Sin dirección registrada', const Color(0xFF2F3F2A).withOpacity(0.7)),
                       const SizedBox(height: 40), // Bottom padding
                     ],
                   ),
@@ -352,14 +344,18 @@ class _PymeProfileVitrinaScreenState extends State<PymeProfileVitrinaScreen> {
               child: CircleAvatar(
                 radius: 40,
                 backgroundColor: const Color(0xFFFFFFFF),
-                backgroundImage: VitrinaData.logoUrl.startsWith('http')
-                    ? NetworkImage(VitrinaData.logoUrl)
-                    : AssetImage(VitrinaData.logoUrl) as ImageProvider,
+                backgroundImage: (profile.logoUrl != null && profile.logoUrl!.isNotEmpty)
+                    ? (profile.logoUrl!.startsWith('http')
+                        ? NetworkImage(profile.logoUrl!)
+                        : AssetImage(profile.logoUrl!) as ImageProvider)
+                    : const AssetImage('assets/images/placeholder_logo.png') as ImageProvider, // Fallback
               ),
             ),
           ),
         ],
       ),
+    );
+      },
     );
   }
 
@@ -371,8 +367,9 @@ class _PymeProfileVitrinaScreenState extends State<PymeProfileVitrinaScreen> {
     required Color iconColor,
   }) {
     return Container(
-      width: 200,
-      padding: const EdgeInsets.all(16),
+      width: 160,
+      height: 140, 
+      padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: const Color(0xFFFFFFFF),
         borderRadius: BorderRadius.circular(16),
@@ -387,20 +384,24 @@ class _PymeProfileVitrinaScreenState extends State<PymeProfileVitrinaScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(icon, color: iconColor, size: 32),
-          const SizedBox(height: 12),
+          Icon(icon, color: iconColor, size: 28),
+          const Spacer(),
           Text(
             title,
             style: const TextStyle(
               color: Color(0xFF2F3F2A),
               fontWeight: FontWeight.bold,
-              fontSize: 16,
+              fontSize: 14,
             ),
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
           ),
           const SizedBox(height: 4),
           Text(
             description,
-            style: TextStyle(color: const Color(0xFF2F3F2A).withOpacity(0.7), fontSize: 14),
+            style: TextStyle(color: const Color(0xFF2F3F2A).withOpacity(0.7), fontSize: 12),
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
           ),
         ],
       ),

@@ -14,6 +14,29 @@ class Offer {
     required this.icon,
     required this.color,
   });
+
+  factory Offer.fromMap(Map<String, dynamic> map, String id) {
+    return Offer(
+      id: id,
+      title: map['title'] ?? '',
+      description: map['description'] ?? '',
+      icon: IconData(
+        map['iconCodePoint'] ?? Icons.local_offer.codePoint,
+        fontFamily: map['iconFontFamily'] ?? 'MaterialIcons',
+      ),
+      color: Color(map['colorValue'] ?? 0xFF000000),
+    );
+  }
+
+  Map<String, dynamic> toMap() {
+    return {
+      'title': title,
+      'description': description,
+      'iconCodePoint': icon.codePoint,
+      'iconFontFamily': icon.fontFamily,
+      'colorValue': color.value,
+    };
+  }
 }
 
 // Simple in-memory storage for prototype

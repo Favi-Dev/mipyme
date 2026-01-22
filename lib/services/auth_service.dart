@@ -1,30 +1,116 @@
-enum UserRole { client, pyme, foundation, admin }
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import '../models/user_profile.dart';
+import 'notification_service.dart';
 
 class AuthService {
-  // Mock authentication
-  static Future<UserRole?> login(String email, String password) async {
-    await Future.delayed(const Duration(seconds: 1)); // Simulate network delay
+  final FirebaseAuth _auth = FirebaseAuth.instance;
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
-    if (email == 'admin@soypyme.cl' && password == 'admin123') {
-      return UserRole.admin;
-    } else if (email.contains('fundacion') && password == 'fundacion123') {
-      return UserRole.foundation;
-    } else if (email.contains('pyme') && password == 'pyme123') {
-      return UserRole.pyme;
-    } else if (password == 'user123') {
-      return UserRole.client;
-    }
-    
-    // For demo purposes, allow any login as client if password is '123456'
-    if (password == '123456') {
-      return UserRole.client;
-    }
+  // Get current user
+  User? get currentUser => _auth.currentUser;
 
-    return null; // Login failed
+  // Login
+  Future<UserProfile?> login(String email, String password) async {
+    try {
+      UserCredential result = await _auth.signInWithEmailAndPassword(
+        email: email,
+        password: password,
+      );
+      
+      User? user = result.user;
+      if (user != null) {
+        // Fetch user role from Firestore
+        DocumentSnapshot userDoc = await _firestore.collection('users').doc(user.uid).get();
+        if (userDoc.exists) {
+          // Update FCM Token
+          String? token = await NotificationService().getToken();
+          if (token != null) {
+            await _firestore.collection('users').doc(user.uid).update({
+              'fcmToken': token,
+            });
+          }
+          
+          return UserProfile.fromMap(userDoc.data() as Map<String, dynamic>, user.uid);
+        }
+      }
+      return null;
+    } catch (e) {
+      print(e.toString());
+      return null;
+    }
   }
 
-  static Future<bool> register(String email, String password, String name, UserRole role) async {
-    await Future.delayed(const Duration(seconds: 1));
-    return true; // Registration successful
+  // Register
+  Future<bool> register(String email, String password, String name, UserRole role, {Map<String, dynamic>? additionalData}) async {
+    try {
+      UserCredential result = await _auth.createUserWithEmailAndPassword(
+        email: email,
+        password: password,
+      );
+      
+      User? user = result.user;
+      if (user != null) {
+        // Create UserProfile object
+        // We construct a map first to merge additionalData, then use UserProfile to validate/serialize if we want,
+        // but UserProfile requires all fields.
+        // Easier to just construct the map using UserProfile logic or just ensure consistency.
+        
+        // Let's try to construct UserProfile.
+        // But additionalData has keys that match UserProfile fields.
+        
+        final userProfile = UserProfile(
+          id: user.uid,
+          name: name,
+          email: email,
+          role: role,
+          createdAt: DateTime.now(),
+          // Client defaults
+          isSubscribed: false,
+          monthlyCouponRedeemed: false,
+          // Pyme/Foundation fields from additionalData
+          category: additionalData?['category'],
+          description: additionalData?['description'],
+          coverImageUrl: additionalData?['coverImageUrl'],
+          logoUrl: additionalData?['logoUrl'],
+          hours: additionalData?['hours'],
+          location: additionalData?['location'],
+          webUrl: additionalData?['webUrl'],
+          instagramHandle: additionalData?['instagramHandle'],
+          whatsappNumber: additionalData?['whatsappNumber'],
+          // Foundation fields
+          donationGoal: additionalData?['donationGoal'] is int ? (additionalData?['donationGoal'] as int).toDouble() : additionalData?['donationGoal'],
+          currentDonations: 0.0,
+          donationAlias: additionalData?['donationAlias'],
+          donationCbu: additionalData?['donationCbu'],
+          // Bank fields
+          bankName: additionalData?['bankName'],
+          bankAccountType: additionalData?['bankAccountType'],
+          bankAccountNumber: additionalData?['bankAccountNumber'],
+          bankAccountHolderRut: additionalData?['bankAccountHolderRut'],
+        );
+
+        await _firestore.collection('users').doc(user.uid).set(userProfile.toMap());
+
+        // Save FCM Token
+        String? token = await NotificationService().getToken();
+        if (token != null) {
+          await _firestore.collection('users').doc(user.uid).update({
+            'fcmToken': token,
+          });
+        }
+
+        return true;
+      }
+      return false;
+    } catch (e) {
+      print(e.toString());
+      return false;
+    }
+  }
+
+  // Sign out
+  Future<void> signOut() async {
+    await _auth.signOut();
   }
 }

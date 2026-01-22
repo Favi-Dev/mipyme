@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "527081578254",
+    "project_id": "soyplus-fec46",
+    "storage_bucket": "soyplus-fec46.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:527081578254:android:c4764c1627502218b4415f",
+        "android_client_info": {
+          "package_name": "com.example.mipyme"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCQJgrcK3ANPU6aFTGlK4ZYQi84ut2dWmI"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

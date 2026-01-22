@@ -1,7 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import '../models/vitrina_data.dart';
+import '../models/user_profile.dart';
 import '../services/product_service.dart';
+import '../services/pyme_service.dart';
 import 'client_pyme_detail_screen.dart';
+import 'donation_screen.dart';
 
 class ClientHomeScreen extends StatefulWidget {
   final bool showFoundationsOnly;
@@ -20,82 +24,7 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
   String _searchQuery = '';
   final Set<String> _followedPymes = {};
   final Set<String> _selectedTags = {};
-
-  final List<Map<String, dynamic>> _allPymes = [
-    {
-      'name': 'Metamorfosis',
-      'category': 'Reciclaje Textil',
-      'category_key': 'Metamorfosis',
-      'rating': '5.0',
-      'distance': '0.3 km',
-      'image': 'https://images.unsplash.com/photo-1523381210434-271e8be1f52b?auto=format&fit=crop&w=800&q=80',
-      'tags': ['Reciclaje', 'Sustentable', 'Moda'],
-      'isOpen': true,
-    },
-    {
-      'name': 'Farmayuda',
-      'category': 'Salud y Bienestar',
-      'category_key': 'Salud, belleza y bienestar',
-      'rating': '4.9',
-      'distance': '0.5 km',
-      'image': 'https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?auto=format&fit=crop&w=800&q=80',
-      'tags': ['Farmacia', 'Medicamentos'],
-      'isOpen': true,
-    },
-    {
-      'name': 'Zapatería Los Robles',
-      'category': 'Comercio/Retail',
-      'category_key': 'Comercio/retail',
-      'rating': '4.9',
-      'distance': '0.8 km',
-      'image': 'https://images.unsplash.com/photo-1549298916-b41d501d3772?auto=format&fit=crop&w=800&q=80',
-      'tags': ['Calzado', 'Cuero', 'Reparación'],
-      'isOpen': true,
-    },
-    {
-      'name': 'Fundación Los Robles',
-      'category': 'Educación y Cultura',
-      'category_key': 'Educación y cultura',
-      'rating': '5.0',
-      'distance': '1.2 km',
-      'image': 'https://images.unsplash.com/photo-1532996122724-e3c354a0b15b?auto=format&fit=crop&w=800&q=80',
-      'tags': ['Reciclaje', 'Comunidad'],
-      'isOpen': true,
-    },
-    {
-      'name': 'Abogados & Asoc.',
-      'category': 'Servicios Profesionales',
-      'category_key': 'Servicios profesionales',
-      'rating': '4.7',
-      'distance': '2.0 km',
-      'image': 'https://images.unsplash.com/photo-1589829085413-56de8ae18c73?auto=format&fit=crop&w=800&q=80',
-      'tags': ['Legal', 'Asesoría'],
-      'isOpen': false,
-    },
-  ];
-
-  List<Map<String, dynamic>> get _filteredPymes {
-    return _allPymes.where((pyme) {
-      final matchesSearch = pyme['name'].toString().toLowerCase().contains(_searchQuery.toLowerCase()) ||
-          pyme['category'].toString().toLowerCase().contains(_searchQuery.toLowerCase());
-      
-      // Filter by tags if any are selected
-      final matchesTags = _selectedTags.isEmpty || 
-          (pyme['tags'] as List<String>).any((tag) => _selectedTags.contains(tag));
-
-      if (widget.showFoundationsOnly) {
-        // Filter for foundations (using category key or name for now as proxy)
-        final isFoundation = pyme['category_key'] == 'Educación y cultura' || 
-                             pyme['name'].toString().contains('Fundación');
-        return matchesSearch && matchesTags && isFoundation;
-      } else {
-        // Filter OUT foundations for the main home screen
-        final isFoundation = pyme['category_key'] == 'Educación y cultura' || 
-                             pyme['name'].toString().contains('Fundación');
-        return matchesSearch && matchesTags && !isFoundation;
-      }
-    }).toList();
-  }
+  String? _selectedCategory;
 
   void _showNotifications() {
     final theme = Theme.of(context);
@@ -128,13 +57,15 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
     );
   }
 
-  void _showFilterDialog() {
+  void _showFilterDialog(List<UserProfile> pymes) {
     final theme = Theme.of(context);
     // Extract all unique tags
-    final allTags = _allPymes
-        .expand((pyme) => pyme['tags'] as List<String>)
-        .toSet()
-        .toList();
+    final allTags = <String>{};
+    for (var pyme in pymes) {
+      if (pyme.tags != null) {
+        allTags.addAll(pyme.tags!);
+      }
+    }
 
     showModalBottomSheet(
       context: context,
@@ -213,43 +144,72 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
       appBar: AppBar(
         elevation: 0,
         toolbarHeight: 70,
-        title: Row(
-          children: [
-            const CircleAvatar(
-              radius: 22,
-              backgroundImage: NetworkImage('https://i.pravatar.cc/150?img=11'),
-              backgroundColor: Color(0x3DF4F1EA),
-            ),
-            const SizedBox(width: 12),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+        title: StreamBuilder<UserProfile?>(
+          stream: FirebaseAuth.instance.currentUser != null
+              ? PymeService().getUserProfileStream(FirebaseAuth.instance.currentUser!.uid)
+              : Stream.value(null),
+          builder: (context, userSnapshot) {
+            final userProfile = userSnapshot.data;
+            final isFoundationMode = widget.showFoundationsOnly;
+            
+            return Row(
               children: [
-                Text(
-                  widget.showFoundationsOnly ? 'Fundaciones' : 'Hola, Joaquín',
-                  style: theme.textTheme.titleLarge?.copyWith(
-                    color: const Color(0xFFF4F1EA),
-                    fontWeight: FontWeight.bold,
-                  ),
+                CircleAvatar(
+                  radius: 22,
+                  backgroundImage: (userProfile?.logoUrl != null && userProfile!.logoUrl!.startsWith('http')) 
+                      ? NetworkImage(userProfile.logoUrl!)
+                      : const NetworkImage('https://i.pravatar.cc/150?img=11'),
+                  backgroundColor: const Color(0x3DF4F1EA),
                 ),
-                if (!widget.showFoundationsOnly)
-                  Row(
-                    children: [
-                      Icon(Icons.location_on,
-                          size: 12, color: const Color(0xFFF4F1EA).withOpacity(0.9)),
-                      const SizedBox(width: 4),
-                      Text(
-                        'Providencia, Santiago',
-                        style: theme.textTheme.bodySmall?.copyWith(
-                          color: const Color(0xFFF4F1EA).withOpacity(0.9),
-                        ),
+                const SizedBox(width: 12),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      isFoundationMode ? 'Fundaciones' : 'Hola, ${userProfile?.name.split(' ').first ?? 'Invitado'}',
+                      style: theme.textTheme.titleLarge?.copyWith(
+                        color: const Color(0xFFF4F1EA),
+                        fontWeight: FontWeight.bold,
                       ),
-                    ],
-                  ),
+                    ),
+                    if (!isFoundationMode)
+                      Row(
+                        children: [
+                          Icon(Icons.location_on,
+                              size: 12, color: const Color(0xFFF4F1EA).withOpacity(0.9)),
+                          const SizedBox(width: 4),
+                          Text(
+                            userProfile?.location ?? 'Ubicación no disponible',
+                            style: theme.textTheme.bodySmall?.copyWith(
+                              color: const Color(0xFFF4F1EA).withOpacity(0.9),
+                            ),
+                          ),
+                        ],
+                      ),
+                  ],
+                ),
               ],
-            ),
-          ],
+            );
+          }
         ),
         actions: [
+          Container(
+            margin: const EdgeInsets.only(right: 8),
+            decoration: BoxDecoration(
+              color: const Color(0xFFF4F1EA).withOpacity(0.2),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: IconButton(
+              icon: const Icon(Icons.volunteer_activism, color: Color(0xFFF4F1EA)),
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const DonationScreen()),
+                );
+              },
+              tooltip: 'Realizar Donación',
+            ),
+          ),
           Container(
             margin: const EdgeInsets.only(right: 16),
             decoration: BoxDecoration(
@@ -263,163 +223,254 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
           ),
         ],
       ),
-      body: SingleChildScrollView(
-        physics: const BouncingScrollPhysics(),
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Search Bar & Filter
-            Row(
+      body: StreamBuilder<List<String>>(
+        stream: FirebaseAuth.instance.currentUser != null
+            ? PymeService().getFollowedPymeIds(FirebaseAuth.instance.currentUser!.uid)
+            : Stream.value([]),
+        builder: (context, followedSnapshot) {
+          final followedIds = (followedSnapshot.data ?? []).toSet();
+
+          return StreamBuilder<List<UserProfile>>(
+            stream: widget.showFoundationsOnly 
+                ? PymeService().getFoundations() 
+                : PymeService().getPymes(),
+            builder: (context, snapshot) {
+              if (snapshot.hasError) {
+                return Center(child: Text('Error: ${snapshot.error}'));
+              }
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return const Center(child: CircularProgressIndicator());
+              }
+
+              final pymes = snapshot.data ?? [];
+              
+              // Sort Pymes: Followed first
+              pymes.sort((a, b) {
+                final aFollowed = followedIds.contains(a.id);
+                final bFollowed = followedIds.contains(b.id);
+                if (aFollowed && !bFollowed) return -1;
+                if (!aFollowed && bFollowed) return 1;
+                return 0;
+              });
+              
+              // Filter logic
+              final filteredPymes = pymes.where((pyme) {
+            final name = pyme.name;
+            final category = pyme.category ?? '';
+            
+            final matchesSearch = name.toLowerCase().contains(_searchQuery.toLowerCase()) ||
+                category.toLowerCase().contains(_searchQuery.toLowerCase());
+            
+            // Filter by tags if any are selected
+            final tags = pyme.tags ?? [];
+            final matchesTags = _selectedTags.isEmpty || 
+                tags.any((tag) => _selectedTags.contains(tag));
+
+            final matchesCategory = _selectedCategory == null || 
+                _selectedCategory == 'Todo' || 
+                category == _selectedCategory;
+
+            return matchesSearch && matchesTags && matchesCategory;
+          }).toList();
+
+          return SingleChildScrollView(
+            physics: const BouncingScrollPhysics(),
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Expanded(
-                  child: Container(
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFF4F1EA),
-                      borderRadius: BorderRadius.circular(16),
-                      boxShadow: [
-                        BoxShadow(
-                          color: const Color(0xFF2F3F2A).withOpacity(0.3),
-                          blurRadius: 10,
-                          offset: const Offset(0, 4),
+                // Search Bar & Filter
+                Row(
+                  children: [
+                    Expanded(
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFF4F1EA),
+                          borderRadius: BorderRadius.circular(16),
+                          boxShadow: [
+                            BoxShadow(
+                              color: const Color(0xFF2F3F2A).withOpacity(0.3),
+                              blurRadius: 10,
+                              offset: const Offset(0, 4),
+                            ),
+                          ],
+                        ),
+                        child: TextField(
+                          controller: _searchController,
+                          onChanged: (value) {
+                            setState(() {
+                              _searchQuery = value;
+                            });
+                          },
+                          style: theme.textTheme.bodyLarge?.copyWith(color: const Color(0xFF2F3F2A)),
+                          decoration: InputDecoration(
+                            hintText: widget.showFoundationsOnly ? 'Buscar fundación...' : '¿Qué buscas hoy?',
+                            hintStyle: theme.textTheme.bodyMedium?.copyWith(color: const Color(0xFF2F3F2A).withOpacity(0.6)),
+                            prefixIcon:
+                                Icon(Icons.search, color: theme.colorScheme.primary),
+                            border: InputBorder.none,
+                            contentPadding: const EdgeInsets.symmetric(
+                                horizontal: 20, vertical: 15),
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Container(
+                      decoration: BoxDecoration(
+                        color: theme.colorScheme.primary,
+                        borderRadius: BorderRadius.circular(16),
+                        boxShadow: [
+                          BoxShadow(
+                            color: theme.colorScheme.primary.withOpacity(0.3),
+                            blurRadius: 8,
+                            offset: const Offset(0, 4),
+                          ),
+                        ],
+                      ),
+                      child: IconButton(
+                        icon: const Icon(Icons.tune, color: Color(0xFFF4F1EA)),
+                        onPressed: () => _showFilterDialog(pymes),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 24),
+
+                // Categories (Hide if showing foundations only)
+                if (!widget.showFoundationsOnly) ...[
+                  _buildCategories(context),
+                  const SizedBox(height: 24),
+                ],
+
+                // Featured Offers (Dynamic)
+                if (!widget.showFoundationsOnly) ...[
+                  _buildSectionHeader(context, 'Ofertas para ti', showViewAll: false),
+                  const SizedBox(height: 16),
+                  SizedBox(
+                    height: 170,
+                    child: StreamBuilder<List<Map<String, dynamic>>>(
+                      stream: PymeService().getRecentOffersGlobal(),
+                      builder: (context, offersSnapshot) {
+                        if (offersSnapshot.hasError) {
+                          // This helps debugging missing index issues
+                          debugPrint("Error fetching offers: ${offersSnapshot.error}");
+                          return Center(
+                            child: Padding(
+                              padding: const EdgeInsets.all(8.0),
+                              child: Text(
+                                'Error cargando ofertas. Posible falta de índice.',
+                                style: TextStyle(color: theme.colorScheme.error, fontSize: 10),
+                                textAlign: TextAlign.center,
+                              ),
+                            ),
+                          );
+                        }
+                        if (offersSnapshot.connectionState == ConnectionState.waiting) {
+                          return const Center(child: CircularProgressIndicator());
+                        }
+                        
+                        final allOffers = offersSnapshot.data ?? [];
+                        
+                        // Filter offers to only show those from the currently loaded pymes list
+                        // This ensures "Pymes" tab shows only Pyme offers, and "Foundations" tab shows only Foundation offers
+                        final validOffers = allOffers.where((offer) {
+                          final pymeId = offer['pymeId'];
+                          return pymes.any((p) => p.id == pymeId);
+                        }).toList();
+                        
+                        if (validOffers.isEmpty) {
+                           return const Center(child: Text('No hay ofertas disponibles por el momento.'));
+                        }
+
+                        return ListView.builder(
+                          scrollDirection: Axis.horizontal,
+                          physics: const BouncingScrollPhysics(),
+                          itemCount: validOffers.length,
+                          itemBuilder: (context, index) {
+                            final offer = validOffers[index];
+                            final pymeId = offer['pymeId'];
+                            
+                            // It's safe to use first where here because we filtered above
+                            final pyme = pymes.firstWhere((p) => p.id == pymeId);
+
+                            return Padding(
+                              padding: const EdgeInsets.only(right: 16),
+                              child: _buildOfferCard(
+                                context,
+                                pyme.name, 
+                                offer['title'] ?? 'Oferta',
+                                offer['description'] ?? '',
+                                Color(offer['colorValue'] ?? 0xFF000000),
+                                IconData(
+                                  offer['iconCodePoint'] ?? Icons.local_offer.codePoint,
+                                  fontFamily: 'MaterialIcons',
+                                ),
+                                pyme.logoUrl ?? pyme.coverImageUrl, // Prefer logo for offer card
+                              ),
+                            );
+                          },
+                        );
+                      }
+                    ),
+                  ),
+                  const SizedBox(height: 28),
+                ],
+
+                // Upcoming Events (Only for Foundations)
+                if (widget.showFoundationsOnly) ...[
+                  _buildSectionHeader(context, 'Eventos Próximos', showViewAll: false),
+                  const SizedBox(height: 16),
+                  SizedBox(
+                    height: 170,
+                    child: ListView(
+                      scrollDirection: Axis.horizontal,
+                      physics: const BouncingScrollPhysics(),
+                      children: [
+                        _buildOfferCard(
+                          context,
+                          'Fundación Los Robles',
+                          'Campaña de Reciclaje',
+                          'Evento',
+                          theme.colorScheme.primary,
+                          Icons.event,
+                          'assets/images/Logo los robles.jpg',
+                        ),
+                        const SizedBox(width: 16),
+                        _buildOfferCard(
+                          context,
+                          'Fundación Esperanza',
+                          'Colecta Anual',
+                          'Evento',
+                          theme.colorScheme.tertiary,
+                          Icons.volunteer_activism,
+                          'https://images.unsplash.com/photo-1488521787991-ed7bbaae773c?auto=format&fit=crop&w=800&q=80',
                         ),
                       ],
                     ),
-                    child: TextField(
-                      controller: _searchController,
-                      onChanged: (value) {
-                        setState(() {
-                          _searchQuery = value;
-                        });
-                      },
-                      style: theme.textTheme.bodyLarge?.copyWith(color: const Color(0xFF2F3F2A)),
-                      decoration: InputDecoration(
-                        hintText: widget.showFoundationsOnly ? 'Buscar fundación...' : '¿Qué buscas hoy?',
-                        hintStyle: theme.textTheme.bodyMedium?.copyWith(color: const Color(0xFF2F3F2A).withOpacity(0.6)),
-                        prefixIcon:
-                            Icon(Icons.search, color: theme.colorScheme.primary),
-                        border: InputBorder.none,
-                        contentPadding: const EdgeInsets.symmetric(
-                            horizontal: 20, vertical: 15),
-                      ),
-                    ),
                   ),
-                ),
-                const SizedBox(width: 12),
-                Container(
-                  decoration: BoxDecoration(
-                    color: theme.colorScheme.primary,
-                    borderRadius: BorderRadius.circular(16),
-                    boxShadow: [
-                      BoxShadow(
-                        color: theme.colorScheme.primary.withOpacity(0.3),
-                        blurRadius: 8,
-                        offset: const Offset(0, 4),
-                      ),
-                    ],
-                  ),
-                  child: IconButton(
-                    icon: const Icon(Icons.tune, color: Color(0xFFF4F1EA)),
-                    onPressed: _showFilterDialog,
-                  ),
-                ),
+                  const SizedBox(height: 28),
+                ],
+
+                // Nearby Pymes / Foundations List
+                _buildSectionHeader(context, widget.showFoundationsOnly ? 'Fundaciones Disponibles' : 'Pymes en tu zona'),
+                const SizedBox(height: 16),
+                _buildPymesList(filteredPymes),
               ],
             ),
-            const SizedBox(height: 24),
-
-            // Categories (Hide if showing foundations only)
-            if (!widget.showFoundationsOnly) ...[
-              _buildCategories(context),
-              const SizedBox(height: 24),
-            ],
-
-            // Featured Offers (Hide if showing foundations only)
-            if (!widget.showFoundationsOnly) ...[
-              _buildSectionHeader(context, 'Ofertas para ti', showViewAll: false),
-              const SizedBox(height: 16),
-              SizedBox(
-                height: 170,
-                child: ListView(
-                  scrollDirection: Axis.horizontal,
-                  physics: const BouncingScrollPhysics(),
-                  children: [
-                    _buildOfferCard(
-                      context,
-                      'Zapatería Los Robles',
-                      '20% dcto. en Botas',
-                      'Calzado',
-                      const Color(0xFF8B5A3C),
-                      Icons.shopping_bag,
-                      'assets/images/logo el roble calzados.jpg',
-                    ),
-                    const SizedBox(width: 16),
-                    _buildOfferCard(
-                      context,
-                      'Farmayuda',
-                      'Descuentos en Recetas',
-                      'Salud',
-                      const Color(0xFF6F8F5E),
-                      Icons.medical_services,
-                      'assets/images/logo farmayuda.jpg',
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 28),
-            ],
-
-            // Upcoming Events (Only for Foundations)
-            if (widget.showFoundationsOnly) ...[
-              _buildSectionHeader(context, 'Eventos Próximos', showViewAll: false),
-              const SizedBox(height: 16),
-              SizedBox(
-                height: 170,
-                child: ListView(
-                  scrollDirection: Axis.horizontal,
-                  physics: const BouncingScrollPhysics(),
-                  children: [
-                    _buildOfferCard(
-                      context,
-                      'Fundación Los Robles',
-                      'Campaña de Reciclaje',
-                      'Evento',
-                      theme.colorScheme.primary,
-                      Icons.event,
-                      'assets/images/Logo los robles.jpg',
-                    ),
-                    const SizedBox(width: 16),
-                    _buildOfferCard(
-                      context,
-                      'Fundación Esperanza',
-                      'Colecta Anual',
-                      'Evento',
-                      theme.colorScheme.tertiary,
-                      Icons.volunteer_activism,
-                      'https://images.unsplash.com/photo-1488521787991-ed7bbaae773c?auto=format&fit=crop&w=800&q=80',
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 28),
-            ],
-
-            // Nearby Pymes / Foundations List
-            _buildSectionHeader(context, widget.showFoundationsOnly ? 'Fundaciones Disponibles' : 'Pymes en tu zona'),
-            const SizedBox(height: 16),
-            _buildPymesList(),
-          ],
-        ),
+            );
+            }
+          );
+        }
       ),
     );
   }
 
-  Widget _buildPymesList() {
-    final pymes = _filteredPymes;
-
+  Widget _buildPymesList(List<UserProfile> pymes) {
     if (pymes.isEmpty) {
-      return Center(
-        child: Padding(
-          padding: const EdgeInsets.all(20.0),
+      return const Center(
+        child: Padding( 
+          padding: EdgeInsets.all(20.0),
           child: Text(
             'No se encontraron resultados',
             style: TextStyle(color: Color(0xFF2F3F2A)),
@@ -448,7 +499,7 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
       {'icon': Icons.spa, 'label': 'Salud', 'key': 'Salud, belleza y bienestar'},
       {'icon': Icons.construction, 'label': 'Oficios', 'key': 'Oficios y manufactura'},
       {'icon': Icons.school, 'label': 'Educación', 'key': 'Educación y cultura'},
-      {'icon': Icons.local_shipping, 'label': 'Logística', 'key': 'Transporte y logística'},
+      {'icon': Icons.local_shipping, 'label': 'Logística', 'key': 'Transporte y logistica'},
     ];
 
     return SizedBox(
@@ -458,20 +509,18 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
         physics: const BouncingScrollPhysics(),
         itemCount: categories.length,
         itemBuilder: (context, index) {
-          final isSelected = index == 0;
+          final categoryKey = categories[index]['key'] as String;
+          final isSelected = (_selectedCategory == null && index == 0) || _selectedCategory == categoryKey;
+          
           return GestureDetector(
             onTap: () {
-              if (index != 0) {
-                // Update global mock data to simulate selecting a Pyme of this category
-                VitrinaData.setCategory(categories[index]['key'] as String);
-                ProductService().loadMockProductsForCategory(categories[index]['key'] as String);
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => const ClientPymeDetailScreen(),
-                  ),
-                );
-              }
+              setState(() {
+                if (index == 0) {
+                  _selectedCategory = null;
+                } else {
+                  _selectedCategory = categoryKey;
+                }
+              });
             },
             child: Padding(
               padding: const EdgeInsets.only(right: 12),
@@ -557,48 +606,33 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
   }
 
   Widget _buildOfferCard(BuildContext context, String pymeName, String offer,
-      String tag, Color color, IconData icon, String imageUrl) {
+      String tag, Color color, IconData icon, String? imageUrl) {
     return GestureDetector(
       onTap: () {
-        // Update global mock data based on the card clicked
-        if (pymeName == 'Fundación Los Robles') {
-          VitrinaData.setCategory('Educación y cultura');
-          ProductService().loadMockProductsForCategory('Educación y cultura');
-        } else if (pymeName == 'Farmayuda') {
-          VitrinaData.setCategory('Salud, belleza y bienestar');
-          ProductService().loadMockProductsForCategory('Salud, belleza y bienestar');
-        } else if (pymeName == 'Zapatería Los Robles') {
-          VitrinaData.setCategory('Comercio/retail');
-          ProductService().loadMockProductsForCategory('Comercio/retail');
-        } else if (pymeName == 'Metamorfosis') {
-          VitrinaData.setCategory('Metamorfosis');
-          ProductService().loadMockProductsForCategory('Metamorfosis');
-        } else {
-           // Default fallback or try to match by category if passed
-           // For now, we just keep current or default
-        }
-
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => const ClientPymeDetailScreen(),
-          ),
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Oferta no disponible por el momento')),
         );
       },
       child: Container(
         width: 260,
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(20),
-          image: DecorationImage(
-            image: imageUrl.startsWith('http')
-                ? NetworkImage(imageUrl)
-                : AssetImage(imageUrl) as ImageProvider,
-            fit: BoxFit.cover,
-            colorFilter: ColorFilter.mode(
-              const Color(0xFF2F3F2A).withOpacity(0.3),
-              BlendMode.darken,
-            ),
-          ),
+          color: const Color(0xFF2F3F2A), // Fallback color
+          image: imageUrl != null
+              ? DecorationImage(
+                  image: imageUrl.startsWith('http')
+                      ? NetworkImage(imageUrl)
+                      : AssetImage(imageUrl) as ImageProvider,
+                  fit: BoxFit.cover,
+                  colorFilter: ColorFilter.mode(
+                    const Color(0xFF2F3F2A).withOpacity(0.3),
+                    BlendMode.darken,
+                  ),
+                  onError: (exception, stackTrace) {
+                    // Fail silently to background color
+                  },
+                )
+              : null,
           boxShadow: [
             BoxShadow(
               color: const Color(0xFF2F3F2A).withOpacity(0.1),
@@ -690,18 +724,22 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
     );
   }
 
-  Widget _buildPymeCard(BuildContext context, Map<String, dynamic> pyme) {
+  Widget _buildPymeCard(BuildContext context, UserProfile pyme) {
     final theme = Theme.of(context);
+    final String? imageUrl = pyme.coverImageUrl;
+    final bool isOpen = true;
+    final String name = pyme.name;
+    final String rating = '5.0';
+
     return GestureDetector(
       onTap: () {
-        if (pyme.containsKey('category_key')) {
-          VitrinaData.setCategory(pyme['category_key']);
-          ProductService().loadMockProductsForCategory(pyme['category_key']);
-        }
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) => const ClientPymeDetailScreen(),
+            builder: (context) => ClientPymeDetailScreen(
+              pymeId: pyme.id,
+              pymeData: pyme,
+            ),
           ),
         );
       },
@@ -724,54 +762,64 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
               children: [
                 ClipRRect(
                   borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-                  child: pyme['image'].startsWith('http')
+                  child: (imageUrl != null && imageUrl.startsWith('http'))
                       ? Image.network(
-                          pyme['image'],
+                          imageUrl,
                           height: 150,
                           width: double.infinity,
                           fit: BoxFit.cover,
+                          errorBuilder: (context, error, stackTrace) => Container(
+                            height: 150,
+                            color: Colors.grey[300],
+                            child: const Icon(Icons.store, size: 50, color: Colors.grey),
+                          ),
                         )
-                      : Image.asset(
-                          pyme['image'],
+                      : Container(
                           height: 150,
                           width: double.infinity,
-                          fit: BoxFit.cover,
+                          color: const Color(0xFF2F3F2A).withOpacity(0.1),
+                          child: const Icon(Icons.store, size: 50, color: Colors.grey),
                         ),
                 ),
                 Positioned(
                   top: 12,
                   right: 12,
-                  child: GestureDetector(
-                    onTap: () {
-                      setState(() {
-                        if (_followedPymes.contains(pyme['name'])) {
-                          _followedPymes.remove(pyme['name']);
-                        } else {
-                          _followedPymes.add(pyme['name']);
-                        }
-                      });
-                    },
-                    child: Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFF4F1EA),
-                        shape: BoxShape.circle,
-                        boxShadow: [
-                          BoxShadow(
-                            color: const Color(0xFF2F3F2A).withOpacity(0.1),
-                            blurRadius: 8,
+                  child: StreamBuilder<bool>(
+                    stream: FirebaseAuth.instance.currentUser != null 
+                        ? PymeService().isFollowing(FirebaseAuth.instance.currentUser!.uid, pyme.id)
+                        : Stream.value(false),
+                    builder: (context, snapshot) {
+                      final isFollowing = snapshot.data ?? false;
+                      return GestureDetector(
+                        onTap: () {
+                          final user = FirebaseAuth.instance.currentUser;
+                          if (user != null) {
+                            PymeService().toggleFollow(user.uid, pyme.id);
+                          }
+                        },
+                        child: Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFF4F1EA),
+                            shape: BoxShape.circle,
+                            boxShadow: [
+                              BoxShadow(
+                                color: const Color(0xFF2F3F2A).withOpacity(0.1),
+                                blurRadius: 8,
+                              ),
+                            ],
                           ),
-                        ],
-                      ),
-                      child: Icon(
-                        _followedPymes.contains(pyme['name']) ? Icons.favorite : Icons.favorite_border,
-                        color: theme.colorScheme.primary,
-                        size: 20,
-                      ),
-                    ),
+                          child: Icon(
+                            isFollowing ? Icons.favorite : Icons.favorite_border,
+                            color: theme.colorScheme.primary,
+                            size: 20,
+                          ),
+                        ),
+                      );
+                    }
                   ),
                 ),
-                if (pyme['isOpen'])
+                if (isOpen)
                   Positioned(
                     top: 12,
                     left: 12,
@@ -809,7 +857,7 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text(
-                        pyme['name'],
+                        name,
                         style: const TextStyle(
                           color: Color(0xFF2F3F2A),
                           fontSize: 18,
@@ -829,7 +877,7 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
                                 color: Color(0xFF8B5A3C), size: 14),
                             const SizedBox(width: 4),
                             Text(
-                              pyme['rating'],
+                              rating,
                               style: const TextStyle(
                                 color: Color(0xFF8B5A3C),
                                 fontSize: 12,
@@ -848,7 +896,7 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
                           size: 16, color: const Color(0xFF2F3F2A).withOpacity(0.7)),
                       const SizedBox(width: 4),
                       Text(
-                        pyme['category'],
+                        pyme.category ?? 'Sin categoría',
                         style: const TextStyle(
                           color: Color(0xFF2F3F2A),
                           fontSize: 14,
@@ -859,7 +907,7 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
                           size: 16, color: const Color(0xFF2F3F2A).withOpacity(0.7)),
                       const SizedBox(width: 4),
                       Text(
-                        pyme['distance'],
+                        '1.2 km',
                         style: const TextStyle(
                           color: Color(0xFF2F3F2A),
                           fontSize: 14,
@@ -868,14 +916,18 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
                     ],
                   ),
                   const SizedBox(height: 12),
-                  Row(
-                    children: [
-                      ...(pyme['tags'] as List<String>).map((tag) => Padding(
-                            padding: const EdgeInsets.only(right: 8),
-                            child: _buildTag(context, tag),
-                          )),
-                      _buildTag(context, 'S+ Partner', color: Theme.of(context).colorScheme.primary),
-                    ],
+                  SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    physics: const BouncingScrollPhysics(),
+                    child: Row(
+                      children: [
+                        ...(pyme.tags ?? []).map((tag) => Padding(
+                              padding: const EdgeInsets.only(right: 8),
+                              child: _buildTag(context, tag),
+                            )),
+                        _buildTag(context, 'S+ Partner', color: Theme.of(context).colorScheme.primary),
+                      ],
+                    ),
                   ),
                 ],
               ),

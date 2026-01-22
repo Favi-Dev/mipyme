@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import '../models/vitrina_data.dart';
+import '../services/pyme_service.dart';
 
 class PymeMetricsScreen extends StatefulWidget {
   const PymeMetricsScreen({super.key});
@@ -10,6 +13,8 @@ class PymeMetricsScreen extends StatefulWidget {
 
 class _PymeMetricsScreenState extends State<PymeMetricsScreen> {
   String _selectedTimeRange = 'Últimos 7 días';
+  final PymeService _pymeService = PymeService();
+  final String _currentPymeId = FirebaseAuth.instance.currentUser?.uid ?? '';
 
   @override
   Widget build(BuildContext context) {
@@ -56,160 +61,73 @@ class _PymeMetricsScreenState extends State<PymeMetricsScreen> {
           ),
         ],
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Resumen General',
-              style: GoogleFonts.poppins(
-                color: const Color(0xFF2F3F2A),
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            const SizedBox(height: 16),
-            // KPI Grid
-            GridView.count(
-              crossAxisCount: 2,
-              crossAxisSpacing: 12,
-              mainAxisSpacing: 12,
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              childAspectRatio: 1.5,
+      body: StreamBuilder<Map<String, dynamic>>(
+        stream: _pymeService.getPymeMetrics(_currentPymeId),
+        builder: (context, snapshot) {
+          final metrics = snapshot.data ?? {
+            'totalOrders': 0,
+            'totalSales': 0.0,
+            'completedOrders': 0,
+            'pendingOrders': 0,
+          };
+
+          return SingleChildScrollView(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _buildKpiCard(
-                  title: 'Cupones Canjeados',
-                  value: '124',
-                  trend: '+12%',
-                  isPositive: true,
-                  icon: Icons.qr_code,
-                  color: const Color(0xFF6F8F5E),
+                Text(
+                  'Resumen General',
+                  style: GoogleFonts.poppins(
+                    color: const Color(0xFF2F3F2A),
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
-                _buildKpiCard(
-                  title: 'Visitas al Perfil',
-                  value: '1,205',
-                  trend: '+5%',
-                  isPositive: true,
-                  icon: Icons.visibility,
-                  color: const Color(0xFF8B5A3C),
+                const SizedBox(height: 16),
+                // KPI Grid
+                GridView.count(
+                  crossAxisCount: 2,
+                  crossAxisSpacing: 12,
+                  mainAxisSpacing: 12,
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  childAspectRatio: 1.5,
+                  children: [
+                    _buildKpiCard(
+                      title: VitrinaData.isFoundation ? 'Recaudado' : 'Ventas Totales',
+                      value: '\$${(metrics['totalSales'] as num).toStringAsFixed(0)}',
+                      trend: '${metrics['completedOrders']} ${VitrinaData.isFoundation ? "donaciones" : "pedidos"}',
+                      isPositive: true,
+                      icon: Icons.attach_money,
+                      color: const Color(0xFF6F8F5E),
+                    ),
+                    _buildKpiCard(
+                      title: 'Pendientes',
+                      value: '${metrics['pendingOrders']}',
+                      trend: 'Requiere atención',
+                      isPositive: false,
+                      icon: Icons.pending_actions,
+                      color: const Color(0xFF8B5A3C),
+                    ),
+                    _buildKpiCard(
+                      title: 'Total Pedidos',
+                      value: '${metrics['totalOrders']}',
+                      trend: 'Histórico',
+                      isPositive: null,
+                      icon: Icons.receipt_long,
+                      color: const Color(0xFFE3B58F),
+                    ),
+                    // Removed fake Valuation card
+                  ],
                 ),
-                _buildKpiCard(
-                  title: 'Ofertas Activas',
-                  value: '3',
-                  trend: 'Max: 5',
-                  isPositive: null, // Neutral
-                  icon: Icons.local_offer,
-                  color: const Color(0xFFE3B58F),
-                ),
-                _buildKpiCard(
-                  title: 'Valoración',
-                  value: '4.8',
-                  trend: '-0.1',
-                  isPositive: false,
-                  icon: Icons.star,
-                  color: const Color(0xFF2F3F2A),
-                ),
+                const SizedBox(height: 32),
+                
+                // Chart Section Removed (Simulated data)
               ],
             ),
-            const SizedBox(height: 32),
-            
-            // Chart Section (Simulated)
-            Text(
-              'Actividad Semanal',
-              style: GoogleFonts.poppins(
-                color: const Color(0xFF2F3F2A),
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            const SizedBox(height: 16),
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: const Color(0xFFFFFFFF),
-                borderRadius: BorderRadius.circular(16),
-                boxShadow: [
-                  BoxShadow(
-                    color: const Color(0xFF2F3F2A).withOpacity(0.1),
-                    blurRadius: 10,
-                    offset: const Offset(0, 4),
-                  ),
-                ],
-              ),
-              child: Column(
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text('Canjes por día',
-                          style: GoogleFonts.poppins(color: const Color(0xFF2F3F2A).withOpacity(0.6))),
-                      Icon(Icons.bar_chart, color: const Color(0xFF2F3F2A).withOpacity(0.4)),
-                    ],
-                  ),
-                  const SizedBox(height: 24),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                    crossAxisAlignment: CrossAxisAlignment.end,
-                    children: [
-                      _buildBar('Lun', 0.4, const Color(0xFF8B5A3C)),
-                      _buildBar('Mar', 0.6, const Color(0xFF8B5A3C)),
-                      _buildBar('Mié', 0.3, const Color(0xFF8B5A3C)),
-                      _buildBar('Jue', 0.8, const Color(0xFF2F3F2A)),
-                      _buildBar('Vie', 0.9, const Color(0xFF8B5A3C)),
-                      _buildBar('Sáb', 0.7, const Color(0xFF8B5A3C)),
-                      _buildBar('Dom', 0.5, const Color(0xFF8B5A3C)),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-
-            const SizedBox(height: 32),
-
-            // Recent Activity List
-            Text(
-              'Actividad Reciente',
-              style: GoogleFonts.poppins(
-                color: const Color(0xFF2F3F2A),
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            const SizedBox(height: 16),
-            ListView(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              children: [
-                _buildActivityItem(
-                  icon: Icons.check_circle_outline,
-                  color: const Color(0xFF6F8F5E),
-                  title: 'Cupón canjeado',
-                  subtitle: 'Cliente #482 - Hace 10 min',
-                ),
-                _buildActivityItem(
-                  icon: Icons.star_border,
-                  color: const Color(0xFF2F3F2A),
-                  title: 'Nueva reseña recibida',
-                  subtitle: '5 estrellas de Juan P. - Hace 2 horas',
-                ),
-                _buildActivityItem(
-                  icon: Icons.edit,
-                  color: const Color(0xFF8B5A3C),
-                  title: 'Oferta actualizada',
-                  subtitle: 'Exclusivo App SoyPlus - Ayer',
-                ),
-                _buildActivityItem(
-                  icon: Icons.check_circle_outline,
-                  color: const Color(0xFF6F8F5E),
-                  title: 'Cupón canjeado',
-                  subtitle: 'Cliente #301 - Ayer',
-                ),
-              ],
-            ),
-          ],
-        ),
+          );
+        },
       ),
     );
   }

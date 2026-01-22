@@ -16,7 +16,8 @@ class _AdminAppShellState extends State<AdminAppShell> {
 
   final List<Widget> _screens = [
     const AdminDashboardScreen(),
-    const AdminPymeManagementScreen(),
+    const AdminPymeManagementScreen(roleFilter: 'pyme'),
+    const AdminPymeManagementScreen(roleFilter: 'foundation'),
     const AdminUserManagementScreen(),
     const AdminSupportScreen(),
   ];
@@ -42,6 +43,7 @@ class _AdminAppShellState extends State<AdminAppShell> {
         items: const [
           BottomNavigationBarItem(icon: Icon(Icons.dashboard), label: 'Dash'),
           BottomNavigationBarItem(icon: Icon(Icons.store), label: 'Pymes'),
+          BottomNavigationBarItem(icon: Icon(Icons.volunteer_activism), label: 'Fundac.'),
           BottomNavigationBarItem(icon: Icon(Icons.people), label: 'Usuarios'),
           BottomNavigationBarItem(icon: Icon(Icons.support_agent), label: 'Soporte'),
         ],

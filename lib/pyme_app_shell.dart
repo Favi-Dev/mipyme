@@ -6,6 +6,7 @@ import 'screens/pyme_products_screen.dart';
 import 'screens/pyme_profile_vitrina_screen.dart';
 import 'screens/pyme_events_screen.dart';
 import 'screens/pyme_profile_screen.dart';
+import 'screens/pyme_orders_screen.dart';
 
 class PymeAppShell extends StatefulWidget {
   const PymeAppShell({super.key});
@@ -23,6 +24,7 @@ class _PymeAppShellState extends State<PymeAppShell> {
         PymeProfileVitrinaScreen(),
         PymeProductsScreen(),
         PymeEventsScreen(),
+        PymeOrdersScreen(),
         PymeValidationScannerScreen(),
         PymeMetricsScreen(),
         PymeProfileScreen(),
@@ -31,6 +33,7 @@ class _PymeAppShellState extends State<PymeAppShell> {
     return const [
       PymeProfileVitrinaScreen(),
       PymeProductsScreen(),
+      PymeOrdersScreen(),
       PymeValidationScannerScreen(),
       PymeMetricsScreen(),
       PymeProfileScreen(),
@@ -67,6 +70,10 @@ class _PymeAppShellState extends State<PymeAppShell> {
                   label: 'Eventos',
                 ),
                 BottomNavigationBarItem(
+                  icon: Icon(Icons.receipt_long),
+                  label: 'Pedidos',
+                ),
+                BottomNavigationBarItem(
                   icon: Icon(Icons.qr_code_scanner),
                   label: 'Validación',
                 ),
@@ -87,6 +94,10 @@ class _PymeAppShellState extends State<PymeAppShell> {
                 BottomNavigationBarItem(
                   icon: Icon(Icons.inventory_2),
                   label: 'Productos',
+                ),
+                BottomNavigationBarItem(
+                  icon: Icon(Icons.receipt_long),
+                  label: 'Pedidos',
                 ),
                 BottomNavigationBarItem(
                   icon: Icon(Icons.qr_code_scanner),

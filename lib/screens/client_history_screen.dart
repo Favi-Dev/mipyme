@@ -1,44 +1,68 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
+import 'package:intl/intl.dart';
+import '../services/client_service.dart';
+import '../models/order_model.dart';
 
 class ClientHistoryScreen extends StatelessWidget {
   const ClientHistoryScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final clientService = ClientService();
+    final theme = Theme.of(context);
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Historial de Compras'),
         elevation: 0,
       ),
-      body: ListView(
-        padding: const EdgeInsets.all(16),
-        children: [
-          _buildHistoryItem(
-            context,
-            'Café Eclipse',
-            '28 Nov 2025',
-            'Café de Grano 250g',
-            8500,
-            'Completado',
-          ),
-          _buildHistoryItem(
-            context,
-            'Panadería La Masa',
-            '25 Nov 2025',
-            'Pan Integral',
-            3500,
-            'Completado',
-          ),
-           _buildHistoryItem(
-            context,
-            'Artesanías Chile',
-            '20 Nov 2025',
-            'Taza de Cerámica',
-            5000,
-            'Completado',
-          ),
-        ],
+      body: StreamBuilder<List<OrderModel>>(
+        stream: clientService.getOrders(),
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator());
+          }
+
+          final orders = snapshot.data ?? [];
+
+          if (orders.isEmpty) {
+            return Center(
+              child: Text(
+                'No tienes compras recientes.',
+                style: theme.textTheme.bodyLarge?.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
+              ),
+            );
+          }
+
+          return ListView.builder(
+            padding: const EdgeInsets.all(16),
+            itemCount: orders.length,
+            itemBuilder: (context, index) {
+              final order = orders[index];
+              final items = order.items;
+              final firstItem = items.isNotEmpty ? items.first : null;
+              final productName = firstItem?.productName ?? 'Producto desconocido';
+              final itemCount = items.length;
+              final displayProduct = itemCount > 1 ? '$productName + ${itemCount - 1} más' : productName;
+              
+              final date = DateFormat('dd MMM yyyy').format(order.createdAt);
+              
+              final total = order.total;
+              final status = order.status == 'pending' ? 'Pendiente' : 'Completado';
+
+              return _buildHistoryItem(
+                context,
+                'Orden #${order.id.substring(0, 6)}', // Or Pyme Name if available
+                date,
+                displayProduct,
+                total.toInt(),
+                status,
+              );
+            },
+          );
+        },
       ),
     );
   }

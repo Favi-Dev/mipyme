@@ -1,10 +1,16 @@
+import 'dart:io';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import '../models/vitrina_data.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:firebase_storage/firebase_storage.dart';
+import '../services/pyme_service.dart';
 import 'login_screen.dart';
 
 class PymeVitrinaSettingsScreen extends StatefulWidget {
-  const PymeVitrinaSettingsScreen({super.key});
+  final String? pymeId;
+  const PymeVitrinaSettingsScreen({super.key, this.pymeId});
 
   @override
   State<PymeVitrinaSettingsScreen> createState() =>
@@ -20,19 +26,131 @@ class _PymeVitrinaSettingsScreenState extends State<PymeVitrinaSettingsScreen> {
   late TextEditingController _instagramController;
   late TextEditingController _whatsappController;
 
+  final PymeService _pymeService = PymeService();
+  final ImagePicker _picker = ImagePicker();
+  
+  bool _isLoading = true;
+  bool _isUploading = false;
+  String? _targetPymeId;
+  String? _profileImageUrl;
+  String? _coverImageUrl;
+
   @override
   void initState() {
     super.initState();
-    _nameController = TextEditingController(text: VitrinaData.name);
-    _descriptionController =
-        TextEditingController(text: VitrinaData.description);
-    _hoursController = TextEditingController(text: VitrinaData.hours);
-    _locationController = TextEditingController(text: VitrinaData.location);
-    _webController = TextEditingController(text: VitrinaData.webUrl);
-    _instagramController =
-        TextEditingController(text: VitrinaData.instagramHandle);
-    _whatsappController =
-        TextEditingController(text: VitrinaData.whatsappNumber);
+    _nameController = TextEditingController();
+    _descriptionController = TextEditingController();
+    _hoursController = TextEditingController();
+    _locationController = TextEditingController();
+    _webController = TextEditingController();
+    _instagramController = TextEditingController();
+    _whatsappController = TextEditingController();
+    
+    _loadPymeData();
+  }
+
+  Future<void> _loadPymeData() async {
+    _targetPymeId = widget.pymeId ?? FirebaseAuth.instance.currentUser?.uid;
+    
+    if (_targetPymeId == null) {
+      if (mounted) setState(() => _isLoading = false);
+      return;
+    }
+
+    try {
+      final userProfile = await _pymeService.getPymeById(_targetPymeId!);
+      if (userProfile != null) {
+        if (mounted) {
+          setState(() {
+            _nameController.text = userProfile.name;
+            _descriptionController.text = userProfile.description ?? '';
+            _hoursController.text = userProfile.hours ?? '';
+            _locationController.text = userProfile.location ?? '';
+            _webController.text = userProfile.webUrl ?? '';
+            _instagramController.text = userProfile.instagramHandle ?? '';
+            _whatsappController.text = userProfile.whatsappNumber ?? '';
+            _profileImageUrl = userProfile.logoUrl;
+            _coverImageUrl = userProfile.coverImageUrl;
+          });
+        }
+      }
+    } catch (e) {
+      debugPrint('Error loading pyme data: $e');
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  Future<void> _pickImage(bool isCover) async {
+    try {
+      final XFile? image = await _picker.pickImage(
+        source: ImageSource.gallery,
+        maxWidth: 1024,
+        imageQuality: 80,
+      );
+      
+      if (image != null) {
+        await _uploadImage(image, isCover);
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error al seleccionar imagen: $e')),
+        );
+      }
+    }
+  }
+
+  Future<void> _uploadImage(XFile file, bool isCover) async {
+    if (_targetPymeId == null) return;
+
+    setState(() => _isUploading = true);
+    
+    try {
+      final String type = isCover ? 'cover' : 'profile';
+      final String timestamp = DateTime.now().millisecondsSinceEpoch.toString();
+      final String path = 'pyme_images/$_targetPymeId/${type}_$timestamp.jpg';
+      
+      final Reference ref = FirebaseStorage.instance.ref().child(path);
+      
+      if (kIsWeb) {
+        await ref.putData(
+          await file.readAsBytes(), 
+          SettableMetadata(contentType: 'image/jpeg')
+        );
+      } else {
+        await ref.putFile(File(file.path));
+      }
+
+      final String downloadUrl = await ref.getDownloadURL();
+      
+      setState(() {
+        if (isCover) {
+          _coverImageUrl = downloadUrl;
+        } else {
+          _profileImageUrl = downloadUrl;
+        }
+      });
+      
+      // Auto-save the image update
+      await _pymeService.updatePymeProfile(_targetPymeId!, {
+        isCover ? 'coverImageUrl' : 'logoUrl': downloadUrl,
+      });
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Imagen actualizada correctamente')),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error al subir imagen: $e')),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isUploading = false);
+    }
   }
 
   @override
@@ -47,21 +165,48 @@ class _PymeVitrinaSettingsScreenState extends State<PymeVitrinaSettingsScreen> {
     super.dispose();
   }
 
-  void _saveSettings() {
-    setState(() {
-      VitrinaData.name = _nameController.text;
-      VitrinaData.description = _descriptionController.text;
-      VitrinaData.hours = _hoursController.text;
-      VitrinaData.location = _locationController.text;
-      VitrinaData.webUrl = _webController.text;
-      VitrinaData.instagramHandle = _instagramController.text;
-      VitrinaData.whatsappNumber = _whatsappController.text;
-    });
-    Navigator.pop(context, true); // Return true to indicate changes
+  Future<void> _saveSettings() async {
+    if (_targetPymeId == null) return;
+
+    setState(() => _isLoading = true);
+
+    try {
+      await _pymeService.updatePymeProfile(_targetPymeId!, {
+        'name': _nameController.text,
+        'description': _descriptionController.text,
+        'hours': _hoursController.text,
+        'location': _locationController.text,
+        'webUrl': _webController.text,
+        'instagramHandle': _instagramController.text,
+        'whatsappNumber': _whatsappController.text,
+      });
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Configuración guardada exitosamente')),
+        );
+        Navigator.pop(context, true);
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error al guardar: $e')),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
   }
 
   @override
   Widget build(BuildContext context) {
+    if (_isLoading) {
+      return const Scaffold(
+        backgroundColor: Color(0xFFF4F1EA),
+        body: Center(child: CircularProgressIndicator(color: Color(0xFF6F8F5E))),
+      );
+    }
+
     return Scaffold(
       backgroundColor: const Color(0xFFF4F1EA),
       appBar: AppBar(
@@ -93,6 +238,103 @@ class _PymeVitrinaSettingsScreenState extends State<PymeVitrinaSettingsScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // Images Section
+            _buildSectionHeader('Imágenes'),
+            Center(
+              child: Column(
+                children: [
+                  // Profile Image
+                  Stack(
+                    alignment: Alignment.bottomRight,
+                    children: [
+                      CircleAvatar(
+                        radius: 50,
+                        backgroundColor: Colors.grey[300],
+                        backgroundImage: _profileImageUrl != null
+                            ? NetworkImage(_profileImageUrl!)
+                            : null,
+                        child: _profileImageUrl == null
+                            ? const Icon(Icons.store, size: 50, color: Colors.grey)
+                            : null,
+                      ),
+                      GestureDetector(
+                        onTap: () => _pickImage(false),
+                        child: Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF6F8F5E),
+                            shape: BoxShape.circle,
+                            border: Border.all(color: Colors.white, width: 2),
+                          ),
+                          child: const Icon(Icons.camera_alt, color: Colors.white, size: 20),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  Text('Foto de Perfil', style: GoogleFonts.poppins(fontSize: 12)),
+                  
+                  const SizedBox(height: 24),
+                  
+                  // Cover Image
+                  GestureDetector(
+                    onTap: () => _pickImage(true),
+                    child: Container(
+                      height: 150,
+                      width: double.infinity,
+                      decoration: BoxDecoration(
+                        color: Colors.grey[300],
+                        borderRadius: BorderRadius.circular(12),
+                        image: _coverImageUrl != null
+                            ? DecorationImage(
+                                image: NetworkImage(_coverImageUrl!),
+                                fit: BoxFit.cover,
+                              )
+                            : null,
+                      ),
+                      child: _coverImageUrl == null
+                          ? const Center(
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(Icons.image, size: 40, color: Colors.grey),
+                                  SizedBox(height: 8),
+                                  Text('Toca para agregar Portada'),
+                                ],
+                              ),
+                            )
+                          : Container(
+                              alignment: Alignment.bottomRight,
+                              padding: const EdgeInsets.all(8),
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(12),
+                                color: Colors.black26,
+                              ),
+                              child: const Icon(Icons.edit, color: Colors.white),
+                            ),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text('Foto de Portada', style: GoogleFonts.poppins(fontSize: 12)),
+                ],
+              ),
+            ),
+            const SizedBox(height: 24),
+
+            if (_isUploading)
+              const Padding(
+                padding: EdgeInsets.only(bottom: 24),
+                child: Center(
+                  child: Column(
+                    children: [
+                      LinearProgressIndicator(color: Color(0xFF6F8F5E)),
+                      SizedBox(height: 8),
+                      Text('Subiendo imagen...'),
+                    ],
+                  ),
+                ),
+              ),
+
             _buildSectionHeader('Información General'),
             _buildTextField('Nombre del Negocio', _nameController),
             const SizedBox(height: 16),
@@ -114,29 +356,30 @@ class _PymeVitrinaSettingsScreenState extends State<PymeVitrinaSettingsScreen> {
                 icon: Icons.message),
             const SizedBox(height: 40),
             
-            SizedBox(
-              width: double.infinity,
-              height: 50,
-              child: OutlinedButton.icon(
-                onPressed: () {
-                  Navigator.of(context).pushAndRemoveUntil(
-                    MaterialPageRoute(builder: (context) => const LoginScreen()),
-                    (route) => false,
-                  );
-                },
-                icon: const Icon(Icons.logout, color: Color(0xFF8B5A3C)),
-                label: const Text(
-                  'Cerrar Sesión',
-                  style: TextStyle(color: Color(0xFF8B5A3C), fontSize: 16),
-                ),
-                style: OutlinedButton.styleFrom(
-                  side: const BorderSide(color: Color(0xFF8B5A3C)),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
+            if (widget.pymeId == null)
+              SizedBox(
+                width: double.infinity,
+                height: 50,
+                child: OutlinedButton.icon(
+                  onPressed: () {
+                    Navigator.of(context).pushAndRemoveUntil(
+                      MaterialPageRoute(builder: (context) => const LoginScreen()),
+                      (route) => false,
+                    );
+                  },
+                  icon: const Icon(Icons.logout, color: Color(0xFF8B5A3C)),
+                  label: const Text(
+                    'Cerrar Sesión',
+                    style: TextStyle(color: Color(0xFF8B5A3C), fontSize: 16),
+                  ),
+                  style: OutlinedButton.styleFrom(
+                    side: const BorderSide(color: Color(0xFF8B5A3C)),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
                   ),
                 ),
               ),
-            ),
             const SizedBox(height: 40),
           ],
         ),

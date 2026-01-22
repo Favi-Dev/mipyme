@@ -1,15 +1,69 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:url_launcher/url_launcher.dart';
+import '../services/client_service.dart';
 
-class ClientSupportScreen extends StatelessWidget {
+class ClientSupportScreen extends StatefulWidget {
   const ClientSupportScreen({super.key});
+
+  @override
+  State<ClientSupportScreen> createState() => _ClientSupportScreenState();
+}
+
+class _ClientSupportScreenState extends State<ClientSupportScreen> {
+  final _clientService = ClientService();
+  final _formKey = GlobalKey<FormState>();
+  final _descriptionController = TextEditingController();
+  
+  String? _selectedIssueType;
+  bool _isSubmitting = false;
+
+  final List<String> _issueTypes = [
+    'Account Access',
+    'Payment Issue',
+    'Bug Report',
+    'Other',
+  ];
 
   Future<void> _launchUrl(String urlString) async {
     final Uri url = Uri.parse(urlString);
     if (!await launchUrl(url)) {
       throw Exception('Could not launch $url');
     }
+  }
+
+  Future<void> _submitTicket() async {
+    if (_formKey.currentState!.validate() && _selectedIssueType != null) {
+      setState(() => _isSubmitting = true);
+      try {
+        await _clientService.createTicket(_selectedIssueType!, _descriptionController.text);
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Ticket enviado con éxito')),
+          );
+          _descriptionController.clear();
+          setState(() => _selectedIssueType = null);
+        }
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Error al enviar ticket: $e')),
+          );
+        }
+      } finally {
+        if (mounted) setState(() => _isSubmitting = false);
+      }
+    } else if (_selectedIssueType == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Por favor selecciona un tipo de problema')),
+      );
+    }
+  }
+
+  @override
+  void dispose() {
+    _descriptionController.dispose();
+    super.dispose();
   }
 
   @override
@@ -22,7 +76,7 @@ class ClientSupportScreen extends StatelessWidget {
         backgroundColor: const Color(0xFF2F3F2A),
         foregroundColor: const Color(0xFFF4F1EA),
       ),
-      body: Padding(
+      body: SingleChildScrollView(
         padding: const EdgeInsets.all(24.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.center,
@@ -35,11 +89,81 @@ class ClientSupportScreen extends StatelessWidget {
             ),
             const SizedBox(height: 8),
             Text(
-              'Estamos aquí para ayudarte con cualquier problema o duda que tengas sobre SoyPlus.',
+              'Estamos aquí para ayudarte. Envíanos un ticket o contáctanos directamente.',
               textAlign: TextAlign.center,
               style: GoogleFonts.poppins(color: const Color(0xFFF4F1EA).withOpacity(0.8)),
             ),
             const SizedBox(height: 40),
+            
+            // Support Form
+            Card(
+              color: const Color(0xFFF4F1EA),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Form(
+                  key: _formKey,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Crear Ticket de Soporte',
+                        style: GoogleFonts.poppins(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 18,
+                          color: const Color(0xFF2F3F2A),
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      DropdownButtonFormField<String>(
+                        value: _selectedIssueType,
+                        decoration: InputDecoration(
+                          labelText: 'Tipo de Problema',
+                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                          filled: true,
+                          fillColor: Colors.white,
+                        ),
+                        items: _issueTypes.map((type) {
+                          return DropdownMenuItem(value: type, child: Text(type));
+                        }).toList(),
+                        onChanged: (value) => setState(() => _selectedIssueType = value),
+                      ),
+                      const SizedBox(height: 16),
+                      TextFormField(
+                        controller: _descriptionController,
+                        decoration: InputDecoration(
+                          labelText: 'Descripción del problema',
+                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                          filled: true,
+                          fillColor: Colors.white,
+                        ),
+                        maxLines: 4,
+                        validator: (value) =>
+                            value == null || value.isEmpty ? 'Por favor describe el problema' : null,
+                      ),
+                      const SizedBox(height: 16),
+                      SizedBox(
+                        width: double.infinity,
+                        child: ElevatedButton(
+                          onPressed: _isSubmitting ? null : _submitTicket,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFF2F3F2A),
+                            foregroundColor: const Color(0xFFF4F1EA),
+                            padding: const EdgeInsets.symmetric(vertical: 12),
+                          ),
+                          child: _isSubmitting
+                              ? const CircularProgressIndicator(color: Colors.white)
+                              : const Text('Enviar Ticket'),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+            
+            const SizedBox(height: 24),
+
             _buildContactCard(
               icon: Icons.email_outlined,
               title: 'Correo Electrónico',

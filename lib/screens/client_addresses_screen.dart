@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../services/client_service.dart';
 
 class ClientAddressesScreen extends StatelessWidget {
   const ClientAddressesScreen({super.key});
@@ -6,6 +7,8 @@ class ClientAddressesScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final clientService = ClientService();
+
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
@@ -19,58 +22,72 @@ class ClientAddressesScreen extends StatelessWidget {
         foregroundColor: theme.colorScheme.onPrimary,
         iconTheme: IconThemeData(color: theme.colorScheme.onPrimary),
       ),
-      body: ListView(
-        padding: const EdgeInsets.all(16),
-        children: [
-          _buildAddressCard(
-            context: context,
-            icon: Icons.home,
-            label: 'Casa',
-            address: 'Av. Providencia 1234, Depto 402',
-            isDefault: true,
-          ),
-          _buildAddressCard(
-            context: context,
-            icon: Icons.work,
-            label: 'Oficina',
-            address: 'Cerro El Plomo 5630, Las Condes',
-            isDefault: false,
-          ),
-          _buildAddressCard(
-            context: context,
-            icon: Icons.favorite,
-            label: 'Casa de Mamá',
-            address: 'Irarrázaval 3500, Ñuñoa',
-            isDefault: false,
-          ),
-          const SizedBox(height: 20),
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton.icon(
-              onPressed: () => _showAddAddressDialog(context),
-              icon: const Icon(Icons.add_location_alt),
-              label: Text(
-                'Agregar Nueva Dirección',
-                style: theme.textTheme.labelLarge?.copyWith(fontWeight: FontWeight.bold, color: theme.colorScheme.onPrimary),
-              ),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: theme.colorScheme.primary,
-                foregroundColor: theme.colorScheme.onPrimary,
-                padding: const EdgeInsets.symmetric(vertical: 16),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
+      body: StreamBuilder<List<Map<String, dynamic>>>(
+        stream: clientService.getAddresses(),
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator());
+          }
+          
+          final addresses = snapshot.data ?? [];
+
+          return ListView(
+            padding: const EdgeInsets.all(16),
+            children: [
+              if (addresses.isEmpty)
+                Center(
+                  child: Padding(
+                    padding: const EdgeInsets.all(20.0),
+                    child: Text(
+                      'No tienes direcciones guardadas.',
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        color: theme.colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                  ),
                 ),
-                elevation: 2,
+              ...addresses.map((addr) => _buildAddressCard(
+                context: context,
+                icon: Icons.location_on,
+                label: addr['label'] ?? 'Dirección',
+                address: addr['address'] ?? '',
+                isDefault: addr['isDefault'] ?? false,
+                id: addr['id'],
+                onDelete: () => clientService.deleteAddress(addr['id']),
+              )),
+              const SizedBox(height: 20),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton.icon(
+                  onPressed: () => _showAddAddressDialog(context, clientService),
+                  icon: const Icon(Icons.add_location_alt),
+                  label: Text(
+                    'Agregar Nueva Dirección',
+                    style: theme.textTheme.labelLarge?.copyWith(fontWeight: FontWeight.bold, color: theme.colorScheme.onPrimary),
+                  ),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: theme.colorScheme.primary,
+                    foregroundColor: theme.colorScheme.onPrimary,
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    elevation: 2,
+                  ),
+                ),
               ),
-            ),
-          ),
-        ],
+            ],
+          );
+        },
       ),
     );
   }
 
-  void _showAddAddressDialog(BuildContext context) {
+  void _showAddAddressDialog(BuildContext context, ClientService clientService) {
     final theme = Theme.of(context);
+    final labelController = TextEditingController();
+    final addressController = TextEditingController();
+
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -79,6 +96,7 @@ class ClientAddressesScreen extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             TextField(
+              controller: labelController,
               decoration: InputDecoration(
                 labelText: 'Nombre (ej. Casa, Trabajo)',
                 border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
@@ -90,6 +108,7 @@ class ClientAddressesScreen extends StatelessWidget {
             ),
             const SizedBox(height: 12),
             TextField(
+              controller: addressController,
               decoration: InputDecoration(
                 labelText: 'Dirección',
                 border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
@@ -107,7 +126,16 @@ class ClientAddressesScreen extends StatelessWidget {
             child: Text('Cancelar', style: theme.textTheme.labelLarge?.copyWith(color: theme.colorScheme.onSurfaceVariant)),
           ),
           ElevatedButton(
-            onPressed: () => Navigator.pop(context),
+            onPressed: () {
+              if (labelController.text.isNotEmpty && addressController.text.isNotEmpty) {
+                clientService.addAddress({
+                  'label': labelController.text,
+                  'address': addressController.text,
+                  'isDefault': false, // Default logic can be added later
+                });
+                Navigator.pop(context);
+              }
+            },
             style: ElevatedButton.styleFrom(
               backgroundColor: theme.colorScheme.primary,
               foregroundColor: theme.colorScheme.onPrimary,
@@ -125,6 +153,8 @@ class ClientAddressesScreen extends StatelessWidget {
     required String label,
     required String address,
     required bool isDefault,
+    required String id,
+    required VoidCallback onDelete,
   }) {
     final theme = Theme.of(context);
     return Container(
@@ -206,7 +236,9 @@ class ClientAddressesScreen extends StatelessWidget {
           PopupMenuButton<String>(
             icon: Icon(Icons.more_vert, color: theme.colorScheme.onSurfaceVariant),
             onSelected: (value) {
-              // Handle actions
+              if (value == 'delete') {
+                onDelete();
+              }
             },
             itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
               PopupMenuItem<String>(

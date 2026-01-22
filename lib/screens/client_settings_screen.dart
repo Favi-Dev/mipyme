@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import '../services/client_service.dart';
 import 'login_screen.dart';
 
 class ClientSettingsScreen extends StatefulWidget {
@@ -10,8 +11,7 @@ class ClientSettingsScreen extends StatefulWidget {
 }
 
 class _ClientSettingsScreenState extends State<ClientSettingsScreen> {
-  bool _notifications = true;
-  bool _darkMode = false;
+  final ClientService _clientService = ClientService();
 
   @override
   Widget build(BuildContext context) {
@@ -23,42 +23,61 @@ class _ClientSettingsScreenState extends State<ClientSettingsScreen> {
         backgroundColor: const Color(0xFFF4F1EA),
         foregroundColor: const Color(0xFF2F3F2A),
       ),
-      body: ListView(
-        padding: const EdgeInsets.all(16),
-        children: [
-          _buildSectionTitle('General'),
-          _buildSwitchTile('Notificaciones', 'Recibir alertas de ofertas y pedidos', _notifications, (val) => setState(() => _notifications = val)),
-          _buildSwitchTile('Modo Oscuro', 'Cambiar la apariencia de la app', _darkMode, (val) => setState(() => _darkMode = val)),
-          
-          const SizedBox(height: 24),
-          _buildSectionTitle('Cuenta'),
-          _buildActionTile('Editar Perfil', Icons.person_outline, () {}),
-          _buildActionTile('Cambiar Contraseña', Icons.lock_outline, () {}),
-          _buildActionTile('Privacidad y Seguridad', Icons.security, () {}),
+      body: StreamBuilder<Map<String, dynamic>>(
+        stream: _clientService.getSettings(),
+        builder: (context, snapshot) {
+          final settings = snapshot.data ?? {};
+          final notifications = settings['notifications'] ?? true;
+          final darkMode = settings['darkMode'] ?? false;
 
-          const SizedBox(height: 40),
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton(
-              onPressed: () {
-                 Navigator.pushAndRemoveUntil(
-                  context,
-                  MaterialPageRoute(builder: (context) => const LoginScreen()),
-                  (route) => false,
-                );
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFFFFFFFF),
-                foregroundColor: const Color(0xFF2F3F2A),
-                elevation: 0,
-                side: const BorderSide(color: Color(0xFF2F3F2A)),
-                padding: const EdgeInsets.symmetric(vertical: 16),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          return ListView(
+            padding: const EdgeInsets.all(16),
+            children: [
+              _buildSectionTitle('General'),
+              _buildSwitchTile(
+                'Notificaciones', 
+                'Recibir alertas de ofertas y pedidos', 
+                notifications, 
+                (val) => _clientService.updateSetting('notifications', val)
               ),
-              child: Text('Cerrar Sesión', style: GoogleFonts.poppins(fontWeight: FontWeight.bold)),
-            ),
-          ),
-        ],
+              _buildSwitchTile(
+                'Modo Oscuro', 
+                'Cambiar la apariencia de la app', 
+                darkMode, 
+                (val) => _clientService.updateSetting('darkMode', val)
+              ),
+              
+              const SizedBox(height: 24),
+              _buildSectionTitle('Cuenta'),
+              _buildActionTile('Editar Perfil', Icons.person_outline, () {}),
+              _buildActionTile('Cambiar Contraseña', Icons.lock_outline, () {}),
+              _buildActionTile('Privacidad y Seguridad', Icons.security, () {}),
+
+              const SizedBox(height: 40),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: () {
+                     Navigator.pushAndRemoveUntil(
+                      context,
+                      MaterialPageRoute(builder: (context) => const LoginScreen()),
+                      (route) => false,
+                    );
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFFFFFFFF),
+                    foregroundColor: const Color(0xFF2F3F2A),
+                    elevation: 0,
+                    side: const BorderSide(color: Color(0xFF2F3F2A)),
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  ),
+                  child: Text('Cerrar Sesión', style: GoogleFonts.poppins(fontWeight: FontWeight.bold)),
+                ),
+              ),
+            ],
+          );
+        },
       ),
     );
   }

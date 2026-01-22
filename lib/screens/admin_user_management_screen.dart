@@ -1,8 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:intl/intl.dart';
+import '../services/admin_service.dart';
 
-class AdminUserManagementScreen extends StatelessWidget {
+class AdminUserManagementScreen extends StatefulWidget {
   const AdminUserManagementScreen({super.key});
+
+  @override
+  State<AdminUserManagementScreen> createState() => _AdminUserManagementScreenState();
+}
+
+class _AdminUserManagementScreenState extends State<AdminUserManagementScreen> {
+  final AdminService _adminService = AdminService();
+  final TextEditingController _searchController = TextEditingController();
+  String _searchQuery = '';
 
   @override
   Widget build(BuildContext context) {
@@ -26,6 +38,8 @@ class AdminUserManagementScreen extends StatelessWidget {
           Padding(
             padding: const EdgeInsets.all(16.0),
             child: TextField(
+              controller: _searchController,
+              onChanged: (value) => setState(() => _searchQuery = value),
               style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.onSurface),
               decoration: InputDecoration(
                 hintText: 'Buscar usuario...',
@@ -49,10 +63,31 @@ class AdminUserManagementScreen extends StatelessWidget {
             ),
           ),
           Expanded(
-            child: ListView.builder(
-              itemCount: 10,
-              itemBuilder: (context, index) {
-                return _buildUserTile(context, index);
+            child: StreamBuilder<List<Map<String, dynamic>>>(
+              stream: _adminService.getClients(),
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const Center(child: CircularProgressIndicator());
+                }
+                
+                final users = snapshot.data ?? [];
+                final filteredUsers = users.where((u) {
+                  final name = (u['name'] ?? '').toString().toLowerCase();
+                  final email = (u['email'] ?? '').toString().toLowerCase();
+                  final query = _searchQuery.toLowerCase();
+                  return name.contains(query) || email.contains(query);
+                }).toList();
+
+                if (filteredUsers.isEmpty) {
+                  return const Center(child: Text('No se encontraron usuarios'));
+                }
+
+                return ListView.builder(
+                  itemCount: filteredUsers.length,
+                  itemBuilder: (context, index) {
+                    return _buildUserTile(context, filteredUsers[index]);
+                  },
+                );
               },
             ),
           ),
@@ -61,8 +96,13 @@ class AdminUserManagementScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildUserTile(BuildContext context, int index) {
+  Widget _buildUserTile(BuildContext context, Map<String, dynamic> user) {
     final theme = Theme.of(context);
+    final userId = user['id'];
+    final name = user['name'] ?? 'Sin Nombre';
+    final email = user['email'] ?? 'Sin Email';
+    final isSuspended = user['isSuspended'] == true;
+
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       decoration: BoxDecoration(
@@ -78,26 +118,37 @@ class AdminUserManagementScreen extends StatelessWidget {
       ),
       child: ListTile(
         leading: CircleAvatar(
-          backgroundColor: theme.colorScheme.secondary,
+          backgroundColor: isSuspended ? theme.colorScheme.error : theme.colorScheme.secondary,
           child: Text(
-            'U${index + 1}',
+            name.substring(0, 1).toUpperCase(),
             style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.onSecondary),
           ),
         ),
         title: Text(
-          'Usuario ${index + 1}',
-          style: theme.textTheme.titleMedium?.copyWith(color: theme.colorScheme.onSurface),
+          name,
+          style: theme.textTheme.titleMedium?.copyWith(
+            color: theme.colorScheme.onSurface,
+            decoration: isSuspended ? TextDecoration.lineThrough : null,
+          ),
         ),
         subtitle: Text(
-          'usuario${index + 1}@email.com',
+          email,
           style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurfaceVariant),
         ),
         trailing: PopupMenuButton(
           icon: Icon(Icons.more_vert, color: theme.colorScheme.onSurfaceVariant),
+          onSelected: (value) async {
+            if (value == 'ban') {
+              _toggleSuspension(context, userId, !isSuspended);
+            } else if (value == 'details') {
+              // Show details (could use a simple dialog)
+              _showUserDetails(context, user);
+            }
+          },
           itemBuilder: (context) => [
             PopupMenuItem(
               value: 'ban',
-              child: Text('Suspender Cuenta', style: theme.textTheme.bodyMedium),
+              child: Text(isSuspended ? 'Activar Cuenta' : 'Suspender Cuenta', style: theme.textTheme.bodyMedium),
             ),
             PopupMenuItem(
               value: 'details',
@@ -105,6 +156,54 @@ class AdminUserManagementScreen extends StatelessWidget {
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  void _toggleSuspension(BuildContext context, String userId, bool suspend) async {
+    try {
+      await _adminService.suspendUser(userId, suspend);
+      if (context.mounted) {
+         ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(suspend ? 'Usuario suspendido' : 'Usuario activado')),
+        );
+      }
+    } catch (e) {
+      if (context.mounted) {
+         ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error: $e')),
+        );
+      }
+    }
+  }
+
+  void _showUserDetails(BuildContext context, Map<String, dynamic> user) {
+     String dateStr = 'N/A';
+     if (user['createdAt'] != null) {
+       if (user['createdAt'] is Timestamp) {
+         dateStr = DateFormat('dd/MM/yyyy HH:mm').format((user['createdAt'] as Timestamp).toDate());
+       } else if (user['createdAt'] is DateTime) {
+         dateStr = DateFormat('dd/MM/yyyy HH:mm').format(user['createdAt']);
+       }
+     }
+
+     showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(user['name'] ?? 'Detalles'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('Email: ${user['email']}'),
+            Text('Rol: ${user['role']}'),
+            Text('Creado: $dateStr'),
+            Text('Estado: ${user['isSuspended'] == true ? 'Suspendido' : 'Activo'}'),
+          ],
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cerrar')),
+        ],
       ),
     );
   }

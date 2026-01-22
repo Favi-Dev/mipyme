@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import '../models/reservation.dart';
 
 class ReservationService extends ChangeNotifier {
@@ -6,60 +7,69 @@ class ReservationService extends ChangeNotifier {
   factory ReservationService() => _instance;
   ReservationService._internal();
 
-  final List<Reservation> _reservations = [];
+  final CollectionReference _reservationsCollection =
+      FirebaseFirestore.instance.collection('reservations');
 
-  // Mock checking availability
-  bool isSlotAvailable(String productId, DateTime time) {
-    return !_reservations.any((r) => 
-      r.productId == productId && 
-      r.status != 'cancelled' &&
-      r.scheduledTime.year == time.year &&
-      r.scheduledTime.month == time.month &&
-      r.scheduledTime.day == time.day &&
-      r.scheduledTime.hour == time.hour &&
-      r.scheduledTime.minute == time.minute
-    );
+  // Check availability (Real implementation)
+  Future<bool> isSlotAvailable(String productId, DateTime time) async {
+    // Simple check: is there any confirmed reservation for this product at this time?
+    // Note: This requires exact time matching. In a real app, you might check ranges.
+    final snapshot = await _reservationsCollection
+        .where('productId', isEqualTo: productId)
+        .where('status', isEqualTo: 'confirmed')
+        .where('scheduledTime', isEqualTo: Timestamp.fromDate(time))
+        .get();
+    
+    return snapshot.docs.isEmpty;
   }
 
-  void bookSlot(String pymeId, String productId, String userId, DateTime time) {
-    if (!isSlotAvailable(productId, time)) {
+  Future<void> bookSlot(String pymeId, String productId, String userId, DateTime time) async {
+    if (!await isSlotAvailable(productId, time)) {
       throw Exception('Este horario ya ha sido reservado por otro usuario.');
     }
-    _reservations.add(Reservation(
-      id: DateTime.now().millisecondsSinceEpoch.toString(),
+    
+    final reservation = Reservation(
+      id: '', // Firestore will generate ID
       pymeId: pymeId,
       productId: productId,
       userId: userId,
       scheduledTime: time,
-      status: 'confirmed', 
-    ));
+      status: 'confirmed',
+    );
+
+    await _reservationsCollection.add(reservation.toMap());
     notifyListeners();
   }
 
-  void cancelReservation(String productId, DateTime time) {
-     final index = _reservations.indexWhere((r) => 
-      r.productId == productId && 
-      r.scheduledTime.year == time.year &&
-      r.scheduledTime.month == time.month &&
-      r.scheduledTime.day == time.day &&
-      r.scheduledTime.hour == time.hour &&
-      r.scheduledTime.minute == time.minute
-    );
-    if (index != -1) {
-      _reservations.removeAt(index); 
-      notifyListeners();
+  Future<void> cancelReservation(String productId, DateTime time) async {
+    // Find the reservation to cancel
+    final snapshot = await _reservationsCollection
+        .where('productId', isEqualTo: productId)
+        .where('scheduledTime', isEqualTo: Timestamp.fromDate(time))
+        .get();
+
+    for (var doc in snapshot.docs) {
+      await doc.reference.delete(); // Or update status to 'cancelled'
     }
+    notifyListeners();
   }
   
-  List<DateTime> getTakenSlots(String productId, DateTime date) {
-    return _reservations
-      .where((r) => 
-        r.productId == productId && 
-        r.status != 'cancelled' &&
-        r.scheduledTime.year == date.year &&
-        r.scheduledTime.month == date.month &&
-        r.scheduledTime.day == date.day)
-      .map((r) => r.scheduledTime)
-      .toList();
+  Stream<List<DateTime>> getTakenSlots(String productId, DateTime date) {
+    // Define start and end of the day
+    final startOfDay = DateTime(date.year, date.month, date.day);
+    final endOfDay = startOfDay.add(const Duration(days: 1));
+
+    return _reservationsCollection
+        .where('productId', isEqualTo: productId)
+        .where('status', isEqualTo: 'confirmed')
+        .where('scheduledTime', isGreaterThanOrEqualTo: Timestamp.fromDate(startOfDay))
+        .where('scheduledTime', isLessThan: Timestamp.fromDate(endOfDay))
+        .snapshots()
+        .map((snapshot) {
+          return snapshot.docs.map((doc) {
+            final data = doc.data() as Map<String, dynamic>;
+            return (data['scheduledTime'] as Timestamp).toDate();
+          }).toList();
+        });
   }
 }

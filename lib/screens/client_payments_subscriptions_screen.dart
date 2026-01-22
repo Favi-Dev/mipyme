@@ -1,7 +1,32 @@
 import 'package:flutter/material.dart';
+import '../services/client_service.dart';
 
-class ClientPaymentsSubscriptionsScreen extends StatelessWidget {
+class ClientPaymentsSubscriptionsScreen extends StatefulWidget {
   const ClientPaymentsSubscriptionsScreen({super.key});
+
+  @override
+  State<ClientPaymentsSubscriptionsScreen> createState() => _ClientPaymentsSubscriptionsScreenState();
+}
+
+class _ClientPaymentsSubscriptionsScreenState extends State<ClientPaymentsSubscriptionsScreen> {
+  final ClientService _clientService = ClientService();
+  bool _isLoading = false;
+
+  Future<void> _handleSubscribe() async {
+    setState(() => _isLoading = true);
+    
+    // Simulate payment delay
+    await Future.delayed(const Duration(seconds: 2));
+    
+    await _clientService.subscribe();
+    
+    if (mounted) {
+      setState(() => _isLoading = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('¡Suscripción activada exitosamente!')),
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -47,13 +72,8 @@ class ClientPaymentsSubscriptionsScreen extends StatelessWidget {
 
   Widget _buildPaymentHistory(BuildContext context) {
     final theme = Theme.of(context);
+    // Mock history
     final payments = [
-      {
-        'title': 'Suscripción Mensual App',
-        'date': '12 Dic 2025',
-        'amount': '\$5.990',
-        'status': 'Completado'
-      },
       {
         'title': 'Donación Fundación Los Robles',
         'date': '10 Dic 2025',
@@ -64,12 +84,6 @@ class ClientPaymentsSubscriptionsScreen extends StatelessWidget {
         'title': 'Compra en Café Eclipse',
         'date': '05 Dic 2025',
         'amount': '\$12.500',
-        'status': 'Completado'
-      },
-      {
-        'title': 'Suscripción Mensual App',
-        'date': '12 Nov 2025',
-        'amount': '\$5.990',
         'status': 'Completado'
       },
     ];
@@ -150,29 +164,63 @@ class ClientPaymentsSubscriptionsScreen extends StatelessWidget {
 
   Widget _buildSubscriptions(BuildContext context) {
     final theme = Theme.of(context);
-    return ListView(
-      padding: const EdgeInsets.all(16),
-      children: [
-        _buildSubscriptionCard(
-          context: context,
-          title: 'Plan Premium App',
-          price: '\$5.990/mes',
-          nextBilling: 'Próximo cobro: 12 Ene 2026',
-          isActive: true,
-          icon: Icons.star,
-          color: theme.colorScheme.primary,
-        ),
-        const SizedBox(height: 16),
-        _buildSubscriptionCard(
-          context: context,
-          title: 'Donación Fundación Los Robles',
-          price: '\$3.000/mes',
-          nextBilling: 'Próximo cobro: 10 Ene 2026',
-          isActive: true,
-          icon: Icons.volunteer_activism,
-          color: const Color(0xFF8B5A3C), // Keep specific brand color
-        ),
-      ],
+    return StreamBuilder<bool>(
+      stream: _clientService.getSubscriptionStatus(),
+      builder: (context, snapshot) {
+        final isSubscribed = snapshot.data ?? false;
+
+        return StreamBuilder<DateTime?>(
+          stream: _clientService.getSubscriptionDate(),
+          builder: (context, dateSnapshot) {
+            final subscriptionDate = dateSnapshot.data;
+            String nextBillingString = 'Sin suscripción activa';
+            
+            if (isSubscribed && subscriptionDate != null) {
+               final now = DateTime.now();
+               DateTime nextDate = subscriptionDate;
+               
+               // Find next billing date (must be in the future)
+               while (!nextDate.isAfter(now)) {
+                  nextDate = DateTime(nextDate.year, nextDate.month + 1, nextDate.day);
+               }
+               
+               final months = [
+                 'Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 
+                 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'
+               ];
+               
+               nextBillingString = 'Próximo cobro: ${nextDate.day} ${months[nextDate.month - 1]} ${nextDate.year}';
+            }
+
+            return ListView(
+              padding: const EdgeInsets.all(16),
+              children: [
+                _buildSubscriptionCard(
+                  context: context,
+                  title: 'Suscripción Usuario',
+                  price: '\$2.000/mes',
+                  nextBilling: nextBillingString,
+                  isActive: isSubscribed,
+                  icon: Icons.star,
+                  color: theme.colorScheme.primary,
+                  onAction: isSubscribed ? null : _handleSubscribe,
+                ),
+                const SizedBox(height: 16),
+                _buildSubscriptionCard(
+                  context: context,
+                  title: 'Donación Fundación Los Robles',
+                  price: '\$3.000/mes',
+                  nextBilling: 'Próximo cobro: 10 Ene 2026',
+                  isActive: true,
+                  icon: Icons.volunteer_activism,
+                  color: const Color(0xFF8B5A3C),
+                  onAction: null,
+                ),
+              ],
+            );
+          }
+        );
+      }
     );
   }
 
@@ -184,6 +232,7 @@ class ClientPaymentsSubscriptionsScreen extends StatelessWidget {
     required bool isActive,
     required IconData icon,
     required Color color,
+    VoidCallback? onAction,
   }) {
     final theme = Theme.of(context);
     return Container(
@@ -263,21 +312,40 @@ class ClientPaymentsSubscriptionsScreen extends StatelessWidget {
                   color: theme.colorScheme.onSurfaceVariant,
                 ),
               ),
-              TextButton(
-                onPressed: () {},
-                style: TextButton.styleFrom(
-                  padding: EdgeInsets.zero,
-                  minimumSize: const Size(0, 0),
-                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                ),
-                child: Text(
-                  'Administrar',
-                  style: theme.textTheme.labelLarge?.copyWith(
-                    color: theme.colorScheme.primary,
-                    fontWeight: FontWeight.w600,
+              if (!isActive && onAction != null)
+                _isLoading 
+                  ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2))
+                  : TextButton(
+                      onPressed: onAction,
+                      style: TextButton.styleFrom(
+                        padding: EdgeInsets.zero,
+                        minimumSize: const Size(0, 0),
+                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                      ),
+                      child: Text(
+                        'Suscribirse',
+                        style: theme.textTheme.labelLarge?.copyWith(
+                          color: theme.colorScheme.primary,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+              if (isActive)
+                 TextButton(
+                  onPressed: () {},
+                  style: TextButton.styleFrom(
+                    padding: EdgeInsets.zero,
+                    minimumSize: const Size(0, 0),
+                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  ),
+                  child: Text(
+                    'Administrar',
+                    style: theme.textTheme.labelLarge?.copyWith(
+                      color: theme.colorScheme.primary,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
                 ),
-              ),
             ],
           ),
         ],

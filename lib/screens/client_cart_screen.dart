@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../services/cart_service.dart';
 import '../models/cart_item.dart';
+import 'simple_scanner_screen.dart';
 
 class ClientCartScreen extends StatefulWidget {
   const ClientCartScreen({super.key});
@@ -14,6 +15,7 @@ class _ClientCartScreenState extends State<ClientCartScreen> {
   void _showCouponDialog(CartService cartService) {
     final theme = Theme.of(context);
     final TextEditingController controller = TextEditingController();
+    
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -23,8 +25,27 @@ class _ClientCartScreenState extends State<ClientCartScreen> {
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text('Simulación de escaneo de QR.',
+            Text('Escanea el código QR o ingrésalo manualmente.',
                 style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.onSurfaceVariant)),
+            const SizedBox(height: 16),
+            ElevatedButton.icon(
+              onPressed: () async {
+                final code = await Navigator.push<String>(
+                  context,
+                  MaterialPageRoute(builder: (context) => const SimpleScannerScreen()),
+                );
+                if (code != null) {
+                  controller.text = code;
+                }
+              },
+              icon: const Icon(Icons.qr_code_scanner),
+              label: const Text('Escanear QR'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: theme.colorScheme.secondaryContainer,
+                foregroundColor: theme.colorScheme.onSecondaryContainer,
+                minimumSize: const Size(double.infinity, 48),
+              ),
+            ),
             const SizedBox(height: 16),
             TextField(
               controller: controller,
@@ -405,10 +426,14 @@ class _ClientCartScreenState extends State<ClientCartScreen> {
                         builder: (context) => Center(child: CircularProgressIndicator(color: theme.colorScheme.primary)),
                       );
 
-                      Future.delayed(const Duration(seconds: 2), () {
+                      Future.delayed(const Duration(seconds: 2), () async {
+                        if (!context.mounted) return;
+                        
+                        await cartService.checkout();
+                        
                         if (!context.mounted) return;
                         Navigator.pop(context); // Close loader
-                        cartService.checkout();
+                        
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(
                             content: Text('¡Pago exitoso! Tu reserva ha sido confirmada.',

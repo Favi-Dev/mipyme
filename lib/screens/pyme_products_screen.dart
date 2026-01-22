@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import '../services/product_service.dart';
 import '../models/product.dart';
 import '../models/vitrina_data.dart';
 import 'pyme_add_product_screen.dart';
 
 class PymeProductsScreen extends StatefulWidget {
-  const PymeProductsScreen({super.key});
+  final String? pymeId; // Optional: For admin use
+  const PymeProductsScreen({super.key, this.pymeId});
 
   @override
   State<PymeProductsScreen> createState() => _PymeProductsScreenState();
@@ -14,19 +16,8 @@ class PymeProductsScreen extends StatefulWidget {
 
 class _PymeProductsScreenState extends State<PymeProductsScreen> {
   final ProductService _productService = ProductService();
-  List<Product> _products = [];
 
-  @override
-  void initState() {
-    super.initState();
-    _loadProducts();
-  }
-
-  void _loadProducts() {
-    setState(() {
-      _products = _productService.getProductsByPyme('pyme1');
-    });
-  }
+  String get _targetPymeId => widget.pymeId ?? FirebaseAuth.instance.currentUser?.uid ?? '';
 
   @override
   Widget build(BuildContext context) {
@@ -41,8 +32,20 @@ class _PymeProductsScreenState extends State<PymeProductsScreen> {
         backgroundColor: const Color(0xFF2F3F2A),
         foregroundColor: const Color(0xFFF4F1EA),
       ),
-      body: _products.isEmpty
-          ? Center(
+      body: StreamBuilder<List<Product>>(
+        stream: _productService.getProductsByPyme(_targetPymeId),
+        builder: (context, snapshot) {
+          if (snapshot.hasError) {
+            return Center(child: Text('Error: ${snapshot.error}'));
+          }
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator());
+          }
+
+          final products = snapshot.data ?? [];
+
+          if (products.isEmpty) {
+            return Center(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
@@ -58,15 +61,19 @@ class _PymeProductsScreenState extends State<PymeProductsScreen> {
                   ),
                 ],
               ),
-            )
-          : ListView.builder(
-              padding: const EdgeInsets.all(16),
-              itemCount: _products.length,
-              itemBuilder: (context, index) {
-                final product = _products[index];
-                return _buildProductCard(product);
-              },
-            ),
+            );
+          }
+
+          return ListView.builder(
+            padding: const EdgeInsets.all(16),
+            itemCount: products.length,
+            itemBuilder: (context, index) {
+              final product = products[index];
+              return _buildProductCard(product);
+            },
+          );
+        },
+      ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () async {
           if (VitrinaData.isFoundation) {
@@ -74,9 +81,11 @@ class _PymeProductsScreenState extends State<PymeProductsScreen> {
             await Navigator.push(
               context,
               MaterialPageRoute(
-                  builder: (context) => const PymeAddProductScreen(isService: false)),
+                  builder: (context) => PymeAddProductScreen(
+                    isService: false,
+                    pymeId: _targetPymeId,
+                  )),
             );
-            _loadProducts();
           } else {
             // Regular Pymes can choose between Product and Service
             final bool? isService = await showDialog<bool>(
@@ -109,9 +118,11 @@ class _PymeProductsScreenState extends State<PymeProductsScreen> {
               await Navigator.push(
                 context,
                 MaterialPageRoute(
-                    builder: (context) => PymeAddProductScreen(isService: isService)),
+                    builder: (context) => PymeAddProductScreen(
+                      isService: isService,
+                      pymeId: _targetPymeId,
+                    )),
               );
-              _loadProducts();
             }
           }
         },
@@ -143,8 +154,15 @@ class _PymeProductsScreenState extends State<PymeProductsScreen> {
       child: Material(
         color: Colors.transparent,
         child: InkWell(
-          onTap: () {
-            // TODO: Navigate to edit screen
+          onTap: () async {
+            await Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => PymeAddProductScreen(
+                  product: product, 
+                  isService: product.isService,
+                  pymeId: _targetPymeId,
+                )),
+            );
           },
           borderRadius: BorderRadius.circular(16),
           child: Padding(
@@ -205,9 +223,19 @@ class _PymeProductsScreenState extends State<PymeProductsScreen> {
                                       ListTile(
                                         leading: const Icon(Icons.edit, color: Color(0xFF6F8F5E)),
                                         title: Text('Editar', style: GoogleFonts.poppins(color: const Color(0xFF2F3F2A))),
-                                        onTap: () {
+                                        onTap: () async {
                                           Navigator.pop(context);
-                                          // TODO: Navigate to edit screen
+                                          // Navigate to edit screen with product
+                                          await Navigator.push(
+                                            context,
+                                            MaterialPageRoute(
+                                              builder: (context) => PymeAddProductScreen(
+                                                isService: product.category == 'Servicio',
+                                                product: product,
+                                                pymeId: _targetPymeId,
+                                              ),
+                                            ),
+                                          );
                                         },
                                       ),
                                       ListTile(

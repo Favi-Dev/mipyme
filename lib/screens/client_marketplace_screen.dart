@@ -14,38 +14,13 @@ class ClientMarketplaceScreen extends StatefulWidget {
 class _ClientMarketplaceScreenState extends State<ClientMarketplaceScreen> {
   final ProductService _productService = ProductService();
   
-  List<Product> _allProducts = [];
-  List<Product> _filteredProducts = [];
-  List<String> _categories = [];
   String? _selectedCategory;
   String _searchQuery = '';
 
   @override
-  void initState() {
-    super.initState();
-    _loadData();
-  }
-
-  void _loadData() {
-    setState(() {
-      _allProducts = _productService.getProducts();
-      _categories = _productService.getCategories();
-      _filterProducts();
-    });
-  }
-
-  void _filterProducts() {
-    setState(() {
-      _filteredProducts = _allProducts.where((product) {
-        final matchesCategory = _selectedCategory == null || product.category == _selectedCategory;
-        final matchesSearch = product.name.toLowerCase().contains(_searchQuery.toLowerCase());
-        return matchesCategory && matchesSearch;
-      }).toList();
-    });
-  }
-
-  @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    
     return Scaffold(
       appBar: AppBar(
         title: const Text('Mercado SoyPlus'),
@@ -63,11 +38,12 @@ class _ClientMarketplaceScreenState extends State<ClientMarketplaceScreen> {
                   borderRadius: BorderRadius.circular(12),
                 ),
                 filled: true,
-                fillColor: const Color(0xFFF4F1EA),
+                fillColor: theme.colorScheme.surfaceContainerHighest.withOpacity(0.3),
               ),
               onChanged: (value) {
-                _searchQuery = value;
-                _filterProducts();
+                setState(() {
+                  _searchQuery = value;
+                });
               },
             ),
           ),
@@ -84,12 +60,11 @@ class _ClientMarketplaceScreenState extends State<ClientMarketplaceScreen> {
                   onSelected: (selected) {
                     setState(() {
                       _selectedCategory = null;
-                      _filterProducts();
                     });
                   },
                 ),
                 const SizedBox(width: 8),
-                ..._categories.map((category) {
+                ...ProductService.categories.map((category) {
                   return Padding(
                     padding: const EdgeInsets.only(right: 8.0),
                     child: FilterChip(
@@ -98,7 +73,6 @@ class _ClientMarketplaceScreenState extends State<ClientMarketplaceScreen> {
                       onSelected: (selected) {
                         setState(() {
                           _selectedCategory = selected ? category : null;
-                          _filterProducts();
                         });
                       },
                     ),
@@ -111,18 +85,56 @@ class _ClientMarketplaceScreenState extends State<ClientMarketplaceScreen> {
 
           // Product Grid
           Expanded(
-            child: GridView.builder(
-              padding: const EdgeInsets.all(16),
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 2,
-                childAspectRatio: 0.75,
-                crossAxisSpacing: 16,
-                mainAxisSpacing: 16,
-              ),
-              itemCount: _filteredProducts.length,
-              itemBuilder: (context, index) {
-                final product = _filteredProducts[index];
-                return _buildProductCard(product);
+            child: StreamBuilder<List<Product>>(
+              stream: _productService.getProducts(),
+              builder: (context, snapshot) {
+                if (snapshot.hasError) {
+                  return Center(child: Text('Error: ${snapshot.error}'));
+                }
+                
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const Center(child: CircularProgressIndicator());
+                }
+
+                final allProducts = snapshot.data ?? [];
+                
+                // Filter products
+                final filteredProducts = allProducts.where((product) {
+                  final matchesCategory = _selectedCategory == null || product.category == _selectedCategory;
+                  final matchesSearch = product.name.toLowerCase().contains(_searchQuery.toLowerCase());
+                  return matchesCategory && matchesSearch;
+                }).toList();
+
+                if (filteredProducts.isEmpty) {
+                  return Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(Icons.search_off, size: 64, color: theme.colorScheme.outline),
+                        const SizedBox(height: 16),
+                        Text(
+                          'No se encontraron productos',
+                          style: theme.textTheme.bodyLarge?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+                        ),
+                      ],
+                    ),
+                  );
+                }
+
+                return GridView.builder(
+                  padding: const EdgeInsets.all(16),
+                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 2,
+                    childAspectRatio: 0.75,
+                    crossAxisSpacing: 16,
+                    mainAxisSpacing: 16,
+                  ),
+                  itemCount: filteredProducts.length,
+                  itemBuilder: (context, index) {
+                    final product = filteredProducts[index];
+                    return _buildProductCard(product, theme);
+                  },
+                );
               },
             ),
           ),
@@ -131,10 +143,11 @@ class _ClientMarketplaceScreenState extends State<ClientMarketplaceScreen> {
     );
   }
 
-  Widget _buildProductCard(Product product) {
+  Widget _buildProductCard(Product product, ThemeData theme) {
     return Card(
       clipBehavior: Clip.antiAlias,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      elevation: 2,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -144,8 +157,10 @@ class _ClientMarketplaceScreenState extends State<ClientMarketplaceScreen> {
               width: double.infinity,
               fit: BoxFit.cover,
               errorBuilder: (_, __, ___) => Container(
-                color: const Color(0xFF2F3F2A).withOpacity(0.1),
-                child: const Center(child: Icon(Icons.image_not_supported)),
+                color: theme.colorScheme.surfaceContainerHighest,
+                child: Center(
+                  child: Icon(Icons.image_not_supported, color: theme.colorScheme.onSurfaceVariant),
+                ),
               ),
             ),
           ),
@@ -156,22 +171,22 @@ class _ClientMarketplaceScreenState extends State<ClientMarketplaceScreen> {
               children: [
                 Text(
                   product.name,
-                  style: const TextStyle(fontWeight: FontWeight.bold),
+                  style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
                 Text(
                   '\$${product.price.toStringAsFixed(0)}',
-                  style: const TextStyle(
-                    color: Color(0xFF6F8F5E),
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    color: theme.colorScheme.primary,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
                 const SizedBox(height: 8),
                 SizedBox(
                   width: double.infinity,
-                  child: ElevatedButton(
-                    style: ElevatedButton.styleFrom(
+                  child: FilledButton.tonal(
+                    style: FilledButton.styleFrom(
                       padding: EdgeInsets.zero,
                       minimumSize: const Size(0, 36),
                     ),
@@ -179,9 +194,10 @@ class _ClientMarketplaceScreenState extends State<ClientMarketplaceScreen> {
                       try {
                         context.read<CartService>().addToCart(product);
                         ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('Agregado al carrito'),
-                            duration: Duration(seconds: 1),
+                          SnackBar(
+                            content: const Text('Agregado al carrito'),
+                            duration: const Duration(seconds: 1),
+                            backgroundColor: theme.colorScheme.secondary,
                           ),
                         );
                       } catch (e) {
