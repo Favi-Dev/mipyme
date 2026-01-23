@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../services/admin_service.dart';
-// Note: We'll likely need to refactor these screens to accept pymeId or create Admin versions
 import 'pyme_vitrina_settings_screen.dart'; 
 import 'pyme_products_screen.dart';
 import 'pyme_events_screen.dart';
@@ -107,7 +106,6 @@ class _AdminUserDetailScreenState extends State<AdminUserDetailScreen> {
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: const Color(0xFFF4F1EA), // Should be slightly darker/lighter or outlined? Screenshot has outline.
                 borderRadius: BorderRadius.circular(16),
                 border: Border.all(color: const Color(0xFF8B5A3C).withOpacity(0.3)),
                 boxShadow: const [
@@ -215,10 +213,8 @@ class _AdminUserDetailScreenState extends State<AdminUserDetailScreen> {
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
-        color: const Color(0xFFF0EFE9), // Slightly different bg for tiles
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.transparent), // Removing border to match flat look if needed
-        // Assuming tiles are elevated or lighter:
+        border: Border.all(color: Colors.transparent),
         color: Colors.white.withOpacity(0.5),
       ),
       child: ListTile(

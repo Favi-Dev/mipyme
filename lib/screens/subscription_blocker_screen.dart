@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'donation_screen.dart';
+import 'client_subscription_screen.dart';
 
 class SubscriptionBlockerScreen extends StatefulWidget {
   const SubscriptionBlockerScreen({super.key});
@@ -13,7 +13,7 @@ class _SubscriptionBlockerScreenState extends State<SubscriptionBlockerScreen> {
   void _goToDonation() {
     Navigator.of(context).push(
       MaterialPageRoute(
-        builder: (_) => const DonationScreen(isInitialRegistration: true),
+        builder: (_) => const ClientSubscriptionScreen(isInitialRegistration: true),
       ),
     );
   }

@@ -248,28 +248,6 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                 ),
               ),
-
-              const SizedBox(height: 20),
-              
-              // Dev Tool: Seeding Button
-              TextButton(
-                onPressed: () async {
-                  setState(() => _isLoading = true);
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Generando usuarios de prueba...')),
-                  );
-                  
-                  await SeedingService().seedUsers();
-                  
-                  if (mounted) {
-                    setState(() => _isLoading = false);
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Usuarios creados: admin@soyplus.cl, pyme@ejemplo.cl, fundacion@ejemplo.cl')),
-                    );
-                  }
-                },
-                child: const Text('Generar Datos de Prueba (Dev)', style: TextStyle(color: Colors.grey)),
-              ),
             ],
           ),
         ),
