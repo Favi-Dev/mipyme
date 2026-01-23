@@ -19,10 +19,10 @@ class _ClientSupportScreenState extends State<ClientSupportScreen> {
   bool _isSubmitting = false;
 
   final List<String> _issueTypes = [
-    'Account Access',
-    'Payment Issue',
-    'Bug Report',
-    'Other',
+    'Acceso a Cuenta',
+    'Problema de Pago',
+    'Reporte de Error',
+    'Otro',
   ];
 
   Future<void> _launchUrl(String urlString) async {
