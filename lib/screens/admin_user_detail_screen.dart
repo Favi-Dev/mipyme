@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:intl/intl.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import '../services/admin_service.dart';
 import 'pyme_vitrina_settings_screen.dart'; 
 import 'pyme_products_screen.dart';
@@ -54,6 +56,16 @@ class _AdminUserDetailScreenState extends State<AdminUserDetailScreen> {
     final role = user['role'];
     final isPymeOrFoundation = role == 'pyme' || role == 'foundation';
     final isClient = role == 'client';
+
+    String dateStr = 'N/A';
+    if (user['createdAt'] != null) {
+      if (user['createdAt'] is Timestamp) {
+        dateStr = DateFormat('dd/MM/yyyy HH:mm').format((user['createdAt'] as Timestamp).toDate());
+      } else if (user['createdAt'] is String) {
+        // Try parsing if string
+        dateStr = user['createdAt'];
+      }
+    }
 
     return Scaffold(
       backgroundColor: const Color(0xFFF4F1EA), // Match screenshot background
@@ -201,7 +213,7 @@ class _AdminUserDetailScreenState extends State<AdminUserDetailScreen> {
               const SizedBox(height: 16),
               _buildInfoTile(context, 'Rol', 'Cliente'),
               _buildInfoTile(context, 'ID', user['id']),
-              _buildInfoTile(context, 'Fecha Registro', user['createdAt'].toString()),
+              _buildInfoTile(context, 'Fecha Registro', dateStr),
             ],
           ],
         ),
