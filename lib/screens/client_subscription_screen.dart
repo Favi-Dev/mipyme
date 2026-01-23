@@ -55,7 +55,7 @@ class _ClientSubscriptionScreenState extends State<ClientSubscriptionScreen> {
         builder: (context) => AlertDialog(
           title: const Text('¡Suscripción Activada!'),
           content: const Text(
-            'Tu suscripción mensual ha sido procesada correctamente. Ahora tienes acceso a tu QR de descuento mensual.'
+            'Tu suscripción ha sido procesada. Recuerda que tu primer QR de descuento estará disponible un mes después de la fecha de suscripción (sistema desfasado).'
           ),
           actions: [
             TextButton(
@@ -170,7 +170,7 @@ class _ClientSubscriptionScreenState extends State<ClientSubscriptionScreen> {
                     const SizedBox(height: 24),
                     const Divider(),
                     const SizedBox(height: 16),
-                    _buildFeatureItem('Generación de QR de descuentos'),
+                    _buildFeatureItem('Generación de QR de descuentos (Disponible al mes siguiente del pago)'),
                     _buildFeatureItem('Acceso a red de Pymes asociadas'),
                     _buildFeatureItem('Beneficios exclusivos mes a mes'),
                   ],
