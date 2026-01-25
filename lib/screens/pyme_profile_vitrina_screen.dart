@@ -2,10 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../models/user_profile.dart';
-import '../models/offer_data.dart';
 import 'pyme_offers_management_screen.dart';
 import 'pyme_vitrina_settings_screen.dart';
 import '../services/product_service.dart';
+import '../services/pyme_service.dart';
 import '../models/product.dart';
 import 'pyme_products_screen.dart';
 import '../widgets/supporter_counter.dart';
@@ -21,6 +21,7 @@ class PymeProfileVitrinaScreen extends StatefulWidget {
 class _PymeProfileVitrinaScreenState extends State<PymeProfileVitrinaScreen> {
   final ScrollController _scrollController = ScrollController();
   final ProductService _productService = ProductService();
+  final PymeService _pymeService = PymeService();
   Stream<List<Product>>? _productsStream;
   Stream<DocumentSnapshot>? _userStream;
 
@@ -185,22 +186,42 @@ class _PymeProfileVitrinaScreenState extends State<PymeProfileVitrinaScreen> {
                         ],
                       ),
                       const SizedBox(height: 12),
-                      SingleChildScrollView(
-                        scrollDirection: Axis.horizontal,
-                        child: Row(
-                          children: OfferData.offers.map((offer) {
+                      StreamBuilder<List<Map<String, dynamic>>>(
+                        stream: _pymeService.getOffersByPyme(FirebaseAuth.instance.currentUser!.uid),
+                        builder: (context, snapshot) {
+                          if (snapshot.connectionState == ConnectionState.waiting) {
+                             return const Center(child: Padding(padding: EdgeInsets.all(8.0), child: CircularProgressIndicator()));
+                          }
+                          final offers = snapshot.data ?? [];
+                          if (offers.isEmpty) {
                             return Padding(
-                              padding: const EdgeInsets.only(right: 12),
-                              child: _buildOfferCard(
-                                icon: offer.icon,
-                                title: offer.title,
-                                description: offer.description,
-                                color: offer.color.withOpacity(0.2),
-                                iconColor: offer.color,
-                              ),
+                              padding: const EdgeInsets.symmetric(vertical: 8.0),
+                              child: Text('No hay ofertas creadas.', style: textTheme.bodyMedium?.copyWith(color: Colors.grey[600])),
                             );
-                          }).toList(),
-                        ),
+                          }
+                          return SingleChildScrollView(
+                            scrollDirection: Axis.horizontal,
+                            child: Row(
+                              children: offers.map((offer) {
+                                final iconData = offer['iconCodePoint'] != null 
+                                    ? IconData(offer['iconCodePoint'], fontFamily: 'MaterialIcons') 
+                                    : Icons.local_offer;
+                                final colorVal = offer['colorValue'] != null ? Color(offer['colorValue']) : const Color(0xFF6F8F5E);
+                                
+                                return Padding(
+                                  padding: const EdgeInsets.only(right: 12),
+                                  child: _buildOfferCard(
+                                    icon: iconData,
+                                    title: offer['title'] ?? 'Sin título',
+                                    description: offer['description'] ?? '',
+                                    color: colorVal.withOpacity(0.2),
+                                    iconColor: colorVal,
+                                  ),
+                                );
+                              }).toList(),
+                            ),
+                          );
+                        }
                       ),
                       const SizedBox(height: 24),
 

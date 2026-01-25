@@ -159,14 +159,24 @@ class _PymeAddProductScreenState extends State<PymeAddProductScreen> {
         customAttributes: attributes,
       );
 
-      _productService.addProduct(newProduct);
+      if (widget.product != null) {
+        _productService.updateProduct(newProduct);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Actualizado en $_currentCategory exitosamente', style: GoogleFonts.poppins(color: const Color(0xFFF4F1EA))),
+            backgroundColor: const Color(0xFF2F3F2A),
+          ),
+        );
+      } else {
+        _productService.addProduct(newProduct);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Producto agregado a $_currentCategory exitosamente', style: GoogleFonts.poppins(color: const Color(0xFFF4F1EA))),
+            backgroundColor: const Color(0xFF2F3F2A),
+          ),
+        );
+      }
       Navigator.pop(context);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Producto agregado a $_currentCategory exitosamente', style: GoogleFonts.poppins(color: const Color(0xFFF4F1EA))),
-          backgroundColor: const Color(0xFF2F3F2A),
-        ),
-      );
     }
   }
 

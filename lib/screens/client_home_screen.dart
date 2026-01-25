@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../models/vitrina_data.dart';
 import '../models/user_profile.dart';
+import '../models/product.dart';
 import '../services/product_service.dart';
 import '../services/pyme_service.dart';
 import 'client_pyme_detail_screen.dart';
@@ -37,13 +38,13 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
           children: [
             ListTile(
               leading: Icon(Icons.local_offer, color: theme.colorScheme.primary),
-              title: const Text('Nueva oferta en Farmayuda'),
-              subtitle: const Text('20% de descuento en vitaminas.'),
+              title: const Text('Nuevas ofertas disponibles'),
+              subtitle: const Text('Revisa las últimas promociones.'),
             ),
             ListTile(
               leading: Icon(Icons.event, color: theme.colorScheme.secondary),
-              title: const Text('Evento Fundación Los Robles'),
-              subtitle: const Text('Mañana a las 10:00 AM.'),
+              title: const Text('Eventos próximos'),
+              subtitle: const Text('Actividades en tu comunidad.'),
             ),
           ],
         ),
@@ -135,6 +136,12 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
         );
       },
     );
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
   }
 
   @override
@@ -350,7 +357,7 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
                   SizedBox(
                     height: 170,
                     child: StreamBuilder<List<Map<String, dynamic>>>(
-                      stream: PymeService().getRecentOffersGlobal(),
+                      stream: PymeService().getSpecialOffersGlobal(),
                       builder: (context, offersSnapshot) {
                         if (offersSnapshot.hasError) {
                           // This helps debugging missing index issues
@@ -359,7 +366,7 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
                             child: Padding(
                               padding: const EdgeInsets.all(8.0),
                               child: Text(
-                                'Error cargando ofertas. Posible falta de índice.',
+                                'Error cargando ofertas destacadas.',
                                 style: TextStyle(color: theme.colorScheme.error, fontSize: 10),
                                 textAlign: TextAlign.center,
                               ),
@@ -398,15 +405,15 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
                               padding: const EdgeInsets.only(right: 16),
                               child: _buildOfferCard(
                                 context,
-                                pyme.name, 
+                                pyme,
                                 offer['title'] ?? 'Oferta',
                                 offer['description'] ?? '',
+                                'OFERTA',
                                 Color(offer['colorValue'] ?? 0xFF000000),
                                 IconData(
                                   offer['iconCodePoint'] ?? Icons.local_offer.codePoint,
                                   fontFamily: 'MaterialIcons',
                                 ),
-                                pyme.logoUrl ?? pyme.coverImageUrl, // Prefer logo for offer card
                               ),
                             );
                           },
@@ -423,37 +430,62 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
                   const SizedBox(height: 16),
                   SizedBox(
                     height: 170,
-                    child: ListView(
-                      scrollDirection: Axis.horizontal,
-                      physics: const BouncingScrollPhysics(),
-                      children: [
-                        _buildOfferCard(
-                          context,
-                          'Fundación Los Robles',
-                          'Campaña de Reciclaje',
-                          'Evento',
-                          theme.colorScheme.primary,
-                          Icons.event,
-                          'assets/images/Logo los robles.jpg',
-                        ),
-                        const SizedBox(width: 16),
-                        _buildOfferCard(
-                          context,
-                          'Fundación Esperanza',
-                          'Colecta Anual',
-                          'Evento',
-                          theme.colorScheme.tertiary,
-                          Icons.volunteer_activism,
-                          'https://images.unsplash.com/photo-1488521787991-ed7bbaae773c?auto=format&fit=crop&w=800&q=80',
-                        ),
-                      ],
+                    child: StreamBuilder<List<Product>>(
+                      stream: ProductService().getProducts(),
+                      builder: (context, snapshot) {
+                        if (snapshot.connectionState == ConnectionState.waiting) {
+                          return const Center(child: CircularProgressIndicator());
+                        }
+                        
+                        final allProducts = snapshot.data ?? [];
+                        // Filter for events AND check if they belong to visible pymes/foundations
+                        final events = allProducts.where((p) {
+                          final isEvent = p.customAttributes['is_event'].toString() == 'true';
+                          // Ensure we only show events for the currently loaded Pymes/Foundations
+                          final belongsToVisiblePyme = pymes.any((user) => user.id == p.pymeId);
+                          return isEvent && belongsToVisiblePyme;
+                        }).toList();
+
+                        if (events.isEmpty) {
+                          return Center(
+                            child: Text(
+                              'No hay eventos próximos.',
+                              style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+                            ),
+                          );
+                        }
+
+                        return ListView.builder(
+                          scrollDirection: Axis.horizontal,
+                          physics: const BouncingScrollPhysics(),
+                          itemCount: events.length,
+                          itemBuilder: (context, index) {
+                            final event = events[index];
+                            // Safe lookup because we filtered using the same list above
+                            final pyme = pymes.firstWhere((p) => p.id == event.pymeId);
+
+                            return Padding(
+                              padding: const EdgeInsets.only(right: 16),
+                              child: _buildOfferCard(
+                                context,
+                                pyme,
+                                event.name,
+                                event.description,
+                                'Eventos',
+                                theme.colorScheme.primary,
+                                Icons.event,
+                              ),
+                            );
+                          },
+                        );
+                      }
                     ),
                   ),
                   const SizedBox(height: 28),
                 ],
 
                 // Nearby Pymes / Foundations List
-                _buildSectionHeader(context, widget.showFoundationsOnly ? 'Fundaciones Disponibles' : 'Pymes en tu zona'),
+                _buildSectionHeader(context, widget.showFoundationsOnly ? 'Fundaciones Disponibles' : 'Pymes en tu zona', showViewAll: false),
                 const SizedBox(height: 16),
                 _buildPymesList(filteredPymes),
               ],
@@ -605,12 +637,21 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
     );
   }
 
-  Widget _buildOfferCard(BuildContext context, String pymeName, String offer,
-      String tag, Color color, IconData icon, String? imageUrl) {
+  Widget _buildOfferCard(BuildContext context, UserProfile pyme, String title,
+      String description, String tag, Color color, IconData icon) {
+    // Prefer cover image for offer cards as they are wide, otherwise logo
+    final String? imageUrl = pyme.coverImageUrl ?? pyme.logoUrl;
+
     return GestureDetector(
       onTap: () {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Oferta no disponible por el momento')),
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => ClientPymeDetailScreen(
+              pymeId: pyme.id,
+              pymeData: pyme,
+            ),
+          ),
         );
       },
       child: Container(
@@ -625,7 +666,7 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
                       : AssetImage(imageUrl) as ImageProvider,
                   fit: BoxFit.cover,
                   colorFilter: ColorFilter.mode(
-                    const Color(0xFF2F3F2A).withOpacity(0.3),
+                    const Color(0xFF2F3F2A).withValues(alpha: 0.3),
                     BlendMode.darken,
                   ),
                   onError: (exception, stackTrace) {
@@ -635,7 +676,7 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
               : null,
           boxShadow: [
             BoxShadow(
-              color: const Color(0xFF2F3F2A).withOpacity(0.1),
+              color: const Color(0xFF2F3F2A).withValues(alpha: 0.1),
               blurRadius: 10,
               offset: const Offset(0, 4),
             ),
@@ -650,7 +691,7 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
               end: Alignment.bottomCenter,
               colors: [
                 Colors.transparent,
-                const Color(0xFF2F3F2A).withOpacity(0.8),
+                const Color(0xFF2F3F2A).withValues(alpha: 0.8),
               ],
             ),
           ),
@@ -664,9 +705,9 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
                   Container(
                     padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFF4F1EA).withOpacity(0.2),
+                      color: const Color(0xFFF4F1EA).withValues(alpha: 0.2),
                       borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: const Color(0xFFF4F1EA).withOpacity(0.3)),
+                      border: Border.all(color: const Color(0xFFF4F1EA).withValues(alpha: 0.3)),
                     ),
                     child: Icon(icon, color: const Color(0xFFF4F1EA), size: 20),
                   ),
@@ -693,25 +734,41 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    offer,
+                    title,
                     style: const TextStyle(
                       color: Color(0xFFF4F1EA),
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
                       height: 1.2,
                     ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                   ),
+                  if (description.isNotEmpty) ...[
+                    const SizedBox(height: 2),
+                    Text(
+                      description,
+                      style: const TextStyle(
+                        color: Color(0xB3F4F1EA),
+                        fontSize: 12,
+                      ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
                   const SizedBox(height: 4),
                   Row(
                     children: [
                       const Icon(Icons.store, color: Color(0xB3F4F1EA), size: 14),
                       const SizedBox(width: 4),
                       Text(
-                        pymeName,
+                        pyme.name,
                         style: const TextStyle(
                           color: Color(0xB3F4F1EA),
                           fontSize: 13,
                         ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                       ),
                     ],
                   ),
@@ -727,9 +784,11 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
   Widget _buildPymeCard(BuildContext context, UserProfile pyme) {
     final theme = Theme.of(context);
     final String? imageUrl = pyme.coverImageUrl;
-    final bool isOpen = true;
+    // TODO: Connect with real schedule and rating logic
+    final bool isOpen = true; 
     final String name = pyme.name;
-    final String rating = '5.0';
+    // Hide rating if not available in model
+    final bool showRating = false;
 
     return GestureDetector(
       onTap: () {
@@ -864,6 +923,7 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
                           fontWeight: FontWeight.bold,
                         ),
                       ),
+                      if (showRating)
                       Container(
                         padding: const EdgeInsets.symmetric(
                             horizontal: 8, vertical: 4),
@@ -877,7 +937,7 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
                                 color: Color(0xFF8B5A3C), size: 14),
                             const SizedBox(width: 4),
                             Text(
-                              rating,
+                              '5.0',
                               style: const TextStyle(
                                 color: Color(0xFF8B5A3C),
                                 fontSize: 12,
@@ -902,17 +962,19 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
                           fontSize: 14,
                         ),
                       ),
-                      const SizedBox(width: 12),
-                      Icon(Icons.location_on,
-                          size: 16, color: const Color(0xFF2F3F2A).withOpacity(0.7)),
-                      const SizedBox(width: 4),
-                      Text(
-                        '1.2 km',
-                        style: const TextStyle(
-                          color: Color(0xFF2F3F2A),
-                          fontSize: 14,
+                      if (pyme.location != null) ...[
+                        const SizedBox(width: 12),
+                        Icon(Icons.location_on,
+                            size: 16, color: const Color(0xFF2F3F2A).withOpacity(0.7)),
+                        const SizedBox(width: 4),
+                        Text(
+                          pyme.location!,
+                          style: const TextStyle(
+                            color: Color(0xFF2F3F2A),
+                            fontSize: 14,
+                          ),
                         ),
-                      ),
+                      ],
                     ],
                   ),
                   const SizedBox(height: 12),

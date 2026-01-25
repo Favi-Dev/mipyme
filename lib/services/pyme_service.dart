@@ -51,12 +51,12 @@ class PymeService {
     });
   }
 
-  // Get Recent Offers (Collection Group)
-  Stream<List<Map<String, dynamic>>> getRecentOffersGlobal() {
+  // Get Special Offers (Collection Group) - Only one per Pyme
+  Stream<List<Map<String, dynamic>>> getSpecialOffersGlobal() {
     return FirebaseFirestore.instance
         .collectionGroup('offers')
-        .orderBy('createdAt', descending: true)
-        .limit(10)
+        .where('isSpecial', isEqualTo: true)
+        // .orderBy('createdAt', descending: true) // Requires Composite Index in Firebase Console
         .snapshots()
         .map((snapshot) {
       return snapshot.docs.map((doc) {
@@ -117,10 +117,10 @@ class PymeService {
     return FirebaseFirestore.instance
         .collection('orders')
         .where('pymeId', isEqualTo: pymeId)
-        .orderBy('createdAt', descending: true)
+        // .orderBy('createdAt', descending: true) // Moved to client-side to avoid needing index
         .snapshots()
         .map((snapshot) {
-      return snapshot.docs.map((doc) {
+      final orders = snapshot.docs.map((doc) {
         final data = doc.data();
         data['id'] = doc.id;
         if (data['createdAt'] is Timestamp) {
@@ -128,6 +128,15 @@ class PymeService {
         }
         return data;
       }).toList();
+      
+      // Sort client-side
+      orders.sort((a, b) {
+        final aTime = a['createdAt'] as DateTime? ?? DateTime(1970);
+        final bTime = b['createdAt'] as DateTime? ?? DateTime(1970);
+        return bTime.compareTo(aTime); // Descending
+      });
+      
+      return orders;
     });
   }
 
@@ -210,12 +219,50 @@ class PymeService {
   
   // Create Offer in pyme's subcollection
   Future<void> createOffer(String pymeId, Map<String, dynamic> offerData) async {
-    await _usersCollection.doc(pymeId).collection('offers').add(offerData);
+    // If offer is special, ensuring only one special offer exists
+    if (offerData['isSpecial'] == true) {
+      final batch = FirebaseFirestore.instance.batch();
+      final specialOffersQuery = await _usersCollection
+          .doc(pymeId)
+          .collection('offers')
+          .where('isSpecial', isEqualTo: true)
+          .get();
+
+      for (var doc in specialOffersQuery.docs) {
+        batch.update(doc.reference, {'isSpecial': false});
+      }
+
+      final newDocRef = _usersCollection.doc(pymeId).collection('offers').doc();
+      batch.set(newDocRef, offerData);
+      
+      await batch.commit();
+    } else {
+      await _usersCollection.doc(pymeId).collection('offers').add(offerData);
+    }
   }
 
   // Update Offer
   Future<void> updateOffer(String pymeId, String offerId, Map<String, dynamic> offerData) async {
-    await _usersCollection.doc(pymeId).collection('offers').doc(offerId).update(offerData);
+    // If setting as special, disable any other special offer first
+    if (offerData['isSpecial'] == true) {
+      final batch = FirebaseFirestore.instance.batch();
+      final specialOffersQuery = await _usersCollection
+          .doc(pymeId)
+          .collection('offers')
+          .where('isSpecial', isEqualTo: true)
+          .get();
+
+      for (var doc in specialOffersQuery.docs) {
+        if (doc.id != offerId) {
+          batch.update(doc.reference, {'isSpecial': false});
+        }
+      }
+
+      batch.update(_usersCollection.doc(pymeId).collection('offers').doc(offerId), offerData);
+      await batch.commit();
+    } else {
+      await _usersCollection.doc(pymeId).collection('offers').doc(offerId).update(offerData);
+    }
   }
 
   // Delete Offer

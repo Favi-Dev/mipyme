@@ -46,6 +46,7 @@ class _PymeOffersManagementScreenState
     Color selectedColor = offer != null && offer['colorValue'] != null
         ? Color(offer['colorValue']) 
         : const Color(0xFF6F8F5E);
+    bool isSpecial = offer?['isSpecial'] == true;
 
     showDialog(
       context: context,
@@ -61,6 +62,27 @@ class _PymeOffersManagementScreenState
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
+                   Container(
+                    decoration: BoxDecoration(
+                      color: isSpecial ? const Color(0xFF6F8F5E).withOpacity(0.1) : Colors.transparent,
+                      borderRadius: BorderRadius.circular(12),
+                      border: isSpecial ? Border.all(color: const Color(0xFF6F8F5E)) : null,
+                    ),
+                    child: SwitchListTile(
+                      title: Text(
+                        'Oferta Especial',
+                        style: GoogleFonts.poppins(fontWeight: FontWeight.bold, color: const Color(0xFF2F3F2A)),
+                      ),
+                      subtitle: Text(
+                        'Visible en el inicio de la App. Solo 1 activa.',
+                        style: GoogleFonts.poppins(fontSize: 12, color: const Color(0xFF2F3F2A).withOpacity(0.6)),
+                      ),
+                      value: isSpecial,
+                      activeColor: const Color(0xFF6F8F5E),
+                      onChanged: (val) => setStateDialog(() => isSpecial = val),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
                   TextField(
                     controller: titleController,
                     style: const TextStyle(color: Color(0xFF2F3F2A)),
@@ -166,12 +188,14 @@ class _PymeOffersManagementScreenState
                       'description': descController.text,
                       'iconCodePoint': selectedIcon.codePoint,
                       'colorValue': selectedColor.value,
-                      'createdAt': FieldValue.serverTimestamp(),
+                      'isActive': true,
+                      'isSpecial': isSpecial,
                     };
                     
                     if (isEditing) {
                       _editOffer(offerId!, newOfferData);
                     } else {
+                      newOfferData['createdAt'] = FieldValue.serverTimestamp();
                       _addOffer(newOfferData);
                     }
                     Navigator.pop(context);

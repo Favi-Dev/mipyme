@@ -5,6 +5,7 @@ import '../services/admin_service.dart';
 import 'admin_user_management_screen.dart';
 import 'admin_pyme_management_screen.dart';
 import 'admin_support_screen.dart';
+import 'admin_transactions_screen.dart';
 
 class AdminDashboardScreen extends StatefulWidget {
   const AdminDashboardScreen({super.key});
@@ -149,11 +150,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                           stats['transactions'].toString(),
                           Icons.receipt_long,
                           theme.colorScheme.onSurface,
-                          () {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(content: Text('Pantalla de Transacciones en construcción')),
-                            );
-                          },
+                          () => _navigateTo(const AdminTransactionsScreen()),
                         ),
                       ),
                     ],

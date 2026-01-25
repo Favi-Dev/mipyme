@@ -74,6 +74,16 @@ class _DonationScreenState extends State<DonationScreen> {
             'date': DateTime.now(),
           });
 
+          // Also record in 'payments' for Admin Transactions view
+          await FirebaseFirestore.instance.collection('payments').add({
+            'userId': user.uid,
+            'amount': double.parse(_amountController.text),
+            'type': 'donation',
+            'foundationId': _selectedFoundation!.id,
+            'foundationName': _selectedFoundation!.name,
+            'date': DateTime.now(),
+          });
+
           // Update User Subscription if Monthly
           if (_isMonthly) {
             await FirebaseFirestore.instance.collection('users').doc(user.uid).update({
