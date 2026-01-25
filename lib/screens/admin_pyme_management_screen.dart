@@ -1,176 +1,202 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import '../services/admin_service.dart';
 import 'admin_user_detail_screen.dart';
 
-class AdminPymeManagementScreen extends StatelessWidget {
-  final String? roleFilter;
-  
-  const AdminPymeManagementScreen({super.key, this.roleFilter});
+class AdminPymeManagementScreen extends StatefulWidget {
+  final String roleFilter; // 'pyme' or 'foundation'
 
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final adminService = AdminService();
-    
-    String title = 'Gestión de Pymes y Fundaciones';
-    if (roleFilter == 'pyme') title = 'Gestión de Pymes';
-    if (roleFilter == 'foundation') title = 'Gestión de Fundaciones';
-
-    return Scaffold(
-      backgroundColor: theme.scaffoldBackgroundColor,
-      appBar: AppBar(
-        backgroundColor: theme.colorScheme.surface,
-        elevation: 0,
-        title: Text(
-          title,
-          style: theme.textTheme.titleLarge?.copyWith(
-            color: theme.colorScheme.onSurface,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        iconTheme: IconThemeData(color: theme.colorScheme.onSurface),
-      ),
-      body: _PymeList(adminService: adminService, roleFilter: roleFilter),
-    );
-  }
-}
-
-class _PymeList extends StatelessWidget {
-  final AdminService adminService;
-  final String? roleFilter;
-
-  const _PymeList({required this.adminService, this.roleFilter});
-
-  @override
-  Widget build(BuildContext context) {
-    return StreamBuilder<List<Map<String, dynamic>>>(
-      stream: adminService.getPymes(roleFilter: roleFilter),
-      builder: (context, snapshot) {
-        if (snapshot.hasError) {
-          return Center(child: Text('Error: ${snapshot.error}'));
-        }
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Center(child: CircularProgressIndicator());
-        }
-
-        final pymes = snapshot.data ?? [];
-        if (pymes.isEmpty) {
-          return Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(
-                  Icons.store_mall_directory,
-                  size: 64,
-                  color: Theme.of(context).colorScheme.outline,
-                ),
-                const SizedBox(height: 16),
-                Text(
-                  'No hay pymes registradas',
-                  style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                    color: Theme.of(context).colorScheme.onSurfaceVariant,
-                  ),
-                ),
-              ],
-            ),
-          );
-        }
-
-        return ListView.builder(
-          padding: const EdgeInsets.all(16),
-          itemCount: pymes.length,
-          itemBuilder: (context, index) {
-            final pyme = pymes[index];
-            return _PymeTile(pyme: pyme, adminService: adminService);
-          },
-        );
-      },
-    );
-  }
-}
-
-class _PymeTile extends StatelessWidget {
-  final Map<String, dynamic> pyme;
-  final AdminService adminService;
-
-  const _PymeTile({
-    required this.pyme,
-    required this.adminService,
+  const AdminPymeManagementScreen({
+    super.key,
+    this.roleFilter = 'pyme',
   });
 
   @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final pymeId = pyme['id'];
-    final name = pyme['companyName'] ?? pyme['name'] ?? 'Sin Nombre';
-    final category = pyme['category'] ?? 'Sin Categoría';
-    final address = pyme['address'] ?? 'Sin Dirección';
-    final isSuspended = pyme['isSuspended'] == true;
+  State<AdminPymeManagementScreen> createState() => _AdminPymeManagementScreenState();
+}
 
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      decoration: BoxDecoration(
-        color: theme.cardColor,
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-            color: const Color(0xFF2F3F2A).withOpacity(0.1),
-            blurRadius: 5,
-            offset: const Offset(0, 2),
+class _AdminPymeManagementScreenState extends State<AdminPymeManagementScreen> {
+  final AdminService _adminService = AdminService();
+  String _selectedFilter = 'all'; // all, active
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: const Color(0xFFF4F1EA),
+      appBar: AppBar(
+        title: Text(
+          widget.roleFilter == 'pyme' ? 'Pymes' : 'Fundaciones',
+          style: GoogleFonts.poppins(
+            fontWeight: FontWeight.bold,
+            color: const Color(0xFF2F3F2A),
+          ),
+        ),
+        backgroundColor: const Color(0xFFF4F1EA),
+        elevation: 0,
+        centerTitle: false,
+        actions: [
+          PopupMenuButton<String>(
+            icon: const Icon(Icons.filter_list, color: Color(0xFF2F3F2A)),
+            onSelected: (value) => setState(() => _selectedFilter = value),
+            itemBuilder: (context) => [
+              const PopupMenuItem(value: 'all', child: Text('Todas')),
+              const PopupMenuItem(value: 'active', child: Text('Activas')),
+            ],
           ),
         ],
       ),
-      child: ListTile(
-        leading: Container(
-          width: 50,
-          height: 50,
-          decoration: BoxDecoration(
-            color: theme.colorScheme.surfaceContainerHighest,
-            borderRadius: BorderRadius.circular(8),
-          ),
-          child: Icon(Icons.store, color: theme.colorScheme.primary),
-        ),
-        title: Text(
-          name,
-          style: theme.textTheme.titleMedium?.copyWith(
-            color: theme.colorScheme.onSurface,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-        subtitle: Text(
-          '$category • $address',
-          style: theme.textTheme.bodySmall?.copyWith(
-            color: theme.colorScheme.onSurfaceVariant,
-          ),
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-        ),
-        trailing: isSuspended
-          ? Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-              decoration: BoxDecoration(
-                color: theme.colorScheme.error.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Text(
-                'Suspendido',
-                style: theme.textTheme.labelSmall?.copyWith(
-                  color: theme.colorScheme.error,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            )
-          : const Icon(Icons.arrow_forward_ios, size: 16),
-        onTap: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => AdminUserDetailScreen(
-                userData: pyme,
-              ),
+      body: Column(
+        children: [
+          // Filter Tags
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            child: Row(
+              children: [
+                _buildFilterChip('Todas', 'all'),
+                const SizedBox(width: 8),
+                _buildFilterChip('Activas', 'active'),
+              ],
             ),
-          );
-        },
+          ),
+
+          Expanded(
+            child: StreamBuilder<List<Map<String, dynamic>>>(
+              stream: _adminService.getPymes(roleFilter: widget.roleFilter),
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const Center(child: CircularProgressIndicator());
+                }
+
+                if (snapshot.hasError) {
+                  return Center(child: Text('Error: ${snapshot.error}'));
+                }
+
+                final users = snapshot.data ?? [];
+                
+                // Aplicar filtros locales si es necesario (ej: active)
+                // Nota: Esto asume que el stream trae todo. Si el stream ya filtra, esto es redundante pero seguro.
+                final filteredUsers = _selectedFilter == 'active' 
+                    ? users.where((u) => u['isSuspended'] != true).toList()
+                    : users;
+
+                if (filteredUsers.isEmpty) {
+                  return _buildEmptyState();
+                }
+
+                return ListView.separated(
+                  padding: const EdgeInsets.all(16),
+                  itemCount: filteredUsers.length,
+                  separatorBuilder: (_, __) => const SizedBox(height: 12),
+                  itemBuilder: (context, index) {
+                    final user = filteredUsers[index];
+                    return _buildUserCard(user);
+                  },
+                );
+              },
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildFilterChip(String label, String value) {
+    final isSelected = _selectedFilter == value;
+    return GestureDetector(
+      onTap: () => setState(() => _selectedFilter = value),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        decoration: BoxDecoration(
+          color: isSelected ? const Color(0xFF6F8F5E) : Colors.white,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: isSelected ? Colors.transparent : const Color(0xFF6F8F5E).withOpacity(0.3),
+          ),
+        ),
+        child: Text(
+          label,
+          style: GoogleFonts.poppins(
+            color: isSelected ? Colors.white : const Color(0xFF6F8F5E),
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildEmptyState() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(Icons.store_mall_directory_outlined, size: 64, color: const Color(0xFF8B5A3C).withOpacity(0.3)),
+          const SizedBox(height: 16),
+          Text(
+            'No hay registros encontrados',
+            style: GoogleFonts.poppins(
+              color: const Color(0xFF8B5A3C).withOpacity(0.5),
+              fontSize: 16,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildUserCard(Map<String, dynamic> user) {
+    final imageUrl = user['logoUrl'] ?? user['coverImageUrl'];
+    return GestureDetector(
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => AdminUserDetailScreen(
+              userData: user,
+            ),
+          ),
+        );
+      },
+      child: Container(
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(
+              color: const Color(0xFF2F3F2A).withOpacity(0.05),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: ListTile(
+          contentPadding: const EdgeInsets.all(12),
+          leading: CircleAvatar(
+            radius: 25,
+            backgroundColor: const Color(0xFFF4F1EA),
+            backgroundImage: (imageUrl != null && imageUrl.startsWith('http'))
+                ? NetworkImage(imageUrl)
+                : null,
+            child: (imageUrl == null || !imageUrl.startsWith('http'))
+                ? Icon(
+                    widget.roleFilter == 'pyme' ? Icons.store : Icons.volunteer_activism,
+                    color: const Color(0xFF6F8F5E),
+                  )
+                : null,
+          ),
+          title: Text(
+            user['name'] ?? 'Usuario',
+            style: GoogleFonts.poppins(
+              fontWeight: FontWeight.bold,
+              color: const Color(0xFF2F3F2A),
+            ),
+          ),
+          subtitle: Text(
+            user['email'] ?? '',
+            style: GoogleFonts.poppins(fontSize: 12),
+          ),
+          trailing: const Icon(Icons.arrow_forward_ios, size: 16, color: Colors.grey),
+        ),
       ),
     );
   }
