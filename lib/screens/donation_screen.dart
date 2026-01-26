@@ -4,6 +4,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import '../models/user_profile.dart';
 import '../services/pyme_service.dart';
 import '../client_app_shell.dart';
+import '../widgets/donation_content.dart';
 
 class DonationScreen extends StatefulWidget {
   final bool isGuest;
@@ -41,19 +42,8 @@ class _DonationScreenState extends State<DonationScreen> {
     }
   }
 
-  Future<void> _processDonation() async {
-    if (_selectedFoundation == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Por favor selecciona una fundación')),
-      );
-      return;
-    }
-    if (_amountController.text.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Por favor ingresa un monto')),
-      );
-      return;
-    }
+  Future<void> _processDonation(double amount, bool isMonthly) async {
+    if (_selectedFoundation == null) return;
 
     setState(() => _isLoading = true);
 
@@ -69,29 +59,43 @@ class _DonationScreenState extends State<DonationScreen> {
             'userId': user.uid,
             'foundationId': _selectedFoundation!.id,
             'foundationName': _selectedFoundation!.name,
-            'amount': double.parse(_amountController.text),
-            'isMonthly': _isMonthly,
+            'amount': amount,
+            'isMonthly': isMonthly,
             'date': DateTime.now(),
           });
 
           // Also record in 'payments' for Admin Transactions view
           await FirebaseFirestore.instance.collection('payments').add({
             'userId': user.uid,
-            'amount': double.parse(_amountController.text),
+            'amount': amount,
             'type': 'donation',
             'foundationId': _selectedFoundation!.id,
             'foundationName': _selectedFoundation!.name,
             'date': DateTime.now(),
           });
+          
+          // Increment S+ Score for Foundation
+          await _pymeService.incrementSupporterCount(_selectedFoundation!.id);
+          
+          // Update foundation current donations (Real-time goal support)
+          await FirebaseFirestore.instance.collection('users').doc(_selectedFoundation!.id).update({
+             'currentDonations': FieldValue.increment(amount),
+          });
 
           // Update User Subscription if Monthly
-          if (_isMonthly) {
+          if (isMonthly) {
             await FirebaseFirestore.instance.collection('users').doc(user.uid).update({
               'isSubscribed': true,
               'subscriptionDate': DateTime.now(),
             });
           }
         }
+      } else {
+        // Guest mode: Still update the foundation stats!
+         await _pymeService.incrementSupporterCount(_selectedFoundation!.id);
+         await FirebaseFirestore.instance.collection('users').doc(_selectedFoundation!.id).update({
+             'currentDonations': FieldValue.increment(amount),
+          });
       }
 
       if (!mounted) return;
@@ -162,147 +166,83 @@ class _DonationScreenState extends State<DonationScreen> {
           final foundations = snapshot.data!;
 
           return SingleChildScrollView(
-            padding: const EdgeInsets.all(24.0),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                if (widget.isInitialRegistration) ...[
-                  Text(
-                    '¡Bienvenido a SoyPlus!',
-                    style: theme.textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 8),
-                  const Text(
-                    'Tu donación inicial activa tu suscripción y se utiliza para el mantenimiento y promoción de las Pymes y Fundaciones de la comunidad.',
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 32),
-                ],
-
-                Text(
-                  'Selecciona una Fundación',
-                  style: theme.textTheme.titleMedium,
-                ),
-                const SizedBox(height: 8),
-                DropdownButtonFormField<UserProfile>(
-                  value: _selectedFoundation,
-                  hint: const Text('Elige una causa...'),
-                  items: foundations.map((f) {
-                    return DropdownMenuItem(
-                      value: f,
-                      child: Text(f.name),
-                    );
-                  }).toList(),
-                  onChanged: (val) => setState(() => _selectedFoundation = val),
-                  decoration: InputDecoration(
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                  ),
-                ),
-
-                const SizedBox(height: 24),
-
-                Text(
-                  'Monto a Donar (CLP)',
-                  style: theme.textTheme.titleMedium,
-                ),
-                const SizedBox(height: 12),
-                
-                // Preset Amounts chips
-                Wrap(
-                  spacing: 10,
-                  runSpacing: 10,
-                  children: [1000, 3000, 5000, 10000, 20000].map((amount) {
-                    final isSelected = _amountController.text == amount.toString();
-                    return ChoiceChip(
-                      label: Text('\$${amount.toString()}'),
-                      selected: isSelected,
-                      onSelected: (selected) {
-                        setState(() {
-                           if (selected) {
-                             _amountController.text = amount.toString();
-                           }
-                        });
-                      },
-                      selectedColor: theme.colorScheme.primary,
-                      labelStyle: TextStyle(
-                        color: isSelected ? theme.colorScheme.onPrimary : theme.colorScheme.onSurface,
-                      ),
-                    );
-                  }).toList(),
-                ),
-                const SizedBox(height: 12),
-
-                TextField(
-                  controller: _amountController,
-                  keyboardType: TextInputType.number,
-                  onChanged: (val) {
-                     setState(() {}); // Trigger rebuild to update chips
-                  },
-                  decoration: InputDecoration(
-                    prefixText: '\$ ',
-                    labelText: 'Otro monto', // Added label for clarity
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                  ),
-                ),
-
-                if (!widget.isGuest) ...[
-                  const SizedBox(height: 24),
-                  Container(
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: theme.colorScheme.primaryContainer.withOpacity(0.3),
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: theme.colorScheme.primary),
-                    ),
-                    child: Column(
-                      children: [
-                        CheckboxListTile(
-                          value: _isMonthly,
-                          onChanged: (val) => setState(() => _isMonthly = val ?? false),
-                          title: const Text('Donación Mensual Automática'),
-                          subtitle: Text(widget.isInitialRegistration 
-                              ? 'Requerido para mantener tu cuenta activa y apoyar la plataforma.'
-                              : 'Suscríbete para obtener cupones y beneficios exclusivos en la app.'),
-                          activeColor: theme.colorScheme.primary,
+                Padding(
+                  padding: const EdgeInsets.all(24.0),
+                  child: Column(
+                    children: [
+                      if (widget.isInitialRegistration) ...[
+                        Text(
+                          '¡Bienvenido a SoyPlus!',
+                          style: theme.textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
+                          textAlign: TextAlign.center,
                         ),
-                        if (_isMonthly)
-                          Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                            child: Text(
-                              'Al marcar esta opción, autorizas el cargo automático mensual a tu medio de pago.',
-                              style: theme.textTheme.bodySmall?.copyWith(fontStyle: FontStyle.italic),
-                            ),
-                          ),
+                        const SizedBox(height: 8),
+                        const Text(
+                          'Tu donación inicial activa tu suscripción y se utiliza para el mantenimiento y promoción de las Pymes y Fundaciones de la comunidad.',
+                          textAlign: TextAlign.center,
+                        ),
+                        const SizedBox(height: 32),
                       ],
-                    ),
-                  ),
-                ],
 
-                const SizedBox(height: 32),
-
-                ElevatedButton(
-                  onPressed: _isLoading ? null : _processDonation,
-                  style: ElevatedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                  ),
-                  child: _isLoading 
-                    ? const CircularProgressIndicator()
-                    : Text(
-                        widget.isGuest ? 'Donar como Invitado' : 'Confirmar Donación',
-                        style: const TextStyle(fontSize: 18),
+                      Text(
+                        'Selecciona una Fundación',
+                        style: theme.textTheme.titleMedium,
                       ),
-                ),
-                
-                if (widget.isGuest) ...[
-                  const SizedBox(height: 16),
-                  const Text(
-                    '* Al donar como invitado no acumularás puntos ni recibirás cupones de descuento.',
-                    style: TextStyle(color: Colors.grey, fontSize: 12),
-                    textAlign: TextAlign.center,
+                      const SizedBox(height: 8),
+                      DropdownButtonFormField<UserProfile>(
+                        value: _selectedFoundation, // Ensure this object is equal to one in list (Equatable or same refs)
+                        // If objects are recreated in stream, equality might fail unless UserProfile overrides ==
+                        // We rely on 'id' ideally, but Dropdown uses object identity by default if 'value' not in 'items'.
+                        // Since 'foundations' come from stream, they are new objects. 
+                        // We might need to find the matching object in 'foundations' by ID.
+                        hint: const Text('Elige una causa...'),
+                        items: foundations.map((f) {
+                          return DropdownMenuItem(
+                            value: f, // If we used ID here it would be easier, but we use UserProfile
+                            child: Text(f.name),
+                          );
+                        }).toList(),
+                        // Fix for object equality issues: find matching foundation from list
+                        selectedItemBuilder: (context) {
+                          return foundations.map((f) {
+                            return Text(f.name);
+                          }).toList();
+                        },
+                        onChanged: (val) => setState(() => _selectedFoundation = val),
+                        decoration: InputDecoration(
+                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                        ),
+                      ),
+                    ],
                   ),
-                ]
+                ),
+
+                if (_selectedFoundation != null)
+                   DonationContent(
+                      pymeData: _selectedFoundation!,
+                      amounts: const [1000, 3000, 5000, 10000, 20000],
+                      onDonate: _processDonation,
+                   )
+                else
+                   const SizedBox(
+                     height: 200,
+                     child: Center(
+                       child: Text('Selecciona una organización para continuar'),
+                     ),
+                   ),
+                
+                if (widget.isGuest)
+                  const Padding(
+                    padding: EdgeInsets.all(16.0),
+                    child: Text(
+                      '* Al donar como invitado no acumularás puntos ni recibirás cupones de descuento.',
+                      style: TextStyle(color: Colors.grey, fontSize: 12),
+                      textAlign: TextAlign.center,
+                    ),
+                  )
               ],
             ),
           );

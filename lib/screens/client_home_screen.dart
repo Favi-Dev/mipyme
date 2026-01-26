@@ -5,6 +5,7 @@ import '../models/user_profile.dart';
 import '../models/product.dart';
 import '../services/product_service.dart';
 import '../services/pyme_service.dart';
+import '../services/client_service.dart';
 import 'client_pyme_detail_screen.dart';
 import 'donation_screen.dart';
 
@@ -29,24 +30,65 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
 
   void _showNotifications() {
     final theme = Theme.of(context);
+    final clientService = ClientService();
+
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Notificaciones'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            ListTile(
-              leading: Icon(Icons.local_offer, color: theme.colorScheme.primary),
-              title: const Text('Nuevas ofertas disponibles'),
-              subtitle: const Text('Revisa las últimas promociones.'),
-            ),
-            ListTile(
-              leading: Icon(Icons.event, color: theme.colorScheme.secondary),
-              title: const Text('Eventos próximos'),
-              subtitle: const Text('Actividades en tu comunidad.'),
-            ),
-          ],
+        content: SizedBox(
+          width: double.maxFinite,
+          child: StreamBuilder<List<Map<String, dynamic>>>(
+            stream: clientService.getNotifications(),
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return const SizedBox(
+                  height: 100,
+                  child: Center(child: CircularProgressIndicator()),
+                );
+              }
+              if (snapshot.hasError) {
+                return const Text('Error al cargar notificaciones');
+              }
+              
+              final notifications = snapshot.data ?? [];
+              if (notifications.isEmpty) {
+                return const Padding(
+                  padding: EdgeInsets.all(16.0),
+                  child: Text('No tienes notificaciones nuevas.'),
+                );
+              }
+
+              return ListView.builder(
+                shrinkWrap: true,
+                itemCount: notifications.length,
+                itemBuilder: (context, index) {
+                  final notif = notifications[index];
+                  final isRead = notif['read'] ?? false;
+                  // Handle Timestamp or fallback
+                  // final timestamp = notif['createdAt'] ... 
+
+                  return ListTile(
+                    leading: Icon(
+                      Icons.notifications,
+                      color: isRead ? Colors.grey : theme.colorScheme.primary,
+                    ),
+                    title: Text(
+                      notif['title'] ?? 'Notificación',
+                      style: TextStyle(
+                        fontWeight: isRead ? FontWeight.normal : FontWeight.bold,
+                      ),
+                    ),
+                    subtitle: Text(notif['body'] ?? ''),
+                    onTap: () {
+                      clientService.markNotificationAsRead(notif['id']);
+                      // Optional: Navigate if notification has 'route' or 'data'
+                    },
+                  );
+                },
+              );
+            },
+          ),
         ),
         actions: [
           TextButton(
@@ -360,15 +402,27 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
                       stream: PymeService().getSpecialOffersGlobal(),
                       builder: (context, offersSnapshot) {
                         if (offersSnapshot.hasError) {
-                          // This helps debugging missing index issues
-                          debugPrint("Error fetching offers: ${offersSnapshot.error}");
+                          // Likely missing index for collectionGroup query.
+                          final error = offersSnapshot.error.toString();
+                          debugPrint("Error fetching offers: $error");
+                          
+                          // Convert error to user friendly message or show link for dev
                           return Center(
                             child: Padding(
-                              padding: const EdgeInsets.all(8.0),
-                              child: Text(
-                                'Error cargando ofertas destacadas.',
-                                style: TextStyle(color: theme.colorScheme.error, fontSize: 10),
-                                textAlign: TextAlign.center,
+                              padding: const EdgeInsets.all(16.0),
+                              child: Column(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(Icons.error_outline, color: theme.colorScheme.error),
+                                  const SizedBox(height: 8),
+                                  Text(
+                                    error.contains('failed-precondition') 
+                                      ? 'Falta índice en Firebase. Revisa la consola.' 
+                                      : 'No se pudieron cargar las ofertas.',
+                                    style: TextStyle(color: theme.colorScheme.error, fontSize: 12),
+                                    textAlign: TextAlign.center,
+                                  ),
+                                ],
                               ),
                             ),
                           );
@@ -380,14 +434,21 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
                         final allOffers = offersSnapshot.data ?? [];
                         
                         // Filter offers to only show those from the currently loaded pymes list
-                        // This ensures "Pymes" tab shows only Pyme offers, and "Foundations" tab shows only Foundation offers
                         final validOffers = allOffers.where((offer) {
                           final pymeId = offer['pymeId'];
                           return pymes.any((p) => p.id == pymeId);
                         }).toList();
                         
                         if (validOffers.isEmpty) {
-                           return const Center(child: Text('No hay ofertas disponibles por el momento.'));
+                           return Center(
+                             child: Column(
+                               mainAxisSize: MainAxisSize.min,
+                               children: [
+                                 Icon(Icons.local_offer_outlined, size: 40, color: theme.colorScheme.outline),
+                                 Text('No hay ofertas destacadas hoy', style: TextStyle(color: theme.colorScheme.onSurfaceVariant)),
+                               ],
+                             ),
+                           );
                         }
 
                         return ListView.builder(
@@ -398,30 +459,192 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
                             final offer = validOffers[index];
                             final pymeId = offer['pymeId'];
                             
-                            // It's safe to use first where here because we filtered above
-                            final pyme = pymes.firstWhere((p) => p.id == pymeId);
+                            // Find the Pyme profile for this offer
+                            final pyme = pymes.firstWhere(
+                              (p) => p.id == pymeId,
+                              orElse: () => UserProfile(id: 'unknown', name: 'Desconocido', email: '', role: UserRole.pyme, createdAt: DateTime.now()), // Dummy fallback
+                            );
 
-                            return Padding(
-                              padding: const EdgeInsets.only(right: 16),
-                              child: _buildOfferCard(
-                                context,
-                                pyme,
-                                offer['title'] ?? 'Oferta',
-                                offer['description'] ?? '',
-                                'OFERTA',
-                                Color(offer['colorValue'] ?? 0xFF000000),
-                                IconData(
-                                  offer['iconCodePoint'] ?? Icons.local_offer.codePoint,
-                                  fontFamily: 'MaterialIcons',
+                            return GestureDetector(
+                              onTap: () {
+                                // Navigate to Pyme Detail or Offer Detail
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => ClientPymeDetailScreen(
+                                      pymeId: pyme.id,
+                                      pymeData: pyme,
+                                    ),
+                                  ),
+                                );
+                              },
+                              child: Container(
+                                width: 280,
+                                margin: const EdgeInsets.only(right: 16),
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  borderRadius: BorderRadius.circular(16),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: const Color(0xFF2F3F2A).withOpacity(0.08),
+                                      blurRadius: 10,
+                                      offset: const Offset(0, 4),
+                                    ),
+                                  ],
+                                ),
+                                child: Stack(
+                                  children: [
+                                    // Background Image (Pyme Logo as requested)
+                                    Positioned.fill(
+                                      child: ClipRRect(
+                                        borderRadius: BorderRadius.circular(16),
+                                        child: (pyme.logoUrl != null && pyme.logoUrl!.isNotEmpty)
+                                            ? Image.network(
+                                                pyme.logoUrl!,
+                                                fit: BoxFit.cover,
+                                              )
+                                            : Container(
+                                                color: theme.colorScheme.primaryContainer,
+                                                child: Icon(Icons.store, 
+                                                  size: 60, 
+                                                  color: theme.colorScheme.primary.withOpacity(0.3)
+                                                ),
+                                              ),
+                                      ),
+                                    ),
+                                    
+                                    // Gradient Shadow for text visibility
+                                    Positioned.fill(
+                                      child: Container(
+                                        decoration: BoxDecoration(
+                                          borderRadius: BorderRadius.circular(16),
+                                          gradient: LinearGradient(
+                                            begin: Alignment.topCenter,
+                                            end: Alignment.bottomCenter,
+                                            colors: [
+                                              Colors.transparent,
+                                              Colors.black.withOpacity(0.2), // Subtle start
+                                              Colors.black.withOpacity(0.8), // Dark bottom
+                                            ],
+                                            stops: const [0.5, 0.75, 1.0],
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+
+                                    // Content
+                                    Padding( 
+                                      padding: const EdgeInsets.all(16),
+                                      child: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                        children: [
+                                          // Top Row: Tag and Pyme Name
+                                          Row(
+                                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                            crossAxisAlignment: CrossAxisAlignment.start,
+                                            children: [
+                                              Container(
+                                                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                                                decoration: BoxDecoration(
+                                                  color: Colors.white.withOpacity(0.9),
+                                                  borderRadius: BorderRadius.circular(20),
+                                                ),
+                                                child: Text(
+                                                  'OFERTA ESPECIAL',
+                                                  style: TextStyle(
+                                                    fontSize: 10,
+                                                    fontWeight: FontWeight.bold,
+                                                    color: theme.colorScheme.primary,
+                                                  ),
+                                                ),
+                                              ),
+                                              Flexible(
+                                                child: Padding(
+                                                  padding: const EdgeInsets.only(left: 8.0),
+                                                  child: Text(
+                                                    pyme.name,
+                                                    maxLines: 1,
+                                                    overflow: TextOverflow.ellipsis,
+                                                    style: TextStyle(
+                                                      color: Colors.white.withOpacity(0.95),
+                                                      fontSize: 13,
+                                                      fontWeight: FontWeight.bold,
+                                                      shadows: const [
+                                                        Shadow(offset: Offset(0, 1), blurRadius: 4, color: Colors.black54)
+                                                      ],
+                                                    ),
+                                                  ),
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                          
+                                          // Bottom Row: Details
+                                          Column(
+                                            crossAxisAlignment: CrossAxisAlignment.start,
+                                            children: [
+                                              Text(
+                                                offer['title'] ?? 'Oferta',
+                                                maxLines: 1,
+                                                overflow: TextOverflow.ellipsis,
+                                                style: const TextStyle(
+                                                  fontWeight: FontWeight.bold,
+                                                  fontSize: 18,
+                                                  color: Colors.white,
+                                                  shadows: [
+                                                    Shadow(offset: Offset(0, 1), blurRadius: 4, color: Colors.black45)
+                                                  ],
+                                                ),
+                                              ),
+                                              if (offer['description'] != null && offer['description'].toString().isNotEmpty) ...[
+                                                const SizedBox(height: 2),
+                                                Text(
+                                                  offer['description'],
+                                                  maxLines: 2,
+                                                  overflow: TextOverflow.ellipsis,
+                                                  style: TextStyle(
+                                                    color: Colors.white.withOpacity(0.9),
+                                                    fontSize: 12,
+                                                    height: 1.2,
+                                                    shadows: const [
+                                                      Shadow(offset: Offset(0, 1), blurRadius: 2, color: Colors.black45)
+                                                    ],
+                                                  ),
+                                                ),
+                                              ],
+                                              if (offer['price'] != null) ...[
+                                                const SizedBox(height: 8),
+                                                Container(
+                                                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                                                  decoration: BoxDecoration(
+                                                    color: theme.colorScheme.primary,
+                                                    borderRadius: BorderRadius.circular(8),
+                                                  ),
+                                                  child: Text(
+                                                    '\$${offer['price']}',
+                                                    style: const TextStyle(
+                                                      color: Colors.white,
+                                                      fontWeight: FontWeight.bold,
+                                                      fontSize: 16,
+                                                    ),
+                                                  ),
+                                                ),
+                                              ],
+                                            ],
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ],
                                 ),
                               ),
                             );
                           },
                         );
-                      }
+                      },
                     ),
                   ),
-                  const SizedBox(height: 28),
                 ],
 
                 // Upcoming Events (Only for Foundations)

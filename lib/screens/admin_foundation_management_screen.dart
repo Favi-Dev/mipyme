@@ -29,6 +29,9 @@ class _AdminFoundationManagementScreenState extends State<AdminFoundationManagem
         backgroundColor: const Color(0xFFF4F1EA),
         elevation: 0,
         centerTitle: false,
+        leading: Navigator.of(context).canPop()
+            ? const BackButton(color: Color(0xFF2F3F2A))
+            : null,
         actions: [
           PopupMenuButton<String>(
             icon: const Icon(Icons.filter_list, color: Color(0xFF2F3F2A)),

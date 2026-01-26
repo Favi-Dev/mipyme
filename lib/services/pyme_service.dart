@@ -80,15 +80,32 @@ class PymeService {
     return null;
   }
 
-  // Toggle follow status
+  // Toggle follow status and update supporter count
   Future<void> toggleFollow(String userId, String pymeId) async {
-    final docRef = _usersCollection.doc(userId).collection('following').doc(pymeId);
-    final doc = await docRef.get();
-    if (doc.exists) {
-      await docRef.delete();
-    } else {
-      await docRef.set({'followedAt': FieldValue.serverTimestamp()});
-    }
+    final userRef = _usersCollection.doc(userId).collection('following').doc(pymeId);
+    final pymeRef = _usersCollection.doc(pymeId);
+
+    return FirebaseFirestore.instance.runTransaction((transaction) async {
+      final followDoc = await transaction.get(userRef);
+      if (followDoc.exists) {
+        transaction.delete(userRef);
+        transaction.update(pymeRef, {
+          'supporterCount': FieldValue.increment(-1),
+        });
+      } else {
+        transaction.set(userRef, {'followedAt': FieldValue.serverTimestamp()});
+        transaction.update(pymeRef, {
+          'supporterCount': FieldValue.increment(1),
+        });
+      }
+    });
+  }
+
+  // Increment Supporter Count (for Donations or Sales)
+  Future<void> incrementSupporterCount(String pymeId) async {
+    await _usersCollection.doc(pymeId).update({
+      'supporterCount': FieldValue.increment(1),
+    });
   }
 
   // Check if following

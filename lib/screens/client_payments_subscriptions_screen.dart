@@ -28,6 +28,70 @@ class _ClientPaymentsSubscriptionsScreenState extends State<ClientPaymentsSubscr
     }
   }
 
+  Future<void> _handleUnsubscribe() async {
+    final theme = Theme.of(context);
+    
+    // Show confirmation dialog or bottom sheet
+    showModalBottomSheet(
+      context: context,
+      builder: (context) => Padding(
+        padding: const EdgeInsets.all(24.0),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('Administrar Suscripción', style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
+            const SizedBox(height: 16),
+            Text(
+              '¿Estás seguro de que deseas cancelar tu suscripción? Perderás tus beneficios premium al finalizar el periodo actual.',
+              style: theme.textTheme.bodyMedium,
+            ),
+            const SizedBox(height: 24),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: () async {
+                  Navigator.pop(context); // Close sheet
+                  setState(() => _isLoading = true);
+                  try {
+                    await _clientService.cancelSubscription();
+                    if (mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Suscripción cancelada')),
+                      );
+                    }
+                  } catch (e) {
+                     if (mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text('Error: $e')),
+                      );
+                    }
+                  } finally {
+                    if (mounted) setState(() => _isLoading = false);
+                  }
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: theme.colorScheme.error,
+                  foregroundColor: theme.colorScheme.onError,
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                ),
+                child: const Text('Cancelar Suscripción'),
+              ),
+            ),
+            const SizedBox(height: 12),
+            SizedBox(
+              width: double.infinity,
+              child: TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('Mantener Suscripción'),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -72,91 +136,104 @@ class _ClientPaymentsSubscriptionsScreenState extends State<ClientPaymentsSubscr
 
   Widget _buildPaymentHistory(BuildContext context) {
     final theme = Theme.of(context);
-    // Mock history
-    final payments = [
-      {
-        'title': 'Donación Fundación Los Robles',
-        'date': '10 Dic 2025',
-        'amount': '\$3.000',
-        'status': 'Completado'
-      },
-      {
-        'title': 'Compra en Café Eclipse',
-        'date': '05 Dic 2025',
-        'amount': '\$12.500',
-        'status': 'Completado'
-      },
-    ];
+    
+    return StreamBuilder<List<Map<String, dynamic>>>(
+      stream: _clientService.getPaymentHistory(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(child: CircularProgressIndicator());
+        }
+        
+        final payments = snapshot.data ?? [];
+        
+        if (payments.isEmpty) {
+          return Center(
+            child: Text(
+              'No hay historial de pagos.',
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
+            ),
+          );
+        }
 
-    return ListView.separated(
-      padding: const EdgeInsets.all(16),
-      itemCount: payments.length,
-      separatorBuilder: (context, index) => const SizedBox(height: 12),
-      itemBuilder: (context, index) {
-        final payment = payments[index];
-        return Container(
+        return ListView.separated(
           padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: theme.colorScheme.surfaceContainerLowest,
-            borderRadius: BorderRadius.circular(12),
-            boxShadow: [
-              BoxShadow(
-                color: const Color(0xFF2F3F2A).withOpacity(0.1),
-                blurRadius: 8,
-                offset: const Offset(0, 2),
-              ),
-            ],
-          ),
-          child: Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(
-                  color: theme.colorScheme.primaryContainer,
-                  shape: BoxShape.circle,
-                ),
-                child: Icon(Icons.payment, color: theme.colorScheme.onPrimaryContainer),
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      payment['title']!,
-                      style: theme.textTheme.bodyMedium?.copyWith(
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                    Text(
-                      payment['date']!,
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        color: theme.colorScheme.onSurfaceVariant,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  Text(
-                    payment['amount']!,
-                    style: theme.textTheme.bodyMedium?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  Text(
-                    payment['status']!,
-                    style: theme.textTheme.labelSmall?.copyWith(
-                      color: const Color(0xFF6F8F5E), // Keep green for success status
-                      fontWeight: FontWeight.w600,
-                    ),
+          itemCount: payments.length,
+          separatorBuilder: (context, index) => const SizedBox(height: 12),
+          itemBuilder: (context, index) {
+            final payment = payments[index];
+            final date = payment['date'] as DateTime?;
+            final dateStr = date != null 
+                ? '${date.day}/${date.month}/${date.year}' 
+                : 'Fecha desconocida';
+            final amount = payment['amount'];
+
+            return Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: theme.colorScheme.surfaceContainerLowest,
+                borderRadius: BorderRadius.circular(12),
+                boxShadow: [
+                  BoxShadow(
+                    color: const Color(0xFF2F3F2A).withOpacity(0.1),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
                   ),
                 ],
               ),
-            ],
-          ),
+              child: Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: theme.colorScheme.primaryContainer,
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(Icons.payment, color: theme.colorScheme.onPrimaryContainer),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          payment['title'] ?? 'Pago',
+                          style: theme.textTheme.bodyMedium?.copyWith(
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        Text(
+                          dateStr,
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: theme.colorScheme.onSurfaceVariant,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      Text(
+                        '\$$amount',
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      Text(
+                        payment['status'] ?? 'Completado',
+                        style: theme.textTheme.labelSmall?.copyWith(
+                          color: const Color(0xFF6F8F5E), // Keep green for success status
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            );
+          },
         );
       },
     );
@@ -203,19 +280,10 @@ class _ClientPaymentsSubscriptionsScreenState extends State<ClientPaymentsSubscr
                   isActive: isSubscribed,
                   icon: Icons.star,
                   color: theme.colorScheme.primary,
-                  onAction: isSubscribed ? null : _handleSubscribe,
+                  onSubscribe: _handleSubscribe,
+                  onManage: _handleUnsubscribe,
                 ),
-                const SizedBox(height: 16),
-                _buildSubscriptionCard(
-                  context: context,
-                  title: 'Donación Fundación Los Robles',
-                  price: '\$3.000/mes',
-                  nextBilling: 'Próximo cobro: 10 Ene 2026',
-                  isActive: true,
-                  icon: Icons.volunteer_activism,
-                  color: const Color(0xFF8B5A3C),
-                  onAction: null,
-                ),
+                // Future implementation: List real recurring donations here
               ],
             );
           }
@@ -232,7 +300,8 @@ class _ClientPaymentsSubscriptionsScreenState extends State<ClientPaymentsSubscr
     required bool isActive,
     required IconData icon,
     required Color color,
-    VoidCallback? onAction,
+    required VoidCallback onSubscribe,
+    required VoidCallback onManage,
   }) {
     final theme = Theme.of(context);
     return Container(
@@ -312,11 +381,11 @@ class _ClientPaymentsSubscriptionsScreenState extends State<ClientPaymentsSubscr
                   color: theme.colorScheme.onSurfaceVariant,
                 ),
               ),
-              if (!isActive && onAction != null)
+              if (!isActive)
                 _isLoading 
                   ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2))
                   : TextButton(
-                      onPressed: onAction,
+                      onPressed: onSubscribe,
                       style: TextButton.styleFrom(
                         padding: EdgeInsets.zero,
                         minimumSize: const Size(0, 0),
@@ -332,7 +401,7 @@ class _ClientPaymentsSubscriptionsScreenState extends State<ClientPaymentsSubscr
                     ),
               if (isActive)
                  TextButton(
-                  onPressed: () {},
+                  onPressed: onManage,
                   style: TextButton.styleFrom(
                     padding: EdgeInsets.zero,
                     minimumSize: const Size(0, 0),

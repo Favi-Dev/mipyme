@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import '../services/client_service.dart';
 import 'login_screen.dart';
 
@@ -12,6 +13,120 @@ class ClientSettingsScreen extends StatefulWidget {
 
 class _ClientSettingsScreenState extends State<ClientSettingsScreen> {
   final ClientService _clientService = ClientService();
+  final FirebaseAuth _auth = FirebaseAuth.instance;
+
+  void _showEditProfileDialog(BuildContext context) {
+    final user = _auth.currentUser;
+    final nameController = TextEditingController(text: user?.displayName ?? '');
+    
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Editar Perfil'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(
+              controller: nameController,
+              decoration: const InputDecoration(labelText: 'Nombre Completo'),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancelar'),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              if (nameController.text.isNotEmpty) {
+                await _clientService.updateProfile(name: nameController.text);
+                if (mounted) {
+                  Navigator.pop(context);
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Perfil actualizado')),
+                  );
+                }
+              }
+            },
+            child: const Text('Guardar'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _changePassword(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Cambiar Contraseña'),
+        content: const Text(
+          'Se enviará un correo electrónico a tu dirección registrada para restablecer tu contraseña.'
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancelar'),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              try {
+                final email = _auth.currentUser?.email;
+                if (email != null) {
+                  await _auth.sendPasswordResetEmail(email: email);
+                  if (mounted) {
+                    Navigator.pop(context);
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('Correo enviado a $email')),
+                    );
+                  }
+                }
+              } catch (e) {
+                if (mounted) {
+                  Navigator.pop(context);
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('Error: $e')),
+                  );
+                }
+              }
+            },
+            child: const Text('Enviar Correo'),
+          ),
+        ],
+      ),
+    );
+  }
+  
+  void _showPrivacySecurity(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Privacidad y Seguridad'),
+        content: const SingleChildScrollView(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text('Tus datos están seguros con nosotros.', style: TextStyle(fontWeight: FontWeight.bold)),
+              SizedBox(height: 10),
+              Text('• Encriptación de datos sensibles.', style: TextStyle(fontSize: 14)),
+              Text('• No compartimos información con terceros sin consentimiento.', style: TextStyle(fontSize: 14)),
+              Text('• Control total sobre tus preferencias de notificaciones.', style: TextStyle(fontSize: 14)),
+              SizedBox(height: 10),
+              Text('Para eliminar tu cuenta o solicitar tus datos, contacta a soporte.', style: TextStyle(fontSize: 12, color: Colors.grey)),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cerrar'),
+          ),
+        ],
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -49,9 +164,9 @@ class _ClientSettingsScreenState extends State<ClientSettingsScreen> {
               
               const SizedBox(height: 24),
               _buildSectionTitle('Cuenta'),
-              _buildActionTile('Editar Perfil', Icons.person_outline, () {}),
-              _buildActionTile('Cambiar Contraseña', Icons.lock_outline, () {}),
-              _buildActionTile('Privacidad y Seguridad', Icons.security, () {}),
+              _buildActionTile('Editar Perfil', Icons.person_outline, () => _showEditProfileDialog(context)),
+              _buildActionTile('Cambiar Contraseña', Icons.lock_outline, () => _changePassword(context)),
+              _buildActionTile('Privacidad y Seguridad', Icons.security, () => _showPrivacySecurity(context)),
 
               const SizedBox(height: 40),
               SizedBox(

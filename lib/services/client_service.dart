@@ -1,12 +1,79 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_storage/firebase_storage.dart';
+import 'dart:io';
 import '../models/order_model.dart';
+import 'pyme_service.dart';
 
 class ClientService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final FirebaseAuth _auth = FirebaseAuth.instance;
 
   String? get currentUserId => _auth.currentUser?.uid;
+
+  Future<void> updateProfile({required String name, String? phone}) async {
+    if (currentUserId == null) return;
+    
+    final Map<String, dynamic> updates = {'name': name};
+    if (phone != null) updates['phoneNumber'] = phone; // Assuming phoneNumber field
+    
+    // Update Firestore
+    await _firestore.collection('users').doc(currentUserId).update(updates);
+    
+    // Update Auth Profile
+    await FirebaseAuth.instance.currentUser?.updateDisplayName(name);
+  }
+
+  Future<void> updateProfileImage(File imageFile) async {
+    if (currentUserId == null) return;
+    
+    try {
+      final storageRef = FirebaseStorage.instance
+          .ref()
+          .child('user_profiles')
+          .child(currentUserId!)
+          .child('profile.jpg');
+          
+      await storageRef.putFile(imageFile);
+      final downloadUrl = await storageRef.getDownloadURL();
+      
+      await _firestore.collection('users').doc(currentUserId).update({
+        'logoUrl': downloadUrl, // Reusing logoUrl field as per UserProfile model usage
+      });
+      
+      // Also update Auth profile for consistency
+      await _auth.currentUser?.updatePhotoURL(downloadUrl);
+    } catch (e) {
+      print('Error uploading profile image: $e');
+      rethrow;
+    }
+  }
+
+  // --- Notifications ---
+  Stream<List<Map<String, dynamic>>> getNotifications() {
+    if (currentUserId == null) return Stream.value([]);
+    return _firestore
+        .collection('users')
+        .doc(currentUserId)
+        .collection('notifications')
+        .orderBy('createdAt', descending: true)
+        .snapshots()
+        .map((snapshot) => snapshot.docs.map((doc) {
+              final data = doc.data();
+              data['id'] = doc.id;
+              return data;
+            }).toList());
+  }
+
+  Future<void> markNotificationAsRead(String notificationId) async {
+    if (currentUserId == null) return;
+    await _firestore
+        .collection('users')
+        .doc(currentUserId)
+        .collection('notifications')
+        .doc(notificationId)
+        .update({'read': true});
+  }
 
   // --- Addresses ---
   Stream<List<Map<String, dynamic>>> getAddresses() {
@@ -25,11 +92,42 @@ class ClientService {
 
   Future<void> addAddress(Map<String, dynamic> addressData) async {
     if (currentUserId == null) return;
-    await _firestore
+    
+    // Check if it's the first address to set as default
+    final snapshot = await _firestore
+        .collection('users')
+        .doc(currentUserId)
+        .collection('addresses')
+        .get();
+        
+    if (snapshot.docs.isEmpty) {
+      addressData['isDefault'] = true;
+    } else {
+      // If not specified, default to false. If specified, keep it.
+      if (!addressData.containsKey('isDefault')) {
+         addressData['isDefault'] = false;
+      }
+    }
+    
+    // Add to subcollection
+    final docRef = await _firestore
         .collection('users')
         .doc(currentUserId)
         .collection('addresses')
         .add(addressData);
+        
+    // Update main profile location for quick access if it's default
+    if (addressData['isDefault'] == true) {
+      final parts = [
+        addressData['address'],
+        addressData['comuna'],
+        addressData['region']
+      ].where((e) => e != null && e.toString().isNotEmpty).join(', ');
+
+      await _firestore.collection('users').doc(currentUserId).set({
+        'location': parts,
+      }, SetOptions(merge: true));
+    }
   }
 
   Future<void> deleteAddress(String addressId) async {
@@ -40,6 +138,139 @@ class ClientService {
         .collection('addresses')
         .doc(addressId)
         .delete();
+  }
+
+  Future<void> setDefaultAddress(String addressId) async {
+    if (currentUserId == null) return;
+    
+    final batch = _firestore.batch();
+    final addressesRef = _firestore
+        .collection('users')
+        .doc(currentUserId)
+        .collection('addresses');
+        
+    final snapshot = await addressesRef.get();
+    
+    // Unset all others
+    for (var doc in snapshot.docs) {
+      if (doc.id != addressId && (doc.data()['isDefault'] == true)) {
+        batch.update(doc.reference, {'isDefault': false});
+      }
+    }
+    
+    // Set new default
+    batch.update(addressesRef.doc(addressId), {'isDefault': true});
+    
+    // Also update main profile
+    final selectedDoc = await addressesRef.doc(addressId).get();
+    if (selectedDoc.exists) {
+      final data = selectedDoc.data()!;
+      final parts = [
+        data['address'],
+        data['comuna'],
+        data['region']
+      ].where((e) => e != null && e.toString().isNotEmpty).join(', ');
+
+      batch.set(_firestore.collection('users').doc(currentUserId), {
+        'location': parts,
+      }, SetOptions(merge: true));
+    }
+
+    await batch.commit();
+  }
+
+  Future<void> updateAddress(String addressId, Map<String, dynamic> newData) async {
+    if (currentUserId == null) return;
+    
+    final docRef = _firestore
+        .collection('users')
+        .doc(currentUserId)
+        .collection('addresses')
+        .doc(addressId);
+
+    await docRef.update(newData);
+    
+    // Check if this address is default, if so, update profile location
+    final docSnapshot = await docRef.get();
+    if (docSnapshot.exists && docSnapshot.data()?['isDefault'] == true) {
+      final data = docSnapshot.data()!;
+      final parts = [
+        data['address'],
+        data['comuna'],
+        data['region']
+      ].where((e) => e != null && e.toString().isNotEmpty).join(', ');
+
+      await _firestore.collection('users').doc(currentUserId).set({
+        'location': parts,
+      }, SetOptions(merge: true));
+    }
+  }
+
+  // --- Payment Methods ---
+  Stream<List<Map<String, dynamic>>> getPaymentMethods() {
+    if (currentUserId == null) return Stream.value([]);
+    return _firestore
+        .collection('users')
+        .doc(currentUserId)
+        .collection('payment_methods')
+        .snapshots()
+        .map((snapshot) => snapshot.docs.map((doc) {
+              final data = doc.data();
+              data['id'] = doc.id;
+              return data;
+            }).toList());
+  }
+
+  Future<void> addPaymentMethod(Map<String, dynamic> data) async {
+    if (currentUserId == null) return;
+    // If it's the first one, make it default automatically
+    final snapshot = await _firestore
+       .collection('users')
+       .doc(currentUserId)
+       .collection('payment_methods')
+       .get();
+       
+    if (snapshot.docs.isEmpty) {
+      data['isDefault'] = true;
+    } else {
+      data['isDefault'] = false; // Default to false unless specified
+    }
+
+    await _firestore
+        .collection('users')
+        .doc(currentUserId)
+        .collection('payment_methods')
+        .add(data);
+  }
+
+  Future<void> deletePaymentMethod(String id) async {
+    if (currentUserId == null) return;
+    await _firestore
+        .collection('users')
+        .doc(currentUserId)
+        .collection('payment_methods')
+        .doc(id)
+        .delete();
+  }
+  
+  Future<void> setDefaultPaymentMethod(String id) async {
+    if (currentUserId == null) return;
+    
+    final batch = _firestore.batch();
+    final colRef = _firestore.collection('users').doc(currentUserId).collection('payment_methods');
+    final snapshot = await colRef.get();
+
+    for (var doc in snapshot.docs) {
+      if (doc.id == id) {
+        batch.update(doc.reference, {'isDefault': true});
+      } else {
+        if (doc.data()['isDefault'] == true) {
+          batch.update(doc.reference, {'isDefault': false});
+        }
+      }
+    }
+    
+    await batch.commit();
   }
 
   // --- Orders (History) ---
@@ -64,6 +295,9 @@ class ClientService {
     orderData['createdAt'] = FieldValue.serverTimestamp();
     
     await _firestore.collection('orders').add(orderData);
+    
+    // Increment S+ Score for Pyme
+    await PymeService().incrementSupporterCount(order.pymeId);
   }
 
   // --- Coupon ---
@@ -195,6 +429,49 @@ class ClientService {
       'subscriptionDate': FieldValue.serverTimestamp(),
       'monthlyCouponRedeemed': false, // Reset coupon on new subscription
     }, SetOptions(merge: true));
+    
+    // Log initial payment transaction (Simulated for this context)
+    await _firestore.collection('transactions').add({
+      'clientId': currentUserId,
+      'type': 'subscription', // or 'payment'
+      'title': 'Suscripción Usuario Premium',
+      'amount': 2000,
+      'status': 'Completado',
+      'createdAt': FieldValue.serverTimestamp(),
+    });
+  }
+
+  Future<void> cancelSubscription() async {
+    if (currentUserId == null) return;
+    await _firestore.collection('users').doc(currentUserId).update({
+      'isSubscribed': false,
+    });
+  }
+  
+  Stream<List<Map<String, dynamic>>> getPaymentHistory() {
+    if (currentUserId == null) return Stream.value([]);
+    
+    // Combine real orders with subscription transactions if possible. 
+    // For simplicity, we'll fetch from a 'transactions' collection that we should start populating,
+    // OR just use 'orders' and adapt them.
+    // Let's use a unified 'transactions' stream if we want to include subscription payments.
+    // If 'transactions' doesn't exist, we can return orders formatted.
+    
+    return _firestore
+        .collection('transactions')
+        .where('clientId', isEqualTo: currentUserId)
+        .orderBy('createdAt', descending: true)
+        .snapshots()
+        .map((snapshot) => snapshot.docs.map((doc) {
+             final data = doc.data();
+             return {
+               'id': doc.id,
+               'title': data['title'] ?? 'Pago',
+               'amount': data['amount'] ?? 0,
+               'date': (data['createdAt'] as Timestamp?)?.toDate(),
+               'status': data['status'] ?? 'Completado',
+             };
+           }).toList());
   }
 
   // --- Support ---

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:share_plus/share_plus.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
@@ -10,6 +11,7 @@ import '../services/pyme_service.dart';
 import '../models/product.dart';
 import '../services/cart_service.dart';
 import '../widgets/supporter_counter.dart';
+import '../widgets/donation_content.dart';
 import 'client_cart_screen.dart' as import_cart;
 
 class ClientPymeDetailScreen extends StatefulWidget {
@@ -56,99 +58,11 @@ class _ClientPymeDetailScreenState extends State<ClientPymeDetailScreen> {
   }
 
   void _showShareOptions() {
-    final theme = Theme.of(context);
-    showModalBottomSheet(
-      context: context,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (context) => Container(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Compartir $_pymeName',
-              style: theme.textTheme.titleLarge?.copyWith(
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            const SizedBox(height: 24),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
-              children: [
-                _buildShareOption(
-                  icon: Icons.copy,
-                  label: 'Copiar',
-                  onTap: () {
-                    Navigator.pop(context);
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Enlace copiado al portapapeles')),
-                    );
-                  },
-                ),
-                _buildShareOption(
-                  icon: Icons.message, // WhatsApp icon usually
-                  label: 'WhatsApp',
-                  color: const Color(0xFF6F8F5E),
-                  onTap: () {
-                    Navigator.pop(context);
-                    // Generates a link like https://mipyme.app/pyme/pyme1
-                    final String link = 'https://mipyme.app/pyme/${_pymeName.replaceAll(' ', '').toLowerCase()}';
-                    _launchUrl('https://wa.me/?text=¡Hola!%20Te%20recomiendo%20ver%20*$_pymeName*%20en%20la%20app%20MiPyme.%0A%0AMira%20sus%20productos%20y%20ofertas%20aquí:%20$link');
-                  },
-                ),
-                _buildShareOption(
-                  icon: Icons.email,
-                  label: 'Correo',
-                  color: const Color(0xFF8B5A3C), // Café
-                  onTap: () {
-                    Navigator.pop(context);
-                    final String link = 'https://mipyme.app/pyme/${_pymeName.replaceAll(' ', '').toLowerCase()}';
-                    _launchUrl('mailto:?subject=Te%20recomiendo%20$_pymeName&body=Hola,%0A%0AEchale%20un%20vistazo%20a%20$_pymeName.%20Tienen%20cosas%20increíbles.%0A%0AVer%20perfil:%20$link');
-                  },
-                ),
-                _buildShareOption(
-                  icon: Icons.more_horiz,
-                  label: 'Más',
-                  color: const Color(0xFF6F8F5E), // Verde Claro
-                  onTap: () {
-                    Navigator.pop(context);
-                    // Standard share would go here
-                  },
-                ),
-              ],
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildShareOption({
-    required IconData icon,
-    required String label,
-    Color color = const Color(0xFF2F3F2A),
-    required VoidCallback onTap,
-  }) {
-    final theme = Theme.of(context);
-    return InkWell(
-      onTap: onTap,
-      child: Column(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: color.withOpacity(0.1),
-              shape: BoxShape.circle,
-            ),
-            child: Icon(icon, color: color, size: 28),
-          ),
-          const SizedBox(height: 8),
-          Text(label, style: theme.textTheme.bodySmall),
-        ],
-      ),
+    final String link = 'https://mipyme.app/pyme/${_pymeName.replaceAll(' ', '').toLowerCase()}';
+    // Using native share via share_plus
+    Share.share(
+      '¡Hola! Te recomiendo ver *$_pymeName* en la app MiPyme.\n\nMira sus productos y ofertas aquí: $link',
+      subject: 'Te recomiendo $_pymeName',
     );
   }
 
@@ -167,261 +81,18 @@ class _ClientPymeDetailScreenState extends State<ClientPymeDetailScreen> {
 
   void _showDonationModal() {
     final theme = Theme.of(context);
+    List<int> amounts = [1000, 3000, 5000, 10000];
+
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (context) => StatefulBuilder(
-        builder: (context, setState) {
-          bool isMonthly = false;
-          int selectedAmount = 3000;
-          final List<int> amounts = [1000, 3000, 5000, 10000];
-
-          return DraggableScrollableSheet(
-            initialChildSize: 0.85,
-            minChildSize: 0.5,
-            maxChildSize: 0.95,
-            builder: (_, controller) => Container(
-              decoration: BoxDecoration(
-                color: theme.colorScheme.surface,
-                borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-              ),
-              padding: const EdgeInsets.all(24),
-              child: ListView(
-                controller: controller,
-                children: [
-                  Center(
-                    child: Container(
-                      width: 40,
-                      height: 4,
-                      decoration: BoxDecoration(
-                        color: theme.colorScheme.outlineVariant,
-                        borderRadius: BorderRadius.circular(2),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 24),
-                  Text(
-                    'Donar a $_pymeName',
-                    style: theme.textTheme.headlineSmall?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    'Tu aporte ayuda a continuar con nuestra labor.',
-                    style: theme.textTheme.bodyMedium?.copyWith(
-                      color: theme.colorScheme.onSurfaceVariant,
-                    ),
-                  ),
-                  const SizedBox(height: 24),
-                  
-                  // Frequency Toggle
-                  Container(
-                    padding: const EdgeInsets.all(4),
-                    decoration: BoxDecoration(
-                      color: theme.colorScheme.surfaceContainerHighest,
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Row(
-                      children: [
-                        Expanded(
-                          child: GestureDetector(
-                            onTap: () => setState(() => isMonthly = false),
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(vertical: 12),
-                              decoration: BoxDecoration(
-                                color: !isMonthly ? theme.colorScheme.surface : Colors.transparent,
-                                borderRadius: BorderRadius.circular(10),
-                                boxShadow: !isMonthly ? [
-                                  BoxShadow(
-                                    color: const Color(0xFF2F3F2A).withOpacity(0.1),
-                                    blurRadius: 4,
-                                  )
-                                ] : null,
-                              ),
-                              child: Text(
-                                'Única vez',
-                                textAlign: TextAlign.center,
-                                style: theme.textTheme.labelLarge?.copyWith(
-                                  fontWeight: FontWeight.w600,
-                                  color: !isMonthly ? theme.colorScheme.onSurface : theme.colorScheme.onSurfaceVariant,
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
-                        Expanded(
-                          child: GestureDetector(
-                            onTap: () => setState(() => isMonthly = true),
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(vertical: 12),
-                              decoration: BoxDecoration(
-                                color: isMonthly ? theme.colorScheme.surface : Colors.transparent,
-                                borderRadius: BorderRadius.circular(10),
-                                boxShadow: isMonthly ? [
-                                  BoxShadow(
-                                    color: const Color(0xFF2F3F2A).withOpacity(0.1),
-                                    blurRadius: 4,
-                                  )
-                                ] : null,
-                              ),
-                              child: Text(
-                                'Mensual',
-                                textAlign: TextAlign.center,
-                                style: theme.textTheme.labelLarge?.copyWith(
-                                  fontWeight: FontWeight.w600,
-                                  color: isMonthly ? theme.colorScheme.primary : theme.colorScheme.onSurfaceVariant,
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 24),
-
-                  // Amount Selection
-                  Text(
-                    'Selecciona un monto',
-                    style: theme.textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  Wrap(
-                    spacing: 12,
-                    runSpacing: 12,
-                    children: [
-                      ...amounts.map((amount) => ChoiceChip(
-                        label: Text('\$${amount.toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (Match m) => '${m[1]}.')}'),
-                        selected: selectedAmount == amount,
-                        onSelected: (selected) {
-                          if (selected) setState(() => selectedAmount = amount);
-                        },
-                        selectedColor: theme.colorScheme.primary,
-                        labelStyle: TextStyle(
-                          color: selectedAmount == amount ? theme.colorScheme.onPrimary : theme.colorScheme.onSurface,
-                          fontWeight: FontWeight.w600,
-                        ),
-                        backgroundColor: theme.colorScheme.surface,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
-                          side: BorderSide(
-                            color: selectedAmount == amount ? theme.colorScheme.primary : theme.colorScheme.outline,
-                          ),
-                        ),
-                      )),
-                      ChoiceChip(
-                        label: const Text('Otro monto'),
-                        selected: false,
-                        onSelected: (_) {},
-                        backgroundColor: theme.colorScheme.surface,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
-                          side: BorderSide(color: theme.colorScheme.outline),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 32),
-
-                  // Progress
-                  Text(
-                    'Meta de recaudación',
-                    style: theme.textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  LinearProgressIndicator(
-                    value: (widget.pymeData.currentDonations ?? 0) / (widget.pymeData.donationGoal ?? 100000),
-                    backgroundColor: theme.colorScheme.surfaceContainerHighest,
-                    color: const Color(0xFF6F8F5E), // Light Green for progress
-                    minHeight: 10,
-                    borderRadius: BorderRadius.circular(5),
-                  ),
-                  const SizedBox(height: 8),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        '\$${(widget.pymeData.currentDonations ?? 0).toStringAsFixed(0)}',
-                        style: theme.textTheme.bodyMedium?.copyWith(
-                          fontWeight: FontWeight.bold,
-                          color: const Color(0xFF6F8F5E), // Light Green
-                        ),
-                      ),
-                      Text(
-                        'Meta: \$${(widget.pymeData.donationGoal ?? 100000).toStringAsFixed(0)}',
-                        style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurfaceVariant),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 32),
-
-                  // Payment Method Info
-                  Container(
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: theme.colorScheme.primaryContainer,
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: theme.colorScheme.primary.withOpacity(0.2)),
-                    ),
-                    child: Row(
-                      children: [
-                        Icon(Icons.credit_card, color: theme.colorScheme.primary),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Text(
-                            'Se utilizará tu método de pago registrado para realizar el aporte.',
-                            style: theme.textTheme.bodySmall?.copyWith(
-                              color: theme.colorScheme.onPrimaryContainer,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 32),
-                  
-                  // Action Button
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton(
-                      onPressed: () {
-                        Navigator.pop(context);
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text(isMonthly 
-                              ? '¡Gracias por suscribirte con \$${selectedAmount}/mes!' 
-                              : '¡Gracias por tu donación de \$${selectedAmount}!'),
-                            backgroundColor: const Color(0xFF6F8F5E),
-                          ),
-                        );
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF2F3F2A), // Verde Hoja Profundo
-                        padding: const EdgeInsets.symmetric(vertical: 16),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                      ),
-                      child: Text(
-                        isMonthly ? 'Suscribirse Mensualmente' : 'Realizar Donación',
-                        style: theme.textTheme.titleMedium?.copyWith(
-                          fontWeight: FontWeight.bold,
-                          color: const Color(0xFFF4F1EA),
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          );
-        },
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      backgroundColor: const Color(0xFFF4F1EA), // Beige Suave
+      builder: (context) => DonationContent(
+        pymeData: widget.pymeData,
+        amounts: amounts,
       ),
     );
   }
@@ -578,7 +249,13 @@ class _ClientPymeDetailScreenState extends State<ClientPymeDetailScreen> {
                               color: theme.colorScheme.onSurface,
                             ),
                           ),
-                          SupporterCounter(count: 0),
+                          StreamBuilder<UserProfile?>(
+                            stream: _pymeService.getUserProfileStream(widget.pymeId),
+                            builder: (context, snapshot) {
+                              final count = snapshot.data?.supporterCount ?? widget.pymeData.supporterCount;
+                              return SupporterCounter(count: count);
+                            },
+                          ),
                         ],
                       ),
                       const SizedBox(height: 8),
@@ -812,7 +489,7 @@ class _ClientPymeDetailScreenState extends State<ClientPymeDetailScreen> {
     final theme = Theme.of(context);
     
     // Parse color
-    Color cardColor = const Color(0xFFE76F51);
+    Color cardColor = theme.colorScheme.primary;
     if (offer['color'] != null) {
       try {
         if (offer['color'] is int) {
@@ -916,9 +593,253 @@ class _ClientPymeDetailScreenState extends State<ClientPymeDetailScreen> {
   }
 
 
+  void _showProductDetail(Product product) {
+    int quantity = 1;
+    final theme = Theme.of(context);
+
+    // Filter relevant attributes to display
+    final attributes = product.customAttributes.entries.where((e) {
+      final key = e.key.toLowerCase();
+      return key != 'is_event' && key != 'event_date' && e.value.toString().isNotEmpty;
+    }).toList();
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setState) {
+          return Container(
+            height: MediaQuery.of(context).size.height * 0.85,
+            decoration: BoxDecoration(
+              color: theme.colorScheme.surface,
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+            ),
+            child: Column(
+              children: [
+                // Drag Handle
+                Container(
+                  margin: const EdgeInsets.symmetric(vertical: 12),
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: Colors.grey[300],
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+                
+                Expanded(
+                  child: ListView(
+                    padding: const EdgeInsets.symmetric(horizontal: 24),
+                    children: [
+                      // Large Image
+                      Hero(
+                        tag: 'product_${product.id}',
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(16),
+                          child: Image.network(
+                            product.imageUrl,
+                            height: 300,
+                            width: double.infinity,
+                            fit: BoxFit.cover,
+                            errorBuilder: (_, __, ___) => Container(
+                              height: 300,
+                              color: theme.colorScheme.surfaceContainerHighest,
+                              child: Icon(Icons.image_not_supported, size: 50, color: theme.colorScheme.onSurfaceVariant),
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 24),
+                      
+                      // Title & Price
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Expanded(
+                            child: Text(
+                              product.name,
+                              style: theme.textTheme.headlineSmall?.copyWith(
+                                fontWeight: FontWeight.bold,
+                                color: theme.colorScheme.onSurface,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 16),
+                          Text(
+                            '\$${(product.price * quantity).toStringAsFixed(0)}',
+                            style: theme.textTheme.headlineSmall?.copyWith(
+                              fontWeight: FontWeight.bold,
+                              color: theme.colorScheme.primary,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 16),
+                      
+                      // Description
+                      if (product.description.isNotEmpty) ...[
+                        Text(
+                          'Descripción',
+                          style: theme.textTheme.titleMedium?.copyWith(
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          product.description,
+                          style: theme.textTheme.bodyMedium?.copyWith(
+                            color: theme.colorScheme.onSurfaceVariant,
+                            height: 1.5,
+                          ),
+                        ),
+                        const SizedBox(height: 24),
+                      ],
+
+                      // Attributes (Color, Talla, Modelo...)
+                      if (attributes.isNotEmpty) ...[
+                        Wrap(
+                          spacing: 16,
+                          runSpacing: 16,
+                          children: attributes.map((entry) {
+                            return Container(
+                              padding: const EdgeInsets.all(12),
+                              decoration: BoxDecoration(
+                                color: theme.colorScheme.surfaceContainerLowest,
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(color: theme.colorScheme.outlineVariant),
+                              ),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    entry.key.toUpperCase(),
+                                    style: theme.textTheme.labelSmall?.copyWith(
+                                      color: theme.colorScheme.primary,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    entry.value.toString(),
+                                    style: theme.textTheme.bodyMedium?.copyWith(
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            );
+                          }).toList(),
+                        ),
+                        const SizedBox(height: 24),
+                      ],
+                    ],
+                  ),
+                ),
+
+                // Bottom Action Bar
+                Container(
+                  padding: const EdgeInsets.all(24),
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.surface,
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.05),
+                        blurRadius: 16,
+                        offset: const Offset(0, -4),
+                      ),
+                    ],
+                  ),
+                  child: Row(
+                    children: [
+                      // Counter
+                      Container(
+                        decoration: BoxDecoration(
+                          color: theme.colorScheme.surfaceContainerHighest,
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Row(
+                          children: [
+                            IconButton(
+                              icon: const Icon(Icons.remove),
+                              onPressed: quantity > 1 
+                                  ? () => setState(() => quantity--) 
+                                  : null,
+                            ),
+                            Text(
+                              quantity.toString(),
+                              style: theme.textTheme.titleMedium?.copyWith(
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            IconButton(
+                              icon: const Icon(Icons.add),
+                              onPressed: () => setState(() => quantity++),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(width: 16),
+                      // Add Button
+                      Expanded(
+                        child: ElevatedButton(
+                          onPressed: () {
+                            // Logic to add specific quantity
+                            // Since CartService might handle 1 by 1 or custom, 
+                            // we loop or update CartService to accept quantity.
+                            // Assuming CartService.addToCart adds 1 instance. 
+                            // Current `addToCart` impl in context adds a product.
+                            // Ideally CartService should support quantity param.
+                            // For now, loop calls or one call if updated.
+                            // Checking previous code: context.read<CartService>().addToCart(product);
+                            
+                            // Simple loop for now as fallback, but ideally update service
+                            for (int i = 0; i < quantity; i++) {
+                              context.read<CartService>().addToCart(product);
+                            }
+                            
+                            Navigator.pop(context);
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text('Agregado $quantity al carrito'),
+                                backgroundColor: const Color(0xFFA7C957),
+                              ),
+                            );
+                          },
+                          style: ElevatedButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(vertical: 16),
+                            backgroundColor: theme.colorScheme.primary,
+                            foregroundColor: theme.colorScheme.onPrimary,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                          child: const Text(
+                            'Agregar al Carrito',
+                            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          );
+        },
+      ),
+    );
+  }
+
   Widget _buildProductCard(Product product) {
     final theme = Theme.of(context);
-    return Container(
+    return GestureDetector(
+      onTap: () {
+        if (!product.isService) {
+          _showProductDetail(product);
+        }
+      },
+      child: Container(
       width: 160,
       decoration: BoxDecoration(
         color: theme.colorScheme.surfaceContainerLowest,
@@ -1068,14 +989,8 @@ class _ClientPymeDetailScreenState extends State<ClientPymeDetailScreen> {
                             }
                           }
                         } else {
-                          context.read<CartService>().addToCart(product);
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text('Agregado al carrito'),
-                              duration: Duration(seconds: 1),
-                              backgroundColor: Color(0xFFA7C957), // Verde Claro
-                            ),
-                          );
+                          // Standard product flow: Open details
+                          _showProductDetail(product);
                         }
                       } catch (e) {
                         if (mounted) {
@@ -1100,7 +1015,7 @@ class _ClientPymeDetailScreenState extends State<ClientPymeDetailScreen> {
                     child: Text(
                       product.customAttributes['is_event'] == 'true'
                           ? 'Participar'
-                          : (product.isService ? 'Reservar' : 'Comprar'),
+                          : (product.isService ? 'Reservar' : 'Ver Detalles'), // Changed from Comprar
                     ),
                   ),
                 ),
@@ -1109,6 +1024,7 @@ class _ClientPymeDetailScreenState extends State<ClientPymeDetailScreen> {
           ),
         ],
       ),
+    ),
     );
   }
 

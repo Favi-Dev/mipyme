@@ -103,14 +103,18 @@ class _PymeAddProductScreenState extends State<PymeAddProductScreen> {
         }
         break;
       case 'Oficios y manufactura':
+        _dynamicControllers['materiales'] = TextEditingController();
         _dynamicControllers['tiempo_entrega'] = TextEditingController();
-        _dynamicControllers['garantia'] = TextEditingController();
+        _dynamicControllers['personalizado'] = TextEditingController(text: 'No');
         break;
       case 'Educación y cultura':
         _dynamicControllers['nivel'] = TextEditingController();
-        _dynamicControllers['horario'] = TextEditingController();
+        _dynamicControllers['modalidad'] = TextEditingController();
+        _dynamicControllers['duracion'] = TextEditingController();
+        _dynamicControllers['certificado'] = TextEditingController(text: 'No');
         break;
       case 'Transporte y logística':
+        _dynamicControllers['tipo_vehiculo'] = TextEditingController();
         _dynamicControllers['capacidad'] = TextEditingController();
         _dynamicControllers['cobertura'] = TextEditingController();
         break;
@@ -409,20 +413,46 @@ class _PymeAddProductScreenState extends State<PymeAddProductScreen> {
         break;
       case 'Oficios y manufactura':
         fields = [
-          _buildTextField(_dynamicControllers['tiempo_entrega']!, 'Tiempo de Entrega', Icons.schedule_send),
+          _buildTextField(_dynamicControllers['materiales']!, 'Materiales', Icons.build_circle_outlined),
           const SizedBox(height: 16),
-          _buildTextField(_dynamicControllers['garantia']!, 'Garantía', Icons.verified_user_outlined),
+          _buildTextField(_dynamicControllers['tiempo_entrega']!, 'Tiempo de Elaboración/Entrega', Icons.schedule_send),
+          const SizedBox(height: 16),
+          SwitchListTile(
+            title: Text('¿Es Personalizado?', style: GoogleFonts.poppins()),
+            value: _dynamicControllers['personalizado']?.text == 'Sí',
+            activeColor: const Color(0xFF6F8F5E),
+            onChanged: (val) {
+              setState(() {
+                _dynamicControllers['personalizado']?.text = val ? 'Sí' : 'No';
+              });
+            },
+          ),
         ];
         break;
       case 'Educación y cultura':
         fields = [
-          _buildTextField(_dynamicControllers['nivel']!, 'Nivel (Básico, Intermedio...)', Icons.school_outlined),
+          _buildTextField(_dynamicControllers['nivel']!, 'Nivel (e.g., Básico, Avanzado)', Icons.school_outlined),
           const SizedBox(height: 16),
-          _buildTextField(_dynamicControllers['horario']!, 'Horarios Disponibles', Icons.calendar_today),
+          _buildTextField(_dynamicControllers['modalidad']!, 'Modalidad (Online / Presencial)', Icons.laptop_mac),
+          const SizedBox(height: 16),
+          _buildTextField(_dynamicControllers['duracion']!, 'Duración', Icons.timer_outlined),
+          const SizedBox(height: 16),
+          SwitchListTile(
+            title: Text('¿Incluye Certificado?', style: GoogleFonts.poppins()),
+            value: _dynamicControllers['certificado']?.text == 'Sí',
+            activeColor: const Color(0xFF6F8F5E),
+            onChanged: (val) {
+              setState(() {
+                _dynamicControllers['certificado']?.text = val ? 'Sí' : 'No';
+              });
+            },
+          ),
         ];
         break;
       case 'Transporte y logística':
         fields = [
+          _buildTextField(_dynamicControllers['tipo_vehiculo']!, 'Tipo de Vehículo', Icons.directions_car),
+          const SizedBox(height: 16),
           _buildTextField(_dynamicControllers['capacidad']!, 'Capacidad de Carga / Pasajeros', Icons.local_shipping_outlined),
           const SizedBox(height: 16),
           _buildTextField(_dynamicControllers['cobertura']!, 'Zona de Cobertura', Icons.map_outlined),

@@ -18,7 +18,10 @@ class ClientMapScreen extends StatefulWidget {
 class _ClientMapScreenState extends State<ClientMapScreen> {
   final PymeService _pymeService = PymeService();
   final MapController _mapController = MapController();
-  LatLng _currentLocation = const LatLng(-33.4489, -70.6693); // Santiago default
+  LatLng _currentLocation = const LatLng(
+    -33.4489,
+    -70.6693,
+  ); // Santiago default
   bool _hasLocation = false;
 
   @override
@@ -36,7 +39,8 @@ class _ClientMapScreenState extends State<ClientMapScreen> {
     if (status.isGranted) {
       try {
         Position position = await Geolocator.getCurrentPosition(
-            desiredAccuracy: LocationAccuracy.high);
+          desiredAccuracy: LocationAccuracy.high,
+        );
         setState(() {
           _currentLocation = LatLng(position.latitude, position.longitude);
           _hasLocation = true;
@@ -55,11 +59,13 @@ class _ClientMapScreenState extends State<ClientMapScreen> {
     // Generate random offset within ~2km
     final latOffset = (random.nextDouble() - 0.5) * 0.04;
     final lngOffset = (random.nextDouble() - 0.5) * 0.04;
-    
+
     // Use Santiago center as base if no user location, otherwise user location
     // This ensures pins are always visible near the "center" of action
-    final base = _hasLocation ? _currentLocation : const LatLng(-33.4489, -70.6693);
-    
+    final base = _hasLocation
+        ? _currentLocation
+        : const LatLng(-33.4489, -70.6693);
+
     return LatLng(base.latitude + latOffset, base.longitude + lngOffset);
   }
 
@@ -73,7 +79,10 @@ class _ClientMapScreenState extends State<ClientMapScreen> {
       case 'Servicios profesionales':
         return {'icon': Icons.business_center, 'color': Colors.blueGrey};
       case 'Salud, belleza y bienestar':
-        return {'icon': Icons.medical_services, 'color': const Color(0xFFE63946)};
+        return {
+          'icon': Icons.medical_services,
+          'color': const Color(0xFFE63946),
+        };
       case 'Oficios y manufactura':
         return {'icon': Icons.handyman, 'color': Colors.brown};
       case 'Educación y cultura':
@@ -96,7 +105,7 @@ class _ClientMapScreenState extends State<ClientMapScreen> {
             stream: _pymeService.getAllPublicProfiles(),
             builder: (context, snapshot) {
               final pymes = snapshot.data ?? [];
-              
+
               return FlutterMap(
                 mapController: _mapController,
                 options: MapOptions(
@@ -105,7 +114,8 @@ class _ClientMapScreenState extends State<ClientMapScreen> {
                 ),
                 children: [
                   TileLayer(
-                    urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                    urlTemplate:
+                        'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
                     userAgentPackageName: 'com.example.mipyme',
                   ),
                   MarkerLayer(
@@ -120,7 +130,10 @@ class _ClientMapScreenState extends State<ClientMapScreen> {
                             decoration: BoxDecoration(
                               color: theme.colorScheme.primary.withOpacity(0.2),
                               shape: BoxShape.circle,
-                              border: Border.all(color: theme.colorScheme.primary, width: 2),
+                              border: Border.all(
+                                color: theme.colorScheme.primary,
+                                width: 2,
+                              ),
                             ),
                             child: Icon(
                               Icons.my_location,
@@ -129,7 +142,7 @@ class _ClientMapScreenState extends State<ClientMapScreen> {
                             ),
                           ),
                         ),
-                      
+
                       // Pyme Markers
                       ...pymes.map((pyme) {
                         LatLng pos;
@@ -140,7 +153,7 @@ class _ClientMapScreenState extends State<ClientMapScreen> {
                         }
 
                         final style = _getStyleForCategory(pyme.category);
-                        
+
                         return Marker(
                           point: pos,
                           width: 50,
@@ -151,7 +164,10 @@ class _ClientMapScreenState extends State<ClientMapScreen> {
                               decoration: BoxDecoration(
                                 color: style['color'],
                                 shape: BoxShape.circle,
-                                border: Border.all(color: Colors.white, width: 2),
+                                border: Border.all(
+                                  color: Colors.white,
+                                  width: 2,
+                                ),
                                 boxShadow: [
                                   BoxShadow(
                                     color: Colors.black.withOpacity(0.3),
@@ -160,11 +176,30 @@ class _ClientMapScreenState extends State<ClientMapScreen> {
                                   ),
                                 ],
                               ),
-                              child: Icon(
-                                style['icon'],
-                                color: Colors.white,
-                                size: 24,
-                              ),
+                              child:
+                                  (pyme.logoUrl != null &&
+                                      pyme.logoUrl!.isNotEmpty)
+                                  ? ClipOval(
+                                      child: Image.network(
+                                        pyme.logoUrl!,
+                                        fit: BoxFit.cover,
+                                        width: double.infinity,
+                                        height: double.infinity,
+                                        errorBuilder:
+                                            (context, error, stackTrace) {
+                                              return Icon(
+                                                style['icon'],
+                                                color: Colors.white,
+                                                size: 24,
+                                              );
+                                            },
+                                      ),
+                                    )
+                                  : Icon(
+                                      style['icon'],
+                                      color: Colors.white,
+                                      size: 24,
+                                    ),
                             ),
                           ),
                         );
@@ -175,7 +210,7 @@ class _ClientMapScreenState extends State<ClientMapScreen> {
               );
             },
           ),
-          
+
           // 2. Search Bar Overlay
           Positioned(
             top: 50,
@@ -196,9 +231,15 @@ class _ClientMapScreenState extends State<ClientMapScreen> {
               child: TextField(
                 decoration: InputDecoration(
                   hintText: 'Buscar en el mapa...',
-                  prefixIcon: Icon(Icons.search, color: theme.colorScheme.primary),
+                  prefixIcon: Icon(
+                    Icons.search,
+                    color: theme.colorScheme.primary,
+                  ),
                   border: InputBorder.none,
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 20,
+                    vertical: 15,
+                  ),
                 ),
               ),
             ),
@@ -219,7 +260,11 @@ class _ClientMapScreenState extends State<ClientMapScreen> {
     );
   }
 
-  void _showPymePreview(BuildContext context, UserProfile pyme, Map<String, dynamic> style) {
+  void _showPymePreview(
+    BuildContext context,
+    UserProfile pyme,
+    Map<String, dynamic> style,
+  ) {
     final theme = Theme.of(context);
     final name = pyme.name;
     final category = pyme.category ?? 'Sin categoría';
@@ -253,7 +298,8 @@ class _ClientMapScreenState extends State<ClientMapScreen> {
                   image: DecorationImage(
                     image: (image != null && image.startsWith('http'))
                         ? NetworkImage(image)
-                        : AssetImage(image ?? 'assets/images/placeholder.jpg') as ImageProvider,
+                        : AssetImage(image ?? 'assets/images/placeholder.jpg')
+                              as ImageProvider,
                     fit: BoxFit.cover,
                   ),
                 ),
@@ -311,10 +357,8 @@ class _ClientMapScreenState extends State<ClientMapScreen> {
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => ClientPymeDetailScreen(
-          pymeId: pyme.id,
-          pymeData: pyme,
-        ),
+        builder: (context) =>
+            ClientPymeDetailScreen(pymeId: pyme.id, pymeData: pyme),
       ),
     );
   }

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 import '../services/client_service.dart';
-import 'client_payments_subscriptions_screen.dart';
+
 
 class ClientQrScreen extends StatefulWidget {
   const ClientQrScreen({super.key});
@@ -38,86 +38,37 @@ class _ClientQrScreenState extends State<ClientQrScreen> {
         ),
         centerTitle: true,
       ),
-      body: StreamBuilder<bool>(
-        stream: _clientService.getSubscriptionStatus(),
-        builder: (context, subSnapshot) {
-          final isSubscribed = subSnapshot.data ?? false;
-
-          if (!isSubscribed) {
-            return _buildNotSubscribedView(theme);
+      body: StreamBuilder<DateTime?>(
+        stream: _clientService.getSubscriptionDate(),
+        builder: (context, dateSnapshot) {
+          final subscriptionDate = dateSnapshot.data;
+          
+          // Check if in first month delay
+          if (subscriptionDate != null) {
+            final firstCouponDate = DateTime(
+              subscriptionDate.year, 
+              subscriptionDate.month + 1, 
+              subscriptionDate.day
+            );
+            
+            if (DateTime.now().isBefore(firstCouponDate)) {
+              return _buildLockedView(theme, firstCouponDate);
+            }
           }
 
-          return StreamBuilder<DateTime?>(
-            stream: _clientService.getSubscriptionDate(),
-            builder: (context, dateSnapshot) {
-              final subscriptionDate = dateSnapshot.data;
-              
-              // Check if in first month delay
-              if (subscriptionDate != null) {
-                final firstCouponDate = DateTime(
-                  subscriptionDate.year, 
-                  subscriptionDate.month + 1, 
-                  subscriptionDate.day
-                );
-                
-                if (DateTime.now().isBefore(firstCouponDate)) {
-                  return _buildLockedView(theme, firstCouponDate);
-                }
-              }
-
-              return StreamBuilder<bool>(
-                stream: _clientService.getMonthlyCouponStatus(),
-                builder: (context, couponSnapshot) {
-                  final isRedeemed = couponSnapshot.data ?? false;
-                  return _buildCouponView(theme, isRedeemed, userId);
-                },
-              );
-            }
+          return StreamBuilder<bool>(
+            stream: _clientService.getMonthlyCouponStatus(),
+            builder: (context, couponSnapshot) {
+              final isRedeemed = couponSnapshot.data ?? false;
+              return _buildCouponView(theme, isRedeemed, userId);
+            },
           );
-        },
+        }
       ),
     );
   }
 
-  Widget _buildNotSubscribedView(ThemeData theme) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(24.0),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.lock_outline, size: 80, color: theme.colorScheme.outline),
-            const SizedBox(height: 24),
-            Text(
-              'Suscripción Requerida',
-              style: theme.textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 16),
-            Text(
-              'Para acceder al cupón de descuento mensual de \$10.000, debes tener una suscripción activa.',
-              textAlign: TextAlign.center,
-              style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.onSurfaceVariant),
-            ),
-            const SizedBox(height: 32),
-            ElevatedButton(
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => const ClientPaymentsSubscriptionsScreen()),
-                );
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: theme.colorScheme.primary,
-                foregroundColor: theme.colorScheme.onPrimary,
-                padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
-              ),
-              child: const Text('Suscribirse por \$2.000/mes'),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
+
 
   Widget _buildLockedView(ThemeData theme, DateTime unlockDate) {
     return Center(

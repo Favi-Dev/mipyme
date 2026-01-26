@@ -4,6 +4,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import '../services/admin_service.dart';
 import 'admin_user_management_screen.dart';
 import 'admin_pyme_management_screen.dart';
+import 'admin_foundation_management_screen.dart';
 import 'admin_support_screen.dart';
 import 'admin_transactions_screen.dart';
 
@@ -125,7 +126,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                               stats['foundations'].toString(),
                               Icons.volunteer_activism,
                               const Color(0xFF8B5A3C),
-                              () => _navigateTo(const AdminPymeManagementScreen(roleFilter: 'foundation')),
+                              () => _navigateTo(const AdminFoundationManagementScreen()),
                             ),
                           ),
                           const SizedBox(width: 16),

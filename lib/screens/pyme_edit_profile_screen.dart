@@ -21,6 +21,7 @@ class _PymeEditProfileScreenState extends State<PymeEditProfileScreen> {
   late TextEditingController _addressController;
   late TextEditingController _phoneController;
   late TextEditingController _websiteController;
+  late TextEditingController _donationGoalController;
   bool _isLoading = false;
   final PymeService _pymeService = PymeService();
 
@@ -32,6 +33,7 @@ class _PymeEditProfileScreenState extends State<PymeEditProfileScreen> {
     _addressController = TextEditingController(text: widget.currentData.location ?? '');
     _phoneController = TextEditingController(text: widget.currentData.whatsappNumber ?? '');
     _websiteController = TextEditingController(text: widget.currentData.webUrl ?? '');
+    _donationGoalController = TextEditingController(text: (widget.currentData.donationGoal ?? 100000).toInt().toString());
   }
 
   @override
@@ -41,6 +43,7 @@ class _PymeEditProfileScreenState extends State<PymeEditProfileScreen> {
     _addressController.dispose();
     _phoneController.dispose();
     _websiteController.dispose();
+    _donationGoalController.dispose();
     super.dispose();
   }
 
@@ -60,6 +63,10 @@ class _PymeEditProfileScreenState extends State<PymeEditProfileScreen> {
         'whatsappNumber': _phoneController.text,
         'webUrl': _websiteController.text,
       };
+
+      if (widget.currentData.role == UserRole.foundation) {
+        updates['donationGoal'] = double.tryParse(_donationGoalController.text) ?? 100000.0;
+      }
 
       // Update coordinates if address changed
       if (_addressController.text != widget.currentData.location) {
@@ -121,6 +128,12 @@ class _PymeEditProfileScreenState extends State<PymeEditProfileScreen> {
               _buildTextField('Teléfono', _phoneController, Icons.phone, keyboardType: TextInputType.phone),
               const SizedBox(height: 16),
               _buildTextField('Sitio Web', _websiteController, Icons.language, keyboardType: TextInputType.url),
+              
+              if (widget.currentData.role == UserRole.foundation) ...[
+                const SizedBox(height: 16),
+                _buildTextField('Meta de Recaudación', _donationGoalController, Icons.monetization_on, keyboardType: TextInputType.number),
+              ],
+
               const SizedBox(height: 32),
               SizedBox(
                 width: double.infinity,

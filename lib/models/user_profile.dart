@@ -40,6 +40,9 @@ class UserProfile {
   final String? bankAccountNumber;
   final String? bankAccountHolderRut; // Usually same as company RUT but could be different
 
+  // Metrics
+  final int supporterCount;
+
   UserProfile({
     required this.id,
     required this.name,
@@ -69,6 +72,7 @@ class UserProfile {
     this.bankAccountType,
     this.bankAccountNumber,
     this.bankAccountHolderRut,
+    this.supporterCount = 0,
   });
 
   factory UserProfile.fromMap(Map<String, dynamic> map, String id) {
@@ -101,6 +105,7 @@ class UserProfile {
       bankAccountType: map['bankAccountType'],
       bankAccountNumber: map['bankAccountNumber'],
       bankAccountHolderRut: map['bankAccountHolderRut'],
+      supporterCount: map['supporterCount'] ?? 0,
     );
   }
 

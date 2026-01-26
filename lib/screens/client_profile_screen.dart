@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:image_picker/image_picker.dart';
+import 'dart:io';
+import '../services/client_service.dart';
 import '../services/pyme_service.dart';
 import '../models/vitrina_data.dart';
 import '../models/user_profile.dart';
@@ -15,8 +18,59 @@ import 'client_settings_screen.dart';
 import 'client_support_screen.dart';
 import 'client_addresses_screen.dart';
 
-class ClientProfileScreen extends StatelessWidget {
+class ClientProfileScreen extends StatefulWidget {
   const ClientProfileScreen({super.key});
+
+  @override
+  State<ClientProfileScreen> createState() => _ClientProfileScreenState();
+}
+
+class _ClientProfileScreenState extends State<ClientProfileScreen> {
+  final ClientService _clientService = ClientService();
+  bool _isUploading = false;
+  
+  Future<void> _pickAndUploadImage() async {
+    try {
+      final ImagePicker picker = ImagePicker();
+      final XFile? image = await picker.pickImage(
+        source: ImageSource.gallery,
+        maxWidth: 800,
+        imageQuality: 70,
+      );
+
+      if (image == null) return;
+
+      setState(() {
+        _isUploading = true;
+      });
+
+      final File imageFile = File(image.path);
+      await _clientService.updateProfileImage(imageFile);
+      
+      // Force reload auth user to get new photoURL if needed, 
+      // though the stream below should catch it.
+      await FirebaseAuth.instance.currentUser?.reload();
+      setState(() {});
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Foto de perfil actualizada')),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error al actualizar foto: $e')),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isUploading = false;
+        });
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -33,17 +87,46 @@ class ClientProfileScreen extends StatelessWidget {
             Center(
               child: Column(
                 children: [
-                  Container(
-                    width: 100,
-                    height: 100,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      border: Border.all(color: theme.colorScheme.primary, width: 3),
-                      image: const DecorationImage(
-                        image: NetworkImage('https://i.pravatar.cc/300'),
-                        fit: BoxFit.cover,
+                   Stack(
+                    children: [
+                      Container(
+                        width: 100,
+                        height: 100,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          border: Border.all(color: theme.colorScheme.primary, width: 3),
+                          image: DecorationImage(
+                            image: (user?.photoURL != null && user!.photoURL!.isNotEmpty)
+                                ? NetworkImage(user.photoURL!)
+                                : const NetworkImage('https://i.pravatar.cc/300'),
+                            fit: BoxFit.cover,
+                          ),
+                        ),
+                        child: _isUploading
+                            ? const Center(child: CircularProgressIndicator())
+                            : null,
                       ),
-                    ),
+                      Positioned(
+                        bottom: 0,
+                        right: 0,
+                        child: InkWell(
+                          onTap: _isUploading ? null : _pickAndUploadImage,
+                          child: Container(
+                            padding: const EdgeInsets.all(8),
+                            decoration: BoxDecoration(
+                              color: theme.colorScheme.primary,
+                              shape: BoxShape.circle,
+                              border: Border.all(color: Colors.white, width: 2),
+                            ),
+                            child: const Icon(
+                              Icons.camera_alt,
+                              size: 20,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                   const SizedBox(height: 15),
                   Text(
@@ -57,11 +140,18 @@ class ClientProfileScreen extends StatelessWidget {
                       color: theme.colorScheme.primary,
                       borderRadius: BorderRadius.circular(20),
                     ),
-                    child: Text(
-                      'Plan Premium',
-                      style: theme.textTheme.labelMedium?.copyWith(
-                        color: theme.colorScheme.onPrimary,
-                        fontWeight: FontWeight.bold,
+                    child: RichText(
+                      text: TextSpan(
+                        style: theme.textTheme.labelMedium?.copyWith(
+                          color: theme.colorScheme.onPrimary,
+                        ),
+                        children: const [
+                          TextSpan(text: 'Beneficiario '),
+                          TextSpan(
+                            text: 'Plus',
+                            style: TextStyle(fontWeight: FontWeight.bold),
+                          ),
+                        ],
                       ),
                     ),
                   ),

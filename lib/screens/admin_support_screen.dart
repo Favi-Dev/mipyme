@@ -45,7 +45,22 @@ class AdminSupportScreen extends StatelessWidget {
 
            final tickets = snapshot.data ?? [];
            if (tickets.isEmpty) {
-             return Center(child: Text('No hay tickets pendientes', style: GoogleFonts.poppins()));
+             return Center(
+               child: Column(
+                 mainAxisAlignment: MainAxisAlignment.center,
+                 children: [
+                   Icon(Icons.mark_email_read_outlined, size: 64, color: const Color(0xFF8B5A3C).withOpacity(0.3)),
+                   const SizedBox(height: 16),
+                   Text(
+                     'No hay tickets pendientes',
+                     style: GoogleFonts.poppins(
+                       color: const Color(0xFF8B5A3C).withOpacity(0.5),
+                       fontSize: 16,
+                     ),
+                   ),
+                 ],
+               ),
+             );
            }
 
           return ListView.builder(
