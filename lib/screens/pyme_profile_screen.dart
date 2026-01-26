@@ -147,11 +147,11 @@ class _PymeProfileScreenState extends State<PymeProfileScreen> {
               ),
               _buildOptionTile(
                 icon: Icons.credit_card,
-                title: 'Métodos de Pago',
+                title: 'Métodos de Cobro',
                 onTap: () {
                    Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (context) => const ClientPaymentMethodsScreen()),
+                    MaterialPageRoute(builder: (context) => const ClientPaymentMethodsScreen(title: 'Métodos de Cobro')),
                   );
                 },
               ),

@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 import '../services/client_service.dart';
 
 class ClientPaymentMethodsScreen extends StatelessWidget {
-  const ClientPaymentMethodsScreen({super.key});
+  final String? title;
+  const ClientPaymentMethodsScreen({super.key, this.title});
 
   @override
   Widget build(BuildContext context) {
@@ -11,7 +12,7 @@ class ClientPaymentMethodsScreen extends StatelessWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Métodos de Pago'),
+        title: Text(title ?? 'Métodos de Pago'),
         backgroundColor: theme.colorScheme.primary,
         foregroundColor: theme.colorScheme.onPrimary,
       ),
