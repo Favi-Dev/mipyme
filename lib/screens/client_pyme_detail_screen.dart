@@ -189,18 +189,25 @@ class _ClientPymeDetailScreenState extends State<ClientPymeDetailScreen> {
                   ),
                 ],
                 flexibleSpace: FlexibleSpaceBar(
-                  title: Text(
-                    _pymeName,
-                    style: theme.textTheme.titleLarge?.copyWith(
-                      color: const Color(0xFFF4F1EA),
-                      fontWeight: FontWeight.bold,
-                      shadows: [
-                        Shadow(
-                          offset: const Offset(0, 1),
-                          blurRadius: 3.0,
-                          color: const Color(0xFF2F3F2A).withOpacity(0.54),
-                        ),
-                      ],
+                  title: ConstrainedBox(
+                    constraints: BoxConstraints(
+                      maxWidth: MediaQuery.of(context).size.width - 280, // 110 padding + ~170 for actions (Cart, Heart, Share)
+                    ),
+                    child: Text(
+                      _pymeName,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: theme.textTheme.titleLarge?.copyWith(
+                        color: const Color(0xFFF4F1EA),
+                        fontWeight: FontWeight.bold,
+                        shadows: [
+                          Shadow(
+                            offset: const Offset(0, 1),
+                            blurRadius: 3.0,
+                            color: const Color(0xFF2F3F2A).withOpacity(0.54),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                   titlePadding: const EdgeInsets.only(left: 110, bottom: 16),
@@ -450,10 +457,25 @@ class _ClientPymeDetailScreenState extends State<ClientPymeDetailScreen> {
               if (_scrollController.hasClients) {
                 top -= _scrollController.offset;
               }
+              
+              // Fade out logo as it moves up to avoid overlapping with AppBar
+              // AppBar expanded height 250. Pinned height ~kToolbarHeight (56).
+              // We want to fade out before it hits the text or back button.
+              // Let's start fading at top = 120 and finish at top = 60.
+              double opacity = 1.0;
+              if (top < 120) {
+                 opacity = (top - 60) / 60;
+                 if (opacity < 0) opacity = 0;
+                 if (opacity > 1) opacity = 1;
+              }
+
               return Positioned(
                 top: top,
                 left: 16,
-                child: child!,
+                child: Opacity(
+                  opacity: opacity,
+                  child: child!,
+                ),
               );
             },
             child: Container(

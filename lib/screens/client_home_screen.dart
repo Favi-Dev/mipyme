@@ -211,31 +211,39 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
                   backgroundColor: const Color(0x3DF4F1EA),
                 ),
                 const SizedBox(width: 12),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      isFoundationMode ? 'Fundaciones' : 'Hola, ${userProfile?.name.split(' ').first ?? 'Invitado'}',
-                      style: theme.textTheme.titleLarge?.copyWith(
-                        color: const Color(0xFFF4F1EA),
-                        fontWeight: FontWeight.bold,
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        isFoundationMode ? 'Fundaciones' : 'Hola, ${userProfile?.name.split(' ').first ?? 'Invitado'}',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: theme.textTheme.titleLarge?.copyWith(
+                          color: const Color(0xFFF4F1EA),
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
-                    ),
-                    if (!isFoundationMode)
-                      Row(
-                        children: [
-                          Icon(Icons.location_on,
-                              size: 12, color: const Color(0xFFF4F1EA).withOpacity(0.9)),
-                          const SizedBox(width: 4),
-                          Text(
-                            userProfile?.location ?? 'Ubicación no disponible',
-                            style: theme.textTheme.bodySmall?.copyWith(
-                              color: const Color(0xFFF4F1EA).withOpacity(0.9),
+                      if (!isFoundationMode)
+                        Row(
+                          children: [
+                            Icon(Icons.location_on,
+                                size: 12, color: const Color(0xFFF4F1EA).withOpacity(0.9)),
+                            const SizedBox(width: 4),
+                            Expanded(
+                              child: Text(
+                                userProfile?.location ?? 'Ubicación no disponible',
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: theme.textTheme.bodySmall?.copyWith(
+                                  color: const Color(0xFFF4F1EA).withOpacity(0.9),
+                                ),
+                              ),
                             ),
-                          ),
-                        ],
-                      ),
-                  ],
+                          ],
+                        ),
+                    ],
+                  ),
                 ),
               ],
             );
@@ -1178,11 +1186,15 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
                       Icon(Icons.storefront,
                           size: 16, color: const Color(0xFF2F3F2A).withOpacity(0.7)),
                       const SizedBox(width: 4),
-                      Text(
-                        pyme.category ?? 'Sin categoría',
-                        style: const TextStyle(
-                          color: Color(0xFF2F3F2A),
-                          fontSize: 14,
+                      Flexible(
+                        child: Text(
+                          pyme.category ?? 'Sin categoría',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            color: Color(0xFF2F3F2A),
+                            fontSize: 14,
+                          ),
                         ),
                       ),
                       if (pyme.location != null) ...[
@@ -1190,11 +1202,15 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
                         Icon(Icons.location_on,
                             size: 16, color: const Color(0xFF2F3F2A).withOpacity(0.7)),
                         const SizedBox(width: 4),
-                        Text(
-                          pyme.location!,
-                          style: const TextStyle(
-                            color: Color(0xFF2F3F2A),
-                            fontSize: 14,
+                        Expanded(
+                          child: Text(
+                            pyme.location!,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              color: Color(0xFF2F3F2A),
+                              fontSize: 14,
+                            ),
                           ),
                         ),
                       ],
