@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:url_launcher/url_launcher.dart';
 import '../services/pyme_service.dart';
 import '../models/user_profile.dart';
 import 'pyme_vitrina_settings_screen.dart';
 import 'pyme_support_screen.dart';
 import 'login_screen.dart';
+import 'client_payment_methods_screen.dart';
 
 class PymeProfileScreen extends StatefulWidget {
   const PymeProfileScreen({super.key});
@@ -17,7 +17,80 @@ class PymeProfileScreen extends StatefulWidget {
 
 class _PymeProfileScreenState extends State<PymeProfileScreen> {
   final PymeService _pymeService = PymeService();
+  final FirebaseAuth _auth = FirebaseAuth.instance;
   final User? _currentUser = FirebaseAuth.instance.currentUser;
+
+  void _changePassword(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Cambiar Contraseña'),
+        content: const Text(
+            'Se enviará un correo electrónico a tu dirección registrada para restablecer tu contraseña.'
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancelar'),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              try {
+                final email = _auth.currentUser?.email;
+                if (email != null) {
+                  await _auth.sendPasswordResetEmail(email: email);
+                  if (mounted) {
+                    Navigator.pop(context);
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('Correo enviado a $email')),
+                    );
+                  }
+                }
+              } catch (e) {
+                if (mounted) {
+                  Navigator.pop(context);
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('Error: $e')),
+                  );
+                }
+              }
+            },
+            child: const Text('Enviar Correo'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showTerms(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Términos y Condiciones'),
+        content: const SingleChildScrollView(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text('Términos y Condiciones de Uso', style: TextStyle(fontWeight: FontWeight.bold)),
+              SizedBox(height: 10),
+              Text('• El uso de esta aplicación está sujeto a las leyes vigentes.', style: TextStyle(fontSize: 14)),
+              Text('• Respetamos tu privacidad y datos personales.', style: TextStyle(fontSize: 14)),
+              Text('• Las transacciones son seguras y procesadas por proveedores confiables.', style: TextStyle(fontSize: 14)),
+              SizedBox(height: 10),
+              Text('Para más detalles, visita nuestro sitio web oficial.', style: TextStyle(fontSize: 12, color: Colors.grey)),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cerrar'),
+          ),
+        ],
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -76,8 +149,9 @@ class _PymeProfileScreenState extends State<PymeProfileScreen> {
                 icon: Icons.credit_card,
                 title: 'Métodos de Pago',
                 onTap: () {
-                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Gestión de métodos de pago próximamente')),
+                   Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => const ClientPaymentMethodsScreen()),
                   );
                 },
               ),
@@ -85,7 +159,7 @@ class _PymeProfileScreenState extends State<PymeProfileScreen> {
                 icon: Icons.lock_outline,
                 title: 'Cambiar Contraseña',
                 onTap: () {
-                  // TODO: Navigate to change password
+                  _changePassword(context);
                 },
               ),
               const SizedBox(height: 24),
@@ -116,20 +190,6 @@ class _PymeProfileScreenState extends State<PymeProfileScreen> {
               _buildOptionTile(
                 icon: Icons.help_outline,
                 title: 'Ayuda y Soporte',
-                onTap: () async {
-                   final Uri url = Uri.parse('https://wa.me/56912345678'); // Replace with actual support number
-                   if (!await launchUrl(url)) {
-                     if (context.mounted) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('No se pudo abrir el enlace de soporte')),
-                        );
-                     }
-                   }
-                },
-              ),
-              _buildOptionTile(
-                icon: Icons.confirmation_number_outlined,
-                title: 'Tickets a Administración',
                 onTap: () {
                   Navigator.push(
                     context,
@@ -140,15 +200,8 @@ class _PymeProfileScreenState extends State<PymeProfileScreen> {
               _buildOptionTile(
                 icon: Icons.info_outline,
                 title: 'Términos y Condiciones',
-                onTap: () async {
-                   final Uri url = Uri.parse('https://mipymeproyecto.cl/terminos'); // Replace with actual terms url
-                   if (!await launchUrl(url)) {
-                      if (context.mounted) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('No se pudo abrir los términos y condiciones')),
-                        );
-                     }
-                   }
+                onTap: () {
+                   _showTerms(context);
                 },
               ),
               const SizedBox(height: 32),

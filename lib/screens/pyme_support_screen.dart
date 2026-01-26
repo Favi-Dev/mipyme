@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:intl/intl.dart';
 import '../services/pyme_service.dart';
 
 class PymeSupportScreen extends StatefulWidget {
@@ -12,225 +12,234 @@ class PymeSupportScreen extends StatefulWidget {
 }
 
 class _PymeSupportScreenState extends State<PymeSupportScreen> {
+  final _pymeService = PymeService();
   final _formKey = GlobalKey<FormState>();
-  final TextEditingController _subjectController = TextEditingController();
-  final TextEditingController _messageController = TextEditingController();
-  final PymeService _pymeService = PymeService();
-  bool _isLoading = false;
+  final _descriptionController = TextEditingController();
+  
+  String? _selectedIssueType;
+  bool _isSubmitting = false;
 
-  Future<void> _submitTicket() async {
-    if (!_formKey.currentState!.validate()) return;
-    
-    final user = FirebaseAuth.instance.currentUser;
-    if (user == null) return;
+  final List<String> _issueTypes = [
+    'Problema de Cuenta',
+    'Problema de Pagos',
+    'Problema Técnico',
+    'Otro',
+  ];
 
-    setState(() => _isLoading = true);
-
-    try {
-      await _pymeService.createSupportTicket({
-        'userId': user.uid,
-        'email': user.email,
-        'subject': _subjectController.text.trim(),
-        'message': _messageController.text.trim(),
-        'type': 'pyme_support',
-      });
-
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Ticket enviado exitosamente')),
-        );
-        _subjectController.clear();
-        _messageController.clear();
-        Navigator.pop(context); // Close the dialog/modal
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error al enviar ticket: $e')),
-        );
-      }
-    } finally {
-      if (mounted) setState(() => _isLoading = false);
+  Future<void> _launchUrl(String urlString) async {
+    final Uri url = Uri.parse(urlString);
+    if (!await launchUrl(url)) {
+      throw Exception('Could not launch $url');
     }
   }
 
-  void _showCreateTicketDialog() {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text('Nuevo Ticket', style: GoogleFonts.poppins(fontWeight: FontWeight.bold)),
-        content: Form(
-          key: _formKey,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextFormField(
-                controller: _subjectController,
-                decoration: const InputDecoration(
-                  labelText: 'Asunto',
-                  hintText: 'Ej: Problema con pagos',
-                ),
-                validator: (value) => value!.isEmpty ? 'Requerido' : null,
-              ),
-              const SizedBox(height: 16),
-              TextFormField(
-                controller: _messageController,
-                decoration: const InputDecoration(
-                  labelText: 'Mensaje',
-                  hintText: 'Describe tu problema detalladamente...',
-                  alignLabelWithHint: true,
-                ),
-                maxLines: 4,
-                validator: (value) => value!.isEmpty ? 'Requerido' : null,
-              ),
-            ],
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancelar', style: TextStyle(color: Colors.grey)),
-          ),
-          ElevatedButton(
-            onPressed: _isLoading ? null : () {
-              // Call submit but convert the modal context to local state logic
-               _submitTicket();
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF6F8F5E),
-              foregroundColor: Colors.white,
-            ),
-            child: _isLoading 
-              ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-              : const Text('Enviar'),
-          ),
-        ],
-      ),
-    );
+  Future<void> _submitTicket() async {
+    if (_formKey.currentState!.validate() && _selectedIssueType != null) {
+      final user = FirebaseAuth.instance.currentUser;
+      if (user == null) return;
+
+      setState(() => _isSubmitting = true);
+      try {
+         await _pymeService.createSupportTicket({
+          'userId': user.uid,
+          'email': user.email,
+          'subject': _selectedIssueType!,
+          'message': _descriptionController.text,
+          'type': 'pyme_support',
+        });
+
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Ticket enviado con éxito')),
+          );
+          _descriptionController.clear();
+          setState(() => _selectedIssueType = null);
+        }
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Error al enviar ticket: $e')),
+          );
+        }
+      } finally {
+        if (mounted) setState(() => _isSubmitting = false);
+      }
+    } else if (_selectedIssueType == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Por favor selecciona un tipo de problema')),
+      );
+    }
+  }
+
+  @override
+  void dispose() {
+    _descriptionController.dispose();
+    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    final user = FirebaseAuth.instance.currentUser;
-    if (user == null) return const SizedBox();
-
     return Scaffold(
-      backgroundColor: const Color(0xFFF4F1EA),
+      backgroundColor: const Color(0xFF2F3F2A), // Dark Green Theme like Client
       appBar: AppBar(
-        title: Text('Soporte Administración', style: GoogleFonts.poppins(color: const Color(0xFF2F3F2A), fontWeight: FontWeight.bold)),
-        backgroundColor: const Color(0xFFF4F1EA),
-        foregroundColor: const Color(0xFF2F3F2A),
+        title: Text('Ayuda y Soporte', style: GoogleFonts.poppins(fontWeight: FontWeight.bold)),
         elevation: 0,
+        backgroundColor: const Color(0xFF2F3F2A),
+        foregroundColor: const Color(0xFFF4F1EA),
       ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: _showCreateTicketDialog,
-        backgroundColor: const Color(0xFF6F8F5E),
-        icon: const Icon(Icons.add, color: Colors.white),
-        label: const Text('Nuevo Ticket', style: TextStyle(color: Colors.white)),
-      ),
-      body: StreamBuilder<List<Map<String, dynamic>>>(
-        stream: _pymeService.getUserTickets(user.uid),
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
-          }
-          
-          final tickets = snapshot.data ?? [];
-          
-          if (tickets.isEmpty) {
-            return Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(Icons.support_agent, size: 64, color: Colors.grey[400]),
-                  const SizedBox(height: 16),
-                  Text(
-                    'No tienes tickets creados',
-                    style: GoogleFonts.poppins(color: Colors.grey[600]),
-                  ),
-                ],
-              ),
-            );
-          }
-
-          return ListView.builder(
-            padding: const EdgeInsets.all(16),
-            itemCount: tickets.length,
-            itemBuilder: (context, index) {
-              final ticket = tickets[index];
-              final date = ticket['createdAt'] as DateTime?;
-              final dateStr = date != null ? DateFormat('dd/MM/yyyy HH:mm').format(date) : '';
-              final status = ticket['status'] ?? 'pending';
-              
-              Color statusColor;
-              String statusText;
-              
-              switch(status) {
-                case 'resolved':
-                  statusColor = Colors.green;
-                  statusText = 'Resuelto';
-                  break;
-                case 'in_progress':
-                  statusColor = Colors.orange;
-                  statusText = 'En Progreso';
-                  break;
-                default:
-                  statusColor = Colors.grey;
-                  statusText = 'Pendiente';
-              }
-
-              return Card(
-                margin: const EdgeInsets.only(bottom: 12),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                child: Padding(
-                  padding: const EdgeInsets.all(16.0),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(24.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            const Icon(Icons.support_agent, size: 80, color: Color(0xFFF4F1EA)),
+            const SizedBox(height: 24),
+            Text(
+              '¿Necesitas ayuda?',
+              style: GoogleFonts.poppins(fontSize: 24, fontWeight: FontWeight.bold, color: const Color(0xFFF4F1EA)),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Estamos aquí para ayudarte. Envíanos un ticket o contáctanos directamente.',
+              textAlign: TextAlign.center,
+              style: GoogleFonts.poppins(color: const Color(0xFFF4F1EA).withOpacity(0.8)),
+            ),
+            const SizedBox(height: 40),
+            
+            // Support Form
+            Card(
+              color: const Color(0xFFF4F1EA),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Form(
+                  key: _formKey,
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                            decoration: BoxDecoration(
-                              color: statusColor.withOpacity(0.1),
-                              borderRadius: BorderRadius.circular(8),
-                              border: Border.all(color: statusColor.withOpacity(0.5)),
-                            ),
-                            child: Text(
-                              statusText,
-                              style: TextStyle(color: statusColor, fontSize: 12, fontWeight: FontWeight.bold),
-                            ),
-                          ),
-                          Text(
-                            dateStr,
-                            style: TextStyle(color: Colors.grey[600], fontSize: 12),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 12),
                       Text(
-                        ticket['subject'] ?? 'Sin asunto',
-                        style: GoogleFonts.poppins(fontWeight: FontWeight.bold, fontSize: 16),
+                        'Crear Ticket de Soporte',
+                        style: GoogleFonts.poppins(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 18,
+                          color: const Color(0xFF2F3F2A),
+                        ),
                       ),
-                      const SizedBox(height: 8),
-                      Text(
-                        ticket['message'] ?? '',
-                        style: GoogleFonts.poppins(color: const Color(0xFF2F3F2A).withOpacity(0.8)),
+                      const SizedBox(height: 16),
+                      DropdownButtonFormField<String>(
+                        value: _selectedIssueType,
+                        decoration: InputDecoration(
+                          labelText: 'Tipo de Problema',
+                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                          filled: true,
+                          fillColor: Colors.white,
+                        ),
+                        items: _issueTypes.map((type) {
+                          return DropdownMenuItem(value: type, child: Text(type));
+                        }).toList(),
+                        onChanged: (value) => setState(() => _selectedIssueType = value),
                       ),
-                      if (ticket['adminReply'] != null) ...[
-                         const Divider(height: 24),
-                         Text('Respuesta Administración:', style: TextStyle(fontSize: 12, color: Colors.grey[700], fontWeight: FontWeight.bold)),
-                         const SizedBox(height: 4),
-                         Text(ticket['adminReply'], style: const TextStyle(fontStyle: FontStyle.italic)),
-                      ]
+                      const SizedBox(height: 16),
+                      TextFormField(
+                        controller: _descriptionController,
+                        decoration: InputDecoration(
+                          labelText: 'Descripción del problema',
+                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                          filled: true,
+                          fillColor: Colors.white,
+                        ),
+                        maxLines: 4,
+                        validator: (value) =>
+                            value == null || value.isEmpty ? 'Por favor describe el problema' : null,
+                      ),
+                      const SizedBox(height: 16),
+                      SizedBox(
+                        width: double.infinity,
+                        child: ElevatedButton(
+                          onPressed: _isSubmitting ? null : _submitTicket,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFF2F3F2A),
+                            foregroundColor: const Color(0xFFF4F1EA),
+                            padding: const EdgeInsets.symmetric(vertical: 12),
+                          ),
+                          child: _isSubmitting
+                              ? const CircularProgressIndicator(color: Colors.white)
+                              : const Text('Enviar Ticket'),
+                        ),
+                      ),
                     ],
                   ),
                 ),
-              );
-            },
-          );
-        },
+              ),
+            ),
+            
+            const SizedBox(height: 24),
+
+            _buildContactCard(
+              icon: Icons.email_outlined,
+              title: 'Correo Electrónico',
+              subtitle: 'favi.dev@example.com',
+              onTap: () => _launchUrl('mailto:favi.dev@example.com'),
+            ),
+            const SizedBox(height: 16),
+            _buildContactCard(
+              icon: Icons.code,
+              title: 'GitHub',
+              subtitle: 'github.com/Favi-Dev',
+              onTap: () => _launchUrl('https://github.com/Favi-Dev'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildContactCard({required IconData icon, required String title, required String subtitle, required VoidCallback onTap}) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(16),
+      child: Container(
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: const Color(0xFFF4F1EA),
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(
+              color: const Color(0xFF2F3F2A).withOpacity(0.1),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: const Color(0xFF2F3F2A).withOpacity(0.1),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Icon(icon, color: const Color(0xFF2F3F2A), size: 28),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: GoogleFonts.poppins(fontWeight: FontWeight.bold, fontSize: 16, color: const Color(0xFF2F3F2A)),
+                  ),
+                  Text(
+                    subtitle,
+                    style: GoogleFonts.poppins(color: const Color(0xFF2F3F2A).withOpacity(0.7), fontSize: 14),
+                  ),
+                ],
+              ),
+            ),
+            Icon(Icons.arrow_forward_ios, size: 16, color: const Color(0xFF2F3F2A).withOpacity(0.5)),
+          ],
+        ),
       ),
     );
   }
