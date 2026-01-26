@@ -70,17 +70,12 @@ class _PymeAddProductScreenState extends State<PymeAddProductScreen> {
     switch (_currentCategory) {
       case 'Comercio/retail':
       case 'Reciclaje Textil': // Handle Metamorfosis category
-        if (_isService) {
-          _dynamicControllers['tipo_servicio'] = TextEditingController();
-          _dynamicControllers['tiempo_estimado'] = TextEditingController();
-        } else {
           _dynamicControllers['talla'] = TextEditingController();
           _dynamicControllers['color'] = TextEditingController();
           _dynamicControllers['material'] = TextEditingController();
           if (_currentCategory == 'Reciclaje Textil') {
              _dynamicControllers['pieza_unica'] = TextEditingController(text: 'Sí');
           }
-        }
         break;
       case 'Alimentos y gastronomía':
         _dynamicControllers['ingredientes'] = TextEditingController();
@@ -88,19 +83,15 @@ class _PymeAddProductScreenState extends State<PymeAddProductScreen> {
         _dynamicControllers['dietetico'] = TextEditingController(); // e.g. Vegano, Sin Gluten
         break;
       case 'Servicios profesionales':
-        _dynamicControllers['modalidad'] = TextEditingController(); // Online/Presencial
-        _dynamicControllers['duracion'] = TextEditingController();
+        // Simplified for product-only context, though these categories hint at services.
+        // Keeping basic fields or adapting if these should be products.
+        // Assuming user wants to sell "service packages" as products if they use this screen.
+        // But per request "solo debe ser productos", we remove pure service fields like duration unless it's a "packaged product"
+         _dynamicControllers['modalidad'] = TextEditingController(); 
         break;
       case 'Salud, belleza y bienestar':
-        if (_isService) {
-          _dynamicControllers['duracion_sesion'] = TextEditingController();
-          _dynamicControllers['profesional'] = TextEditingController();
-          _dynamicControllers['is_event'] = TextEditingController(text: 'false');
-          _dynamicControllers['event_date'] = TextEditingController();
-        } else {
           _dynamicControllers['laboratorio'] = TextEditingController();
           _dynamicControllers['receta'] = TextEditingController();
-        }
         break;
       case 'Oficios y manufactura':
         _dynamicControllers['materiales'] = TextEditingController();
@@ -108,20 +99,19 @@ class _PymeAddProductScreenState extends State<PymeAddProductScreen> {
         _dynamicControllers['personalizado'] = TextEditingController(text: 'No');
         break;
       case 'Educación y cultura':
+         // Education products (books, kits) rather than classes
         _dynamicControllers['nivel'] = TextEditingController();
-        _dynamicControllers['modalidad'] = TextEditingController();
-        _dynamicControllers['duracion'] = TextEditingController();
-        _dynamicControllers['certificado'] = TextEditingController(text: 'No');
+        _dynamicControllers['material_incluido'] = TextEditingController();
         break;
       case 'Transporte y logística':
         _dynamicControllers['tipo_vehiculo'] = TextEditingController();
         _dynamicControllers['capacidad'] = TextEditingController();
-        _dynamicControllers['cobertura'] = TextEditingController();
         break;
     }
   }
 
-  bool get _isService => widget.isService;
+  // Force false as we separated events/services
+  bool get _isService => false; 
 
   @override
   void dispose() {
@@ -203,7 +193,7 @@ class _PymeAddProductScreenState extends State<PymeAddProductScreen> {
             children: [
               _buildSectionTitle('Información General'),
               _buildCard([
-                _buildTextField(_nameController, 'Nombre del Producto/Servicio', Icons.label_outline),
+                _buildTextField(_nameController, 'Nombre del Producto', Icons.label_outline),
                 const SizedBox(height: 16),
                 _buildTextField(_descController, 'Descripción', Icons.description_outlined, maxLines: 3),
                 const SizedBox(height: 16),
@@ -211,11 +201,11 @@ class _PymeAddProductScreenState extends State<PymeAddProductScreen> {
                   children: [
                     Expanded(child: _buildTextField(_priceController, 'Precio', Icons.attach_money, isNumber: true)),
                     const SizedBox(width: 16),
-                    Expanded(child: _buildTextField(_codeController, _isService ? 'Código / ID (Opcional)' : 'Código (SKU)', Icons.qr_code, isRequired: !_isService)),
+                    Expanded(child: _buildTextField(_codeController, 'Código (SKU)', Icons.qr_code, isRequired: true)),
                   ],
                 ),
                 const SizedBox(height: 16),
-                _buildTextField(_stockController, _getStockLabel(), Icons.inventory_2_outlined, isNumber: true),
+                _buildTextField(_stockController, 'Stock Disponible', Icons.inventory_2_outlined, isNumber: true),
               ]),
 
               const SizedBox(height: 24),

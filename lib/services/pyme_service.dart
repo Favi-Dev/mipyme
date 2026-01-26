@@ -233,6 +233,28 @@ class PymeService {
       }).toList();
     });
   }
+
+  // --- Events Management ---
+  Stream<List<Map<String, dynamic>>> getEventsByPyme(String pymeId) {
+    // For now, assuming events are stored in a subcollection 'events' in user doc,
+    // OR they are products with isService=true and some event flag. 
+    // BUT the user asked for modification in PymeAddProductScreen to remove services/events from there.
+    // So distinct events should likely be in their own colelction or subcollection.
+    // Let's assume subcollection 'events' for better structure as requested in 'Events Section'.
+    
+    return _usersCollection
+        .doc(pymeId)
+        .collection('events')
+        .orderBy('date', descending: false)
+        .snapshots()
+        .map((snapshot) {
+      return snapshot.docs.map((doc) {
+        final data = doc.data();
+        data['id'] = doc.id;
+        return data;
+      }).toList();
+    });
+  }
   
   // Create Offer in pyme's subcollection
   Future<void> createOffer(String pymeId, Map<String, dynamic> offerData) async {

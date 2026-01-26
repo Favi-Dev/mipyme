@@ -8,6 +8,7 @@ import '../services/product_service.dart';
 import '../services/pyme_service.dart';
 import '../models/product.dart';
 import 'pyme_products_screen.dart';
+import 'pyme_events_screen.dart';
 import '../widgets/supporter_counter.dart';
 
 class PymeProfileVitrinaScreen extends StatefulWidget {
@@ -165,6 +166,8 @@ class _PymeProfileVitrinaScreenState extends State<PymeProfileVitrinaScreen> {
                           ),
                       const SizedBox(height: 24),
 
+                      // Reordered for Foundation: Offers -> Events -> Products
+
                       // Offers Section
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -223,6 +226,76 @@ class _PymeProfileVitrinaScreenState extends State<PymeProfileVitrinaScreen> {
                           );
                         }
                       ),
+                      const SizedBox(height: 24),
+
+                      // Events Section (Foundation and Pyme)
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          _buildSectionTitle('Eventos', const Color(0xFF2F3F2A)),
+                          IconButton(
+                            icon: const Icon(Icons.edit, color: Color(0xFF6F8F5E)),
+                             onPressed: () {
+                              // We don't have a PymeEventsManagementScreen yet, but we have PymeEventsScreen.
+                              // Assuming PymeEventsScreen is the list/manage screen or PymeAddEventScreen.
+                              // Let's assume navigating to PymeEventsScreen allows management or has a '+' button.
+                              // Checking list_dir results... pyme_events_screen.dart exists.
+                              Navigator.push(context, MaterialPageRoute(builder: (c) => const PymeEventsScreen()));
+                            },
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+                       StreamBuilder<List<Map<String, dynamic>>>(
+                        stream: _pymeService.getEventsByPyme(FirebaseAuth.instance.currentUser!.uid),
+                        builder: (context, snapshot) {
+                          if (snapshot.connectionState == ConnectionState.waiting) {
+                            return const Center(child: CircularProgressIndicator());
+                          }
+                          final events = snapshot.data ?? [];
+                          // Filter future events locally if not done in query
+                           final futureEvents = events.where((e) {
+                            final date = (e['date'] as Timestamp).toDate();
+                            return date.isAfter(DateTime.now().subtract(const Duration(days: 1)));
+                          }).toList();
+
+                          if (futureEvents.isEmpty) {
+                             return Padding(
+                              padding: const EdgeInsets.symmetric(vertical: 8.0),
+                              child: Text('No hay eventos próximos.', style: textTheme.bodyMedium?.copyWith(color: Colors.grey[600])),
+                            );
+                          }
+                          return SingleChildScrollView(
+                            scrollDirection: Axis.horizontal,
+                            child: Row(
+                              children: futureEvents.map((event) {
+                                return Padding(
+                                  padding: const EdgeInsets.only(right: 12),
+                                  child: Container(
+                                    width: 200,
+                                    padding: const EdgeInsets.all(12),
+                                    decoration: BoxDecoration(
+                                      color: Colors.white,
+                                      borderRadius: BorderRadius.circular(12),
+                                      boxShadow: [
+                                        BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 4, offset: const Offset(0, 2))
+                                      ]
+                                    ),
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Text(event['title'] ?? 'Evento', style: const TextStyle(fontWeight: FontWeight.bold)),
+                                        Text(event['date'] != null ? (event['date'] as Timestamp).toDate().toString().split(' ')[0] : '', style: TextStyle(fontSize: 12, color: Colors.grey[600])),
+                                      ],
+                                    ),
+                                  ),
+                                );
+                              }).toList(),
+                            ),
+                          );
+                        }
+                      ),
+
                       const SizedBox(height: 24),
 
                       // Products Section

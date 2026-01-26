@@ -3,6 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../models/vitrina_data.dart';
 import '../services/pyme_service.dart';
+import 'foundation_donations_goal_screen.dart';
 
 class PymeMetricsScreen extends StatefulWidget {
   const PymeMetricsScreen({super.key});
@@ -94,13 +95,23 @@ class _PymeMetricsScreenState extends State<PymeMetricsScreen> {
                   physics: const NeverScrollableScrollPhysics(),
                   childAspectRatio: 1.5,
                   children: [
-                    _buildKpiCard(
-                      title: VitrinaData.isFoundation ? 'Recaudado' : 'Ventas Totales',
-                      value: '\$${(metrics['totalSales'] as num).toStringAsFixed(0)}',
-                      trend: '${metrics['completedOrders']} ${VitrinaData.isFoundation ? "donaciones" : "pedidos"}',
-                      isPositive: true,
-                      icon: Icons.attach_money,
-                      color: const Color(0xFF6F8F5E),
+                    GestureDetector(
+                      onTap: () {
+                         if (VitrinaData.isFoundation) {
+                           Navigator.push(
+                             context,
+                             MaterialPageRoute(builder: (context) => const FoundationDonationsGoalScreen()),
+                           );
+                         }
+                      },
+                      child: _buildKpiCard(
+                        title: VitrinaData.isFoundation ? 'Recaudado' : 'Ventas Totales',
+                        value: '\$${(metrics['totalSales'] as num).toStringAsFixed(0)}',
+                        trend: '${metrics['completedOrders']} ${VitrinaData.isFoundation ? "donaciones" : "pedidos"}',
+                        isPositive: true,
+                        icon: Icons.attach_money,
+                        color: const Color(0xFF6F8F5E),
+                      ),
                     ),
                     _buildKpiCard(
                       title: 'Pendientes',
