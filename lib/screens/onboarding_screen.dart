@@ -62,8 +62,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     final colorScheme = theme.colorScheme;
 
     return Scaffold(
-      // Fondo superior (verde claro/secundario)
-      backgroundColor: colorScheme.secondary,
+      // Fondo superior (crema #fcf1d9)
+      backgroundColor: const Color(0xFFFCF1D9),
       body: Stack(
         children: [
           // Contenido Principal (PageView)
@@ -99,8 +99,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                   width: 10,
                   decoration: BoxDecoration(
                     color: _currentPage == index
-                        ? Colors.white
-                        : Colors.white.withOpacity(0.4),
+                        ? const Color(0xFF2F3F2A)
+                        : const Color(0xFF2F3F2A).withOpacity(0.4),
                     shape: BoxShape.circle,
                   ),
                 ),
@@ -117,7 +117,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               child: Text(
                 'Saltar',
                 style: TextStyle(
-                  color: Colors.white.withOpacity(0.9),
+                  color: const Color(0xFF2F3F2A).withOpacity(0.9),
                   fontWeight: FontWeight.w600,
                   fontSize: 16,
                 ),
@@ -218,27 +218,15 @@ class _OnboardingPage extends StatelessWidget {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                // Placeholder para la imagen
-                // Cuando tengas las imágenes, usa: Image.asset(content.imageAsset)
                 Expanded(
-                  child: Container(
-                    decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.1),
-                      shape: BoxShape.circle,
-                    ),
-                    padding: const EdgeInsets.all(40),
-                    child: Icon(
-                      content.icon,
-                      size: 100,
-                      color: Colors.white,
+                  child: Padding(
+                    padding: const EdgeInsets.all(20.0),
+                    child: Image.asset(
+                      content.imageAsset,
+                      fit: BoxFit.contain,
                     ),
                   ),
                 ),
-                const SizedBox(height: 20),
-                Text(
-                  "Imagen: ${content.imageAsset}",
-                  style: TextStyle(color: Colors.white.withOpacity(0.5), fontSize: 10),
-                )
               ],
             ),
           ),
