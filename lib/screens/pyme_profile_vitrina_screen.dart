@@ -153,8 +153,8 @@ class _PymeProfileVitrinaScreenState extends State<PymeProfileVitrinaScreen> {
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
                               _buildSectionTitle('Descripción', const Color(0xFF2F3F2A)),
-                              // TODO: Connect supporter count to real data
-                              const SupporterCounter(count: 0), 
+                              // Connected supporter count to real data
+                              SupporterCounter(count: profile.supporterCount), 
                             ],
                           ),
                           const SizedBox(height: 8),
