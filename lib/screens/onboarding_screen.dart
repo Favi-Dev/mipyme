@@ -18,28 +18,28 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       title: 'Tu ayuda echa raíces aquí',
       description:
           'Conecta con fundaciones locales. Cada aporte se transforma en talleres y bienestar para quienes más lo necesitan.',
-      imageAsset: 'assets/images/onboarding_1.jpg',
+      imageAsset: 'assets/images/onboarding_1.png',
       icon: Icons.volunteer_activism,
     ),
     OnboardingContent(
       title: 'Un ciclo donde todos ganan',
       description:
           'Al donar, desbloqueas beneficios exclusivos. Es nuestra forma de agradecerte por impulsar el cambio social.',
-      imageAsset: 'assets/images/onboarding_2.jpg',
+      imageAsset: 'assets/images/onboarding_2.png',
       icon: Icons.sync_rounded, // Changed icon to represent cycle
     ),
     OnboardingContent(
       title: 'Descubre tesoros en tu barrio',
       description:
           'Usa tus beneficios en Pymes locales. Desde artesanías hasta cafeterías, apoya el talento de tu comunidad.',
-      imageAsset: 'assets/images/onboarding_3.jpg',
+      imageAsset: 'assets/images/onboarding_3.png',
       icon: Icons.storefront, // Changed icon to represent local shop
     ),
     OnboardingContent(
       title: 'Sigue el impacto real',
       description:
           'Visualiza las metas de recaudación y celebra cada vez que completamos una misión juntos. Transparencia total.',
-      imageAsset: 'assets/images/onboarding_4.jpg',
+      imageAsset: 'assets/images/onboarding_4.png',
       icon: Icons.trending_up, // Changed icon to represent metrics/goals
     ),
   ];
