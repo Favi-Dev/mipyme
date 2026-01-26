@@ -15,32 +15,32 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
   final List<OnboardingContent> _contents = [
     OnboardingContent(
-      title: 'Ayudar nunca fue tan simple',
+      title: 'Tu ayuda echa raíces aquí',
       description:
-          'Olvida los procesos complejos. Conecta directamente con causas reales y fundaciones que necesitan tu apoyo.',
+          'Conecta con fundaciones locales. Cada aporte se transforma en talleres y bienestar para quienes más lo necesitan.',
       imageAsset: 'assets/images/onboarding_1.jpg',
       icon: Icons.volunteer_activism,
     ),
     OnboardingContent(
-      title: 'Un ecosistema de Triple Impacto',
+      title: 'Un ciclo donde todos ganan',
       description:
-          'Tu donación mueve al mundo: Tú ayudas a una causa, las fundaciones reciben fondos y las Pymes ganan clientes.',
+          'Al donar, desbloqueas beneficios exclusivos. Es nuestra forma de agradecerte por impulsar el cambio social.',
       imageAsset: 'assets/images/onboarding_2.jpg',
-      icon: Icons.diversity_3,
+      icon: Icons.sync_rounded, // Changed icon to represent cycle
     ),
     OnboardingContent(
-      title: 'Tu generosidad tiene recompensa',
+      title: 'Descubre tesoros en tu barrio',
       description:
-          'Al apoyar proyectos sociales, recibes beneficios exclusivos en Pymes locales. Dona con propósito y ahorra.',
+          'Usa tus beneficios en Pymes locales. Desde artesanías hasta cafeterías, apoya el talento de tu comunidad.',
       imageAsset: 'assets/images/onboarding_3.jpg',
-      icon: Icons.card_giftcard,
+      icon: Icons.storefront, // Changed icon to represent local shop
     ),
     OnboardingContent(
-      title: 'Únete al cambio',
+      title: 'Sigue el impacto real',
       description:
-          'Sé parte de la comunidad que transforma la donación en una experiencia simple, transparente y con beneficios.',
+          'Visualiza las metas de recaudación y celebra cada vez que completamos una misión juntos. Transparencia total.',
       imageAsset: 'assets/images/onboarding_4.jpg',
-      icon: Icons.rocket_launch,
+      icon: Icons.trending_up, // Changed icon to represent metrics/goals
     ),
   ];
 
