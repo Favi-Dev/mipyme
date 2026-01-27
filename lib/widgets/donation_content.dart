@@ -6,12 +6,14 @@ import '../services/pyme_service.dart';
 class DonationContent extends StatefulWidget {
   final UserProfile pymeData;
   final List<int> amounts;
+  final bool isGuest;
   final Future<void> Function(double amount, bool isMonthly)? onDonate;
 
   const DonationContent({
     super.key,
     required this.pymeData,
     required this.amounts,
+    this.isGuest = false,
     this.onDonate,
   });
 
@@ -70,7 +72,7 @@ class _DonationContentState extends State<DonationContent> {
               ),
               const SizedBox(height: 8),
               Text(
-                'Tu aporte ayuda a continuar con nuestra labor.',
+                pyme.donationGoalDescription ?? 'Tu aporte ayuda a continuar con nuestra labor.',
                 style: theme.textTheme.bodyMedium?.copyWith(
                   color: const Color(0xFF5A5A55),
                 ),
@@ -272,7 +274,9 @@ class _DonationContentState extends State<DonationContent> {
                     const SizedBox(width: 12),
                     Expanded(
                       child: Text(
-                        'Se utilizará tu método de pago registrado para realizar el aporte.',
+                        widget.isGuest
+                            ? 'Serás redirigido a una pasarela externa para ingresar tus datos de pago de forma segura.'
+                            : 'Se utilizará tu método de pago registrado para realizar el aporte.',
                         style: theme.textTheme.bodySmall?.copyWith(
                           color: theme.colorScheme.onPrimaryContainer,
                         ),

@@ -13,52 +13,61 @@ class FoundationDonationsGoalScreen extends StatefulWidget {
 
 class _FoundationDonationsGoalScreenState extends State<FoundationDonationsGoalScreen> {
   final TextEditingController _goalController = TextEditingController();
+  final TextEditingController _descriptionController = TextEditingController();
   final PymeService _pymeService = PymeService();
   final String _currentPymeId = FirebaseAuth.instance.currentUser?.uid ?? '';
   bool _isEditing = false;
   double _currentGoal = 0;
   double _currentTotal = 0;
+  String _currentDescription = 'Las donaciones ayudan a financiar talleres y capacitaciones para adultos mayores.';
 
   @override
   void initState() {
     super.initState();
+    _descriptionController.text = _currentDescription;
     _loadData();
   }
 
-  void _loadData() async {
-    final metrics = await _pymeService.getPymeMetrics(_currentPymeId).first;
-    // Assuming metrics contains 'totalSales' which is donations for foundations
-    setState(() {
-      _currentTotal = (metrics['totalSales'] as num?)?.toDouble() ?? 0.0;
-    });
+  @override
+  void dispose() {
+    _goalController.dispose();
+    _descriptionController.dispose();
+    super.dispose();
+  }
 
-    // Load Goal from Firestore
+  void _loadData() async {
+    // Load Goal and Current Donations from Firestore
     final userDoc = await FirebaseFirestore.instance.collection('users').doc(_currentPymeId).get();
-    if (userDoc.exists) {
-      if (mounted) {
-        setState(() {
-          _currentGoal = (userDoc.data()?['fundraisingGoal'] as num?)?.toDouble() ?? 0.0;
-          _goalController.text = _currentGoal.toStringAsFixed(0);
-        });
-      }
+    
+    if (userDoc.exists && mounted) {
+      setState(() {
+        _currentTotal = (userDoc.data()?['currentDonations'] as num?)?.toDouble() ?? 0.0;
+        _currentGoal = (userDoc.data()?['donationGoal'] as num?)?.toDouble() ?? 0.0;
+        _currentDescription = userDoc.data()?['donationGoalDescription'] ?? _currentDescription;
+        _goalController.text = _currentGoal.toStringAsFixed(0);
+        _descriptionController.text = _currentDescription;
+      });
     }
   }
 
   Future<void> _updateGoal() async {
     final newGoal = double.tryParse(_goalController.text) ?? 0.0;
+    final newDescription = _descriptionController.text;
     
     await FirebaseFirestore.instance.collection('users').doc(_currentPymeId).set({
-      'fundraisingGoal': newGoal
+      'donationGoal': newGoal,
+      'donationGoalDescription': newDescription,
     }, SetOptions(merge: true));
 
     setState(() {
       _currentGoal = newGoal;
+      _currentDescription = newDescription;
       _isEditing = false;
     });
 
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Meta actualizada correctamente')),
+        const SnackBar(content: Text('Meta y descripción actualizadas correctamente')),
       );
     }
   }
@@ -111,6 +120,11 @@ class _FoundationDonationsGoalScreenState extends State<FoundationDonationsGoalS
                       IconButton(
                         icon: Icon(_isEditing ? Icons.close : Icons.edit, color: const Color(0xFF6F8F5E)),
                         onPressed: () {
+                          if (_isEditing) {
+                             // Reset text on cancel
+                             _goalController.text = _currentGoal.toStringAsFixed(0);
+                             _descriptionController.text = _currentDescription;
+                          }
                           setState(() => _isEditing = !_isEditing);
                         },
                       ),
@@ -118,27 +132,40 @@ class _FoundationDonationsGoalScreenState extends State<FoundationDonationsGoalS
                    ),
                    const SizedBox(height: 16),
                    if (_isEditing)
-                    Row(
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        Expanded(
-                          child: TextField(
-                            controller: _goalController,
-                            keyboardType: TextInputType.number,
-                            decoration: const InputDecoration(
-                              labelText: 'Monto Meta',
-                              prefixText: '\$ ',
-                              border: OutlineInputBorder(),
-                            ),
+                        TextField(
+                          controller: _goalController,
+                          keyboardType: TextInputType.number,
+                          decoration: const InputDecoration(
+                            labelText: 'Monto Meta',
+                            prefixText: '\$ ',
+                            border: OutlineInputBorder(),
                           ),
                         ),
-                         const SizedBox(width: 12),
+                        const SizedBox(height: 16),
+                        TextField(
+                          controller: _descriptionController,
+                          keyboardType: TextInputType.text,
+                          maxLines: 3,
+                          decoration: const InputDecoration(
+                            labelText: 'Descripción del Objetivo',
+                            hintText: '¿Para qué se utilizarán los fondos?',
+                            border: OutlineInputBorder(),
+                            alignLabelWithHint: true,
+                          ),
+                        ),
+                        const SizedBox(height: 16),
                          ElevatedButton(
                            onPressed: _updateGoal,
                            style: ElevatedButton.styleFrom(
                              backgroundColor: const Color(0xFF6F8F5E),
                              foregroundColor: Colors.white,
+                             padding: const EdgeInsets.symmetric(vertical: 16),
+                             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                            ),
-                           child: const Text('Guardar'),
+                           child: const Text('Guardar Cambios'),
                          ),
                       ],
                     )
@@ -235,7 +262,7 @@ class _FoundationDonationsGoalScreenState extends State<FoundationDonationsGoalS
                   ),
                   const SizedBox(height: 16),
                   Text(
-                    'Las donaciones ayudan a financiar talleres y capacitaciones para adultos mayores.',
+                    _currentDescription,
                     textAlign: TextAlign.center,
                     style: GoogleFonts.poppins(
                       color: const Color(0xFFF4F1EA).withOpacity(0.6),

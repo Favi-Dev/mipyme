@@ -93,6 +93,7 @@ class _ClientPymeDetailScreenState extends State<ClientPymeDetailScreen> {
       builder: (context) => DonationContent(
         pymeData: widget.pymeData,
         amounts: amounts,
+        isGuest: _userId == null,
       ),
     );
   }

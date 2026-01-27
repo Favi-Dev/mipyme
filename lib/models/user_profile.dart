@@ -30,6 +30,7 @@ class UserProfile {
   
   // Foundation specific
   final double? donationGoal;
+  final String? donationGoalDescription;
   final double? currentDonations;
   final String? donationAlias;
   final String? donationCbu;
@@ -65,6 +66,7 @@ class UserProfile {
     this.whatsappNumber,
     this.tags,
     this.donationGoal,
+    this.donationGoalDescription,
     this.currentDonations,
     this.donationAlias,
     this.donationCbu,
@@ -97,7 +99,10 @@ class UserProfile {
       instagramHandle: map['instagramHandle'],
       whatsappNumber: map['whatsappNumber'],
       tags: (map['tags'] as List<dynamic>?)?.map((e) => e.toString()).toList(),
-      donationGoal: (map['donationGoal'] as num?)?.toDouble(),
+      donationGoal: ((map['donationGoal'] as num?)?.toDouble() == 5000000.0 && map['fundraisingGoal'] != null)
+          ? (map['fundraisingGoal'] as num?)?.toDouble()
+          : ((map['donationGoal'] as num?)?.toDouble() ?? (map['fundraisingGoal'] as num?)?.toDouble()),
+      donationGoalDescription: map['donationGoalDescription'] ?? map['fundraisingDescription'],
       currentDonations: (map['currentDonations'] as num?)?.toDouble(),
       donationAlias: map['donationAlias'],
       donationCbu: map['donationCbu'],
@@ -131,6 +136,7 @@ class UserProfile {
       'whatsappNumber': whatsappNumber,
       'tags': tags,
       'donationGoal': donationGoal,
+      'donationGoalDescription': donationGoalDescription,
       'currentDonations': currentDonations,
       'donationAlias': donationAlias,
       'donationCbu': donationCbu,

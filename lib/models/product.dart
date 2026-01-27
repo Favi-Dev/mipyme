@@ -46,10 +46,14 @@ class Product {
       pymeId: map['pymeId'] ?? '',
       name: map['name'] ?? '',
       description: map['description'] ?? '',
-      price: (map['price'] ?? 0).toDouble(),
+      price: (map['price'] is num)
+          ? (map['price'] as num).toDouble()
+          : double.tryParse(map['price'].toString()) ?? 0,
       imageUrl: map['imageUrl'] ?? '',
       code: map['code'] ?? '',
-      stock: map['stock'] ?? 0,
+      stock: (map['stock'] is int)
+          ? (map['stock'] as int)
+          : int.tryParse(map['stock'].toString()) ?? 0,
       category: map['category'] ?? '',
       isService: map['isService'] ?? false,
       customAttributes: Map<String, dynamic>.from(map['customAttributes'] ?? {}),

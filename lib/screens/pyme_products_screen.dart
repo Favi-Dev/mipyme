@@ -5,6 +5,7 @@ import '../services/product_service.dart';
 import '../models/product.dart';
 import '../models/vitrina_data.dart';
 import 'pyme_add_product_screen.dart';
+import 'pyme_orders_screen.dart';
 
 class PymeProductsScreen extends StatefulWidget {
   final String? pymeId; // Optional: For admin use
@@ -14,25 +15,83 @@ class PymeProductsScreen extends StatefulWidget {
   State<PymeProductsScreen> createState() => _PymeProductsScreenState();
 }
 
-class _PymeProductsScreenState extends State<PymeProductsScreen> {
+class _PymeProductsScreenState extends State<PymeProductsScreen> with SingleTickerProviderStateMixin {
   final ProductService _productService = ProductService();
+  late TabController _tabController;
 
   String get _targetPymeId => widget.pymeId ?? FirebaseAuth.instance.currentUser?.uid ?? '';
 
   @override
+  void initState() {
+    super.initState();
+    _tabController = TabController(length: 2, vsync: this);
+  }
+
+  @override
+  void dispose() {
+    _tabController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
+    // If it's a foundation, we show tabs (Products and Orders)
+    // If it's a regular pyme, we show just Products (Orders are in the nav bar)
+    // Wait, the requirement said "en la barra de navegacion inferior del rol de fundacion... elimines la seccion de pedidos y la incluyas en la screen de productos".
+    // This implies for Pymes, it might stay the same? Or should I change it for everyone?
+    // "del rol de fundacion" implies specifically/only for foundation role.
+    
+    final bool showTabs = VitrinaData.isFoundation;
+
     return Scaffold(
       backgroundColor: const Color(0xFFF4F1EA),
       appBar: AppBar(
         title: Text(
-          'Mis Productos',
+          showTabs ? 'Gestión' : 'Mis Productos',
           style: GoogleFonts.poppins(fontWeight: FontWeight.bold),
         ),
         elevation: 0,
         backgroundColor: const Color(0xFF2F3F2A),
         foregroundColor: const Color(0xFFF4F1EA),
+        bottom: showTabs 
+          ? TabBar(
+              controller: _tabController,
+              indicatorColor: const Color(0xFF6F8F5E),
+              labelColor: const Color(0xFFF4F1EA),
+              unselectedLabelColor: const Color(0xFFF4F1EA).withOpacity(0.5),
+              tabs: const [
+                Tab(text: 'Productos'),
+                Tab(text: 'Pedidos'),
+              ],
+            )
+          : null,
       ),
-      body: StreamBuilder<List<Product>>(
+      body: showTabs
+        ? TabBarView(
+            controller: _tabController,
+            children: [
+              _buildProductList(),
+              const PymeOrdersScreen(showAppBar: false),
+            ],
+          )
+        : _buildProductList(),
+      floatingActionButton: showTabs
+        ? AnimatedBuilder(
+            animation: _tabController,
+            builder: (context, child) {
+              // Only show FAB on Products tab (index 0)
+              if (_tabController.index == 0) {
+                return _buildFab();
+              }
+              return const SizedBox.shrink();
+            },
+          )
+        : _buildFab(),
+    );
+  }
+
+  Widget _buildProductList() {
+    return StreamBuilder<List<Product>>(
         stream: _productService.getProductsByPyme(_targetPymeId),
         builder: (context, snapshot) {
           if (snapshot.hasError) {
@@ -73,8 +132,11 @@ class _PymeProductsScreenState extends State<PymeProductsScreen> {
             },
           );
         },
-      ),
-      floatingActionButton: FloatingActionButton.extended(
+      );
+  }
+
+  Widget _buildFab() {
+    return FloatingActionButton.extended(
         onPressed: () async {
           if (VitrinaData.isFoundation) {
             // Foundations can only add Products here (Events are in a separate tab)
@@ -133,8 +195,7 @@ class _PymeProductsScreenState extends State<PymeProductsScreen> {
           style: GoogleFonts.poppins(
               fontWeight: FontWeight.bold, color: const Color(0xFFF4F1EA)),
         ),
-      ),
-    );
+      );
   }
 
   Widget _buildProductCard(Product product) {
@@ -173,19 +234,27 @@ class _PymeProductsScreenState extends State<PymeProductsScreen> {
                 // Product Image
                 ClipRRect(
                   borderRadius: BorderRadius.circular(12),
-                  child: Image.network(
-                    product.imageUrl,
-                    width: 100,
-                    height: 100,
-                    fit: BoxFit.cover,
-                    errorBuilder: (_, __, ___) => Container(
-                      width: 100,
-                      height: 100,
-                      color: const Color(0xFFF4F1EA),
-                      child: Icon(Icons.image_not_supported,
-                          color: const Color(0xFF2F3F2A).withOpacity(0.3)),
-                    ),
-                  ),
+                  child: (product.imageUrl.isNotEmpty)
+                      ? Image.network(
+                          product.imageUrl,
+                          width: 100,
+                          height: 100,
+                          fit: BoxFit.cover,
+                          errorBuilder: (_, __, ___) => Container(
+                            width: 100,
+                            height: 100,
+                            color: const Color(0xFFF4F1EA),
+                            child: Icon(Icons.image_not_supported,
+                                color: const Color(0xFF2F3F2A).withOpacity(0.3)),
+                          ),
+                        )
+                      : Container(
+                          width: 100,
+                          height: 100,
+                          color: const Color(0xFFF4F1EA),
+                          child: Icon(Icons.image_not_supported,
+                              color: const Color(0xFF2F3F2A).withOpacity(0.3)),
+                        ),
                 ),
                 const SizedBox(width: 16),
                 // Product Details

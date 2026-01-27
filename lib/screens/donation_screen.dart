@@ -224,6 +224,7 @@ class _DonationScreenState extends State<DonationScreen> {
                    DonationContent(
                       pymeData: _selectedFoundation!,
                       amounts: const [1000, 3000, 5000, 10000, 20000],
+                      isGuest: widget.isGuest,
                       onDonate: _processDonation,
                    )
                 else

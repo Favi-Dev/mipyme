@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
 import '../services/pyme_service.dart';
 
 class PymeOrdersScreen extends StatefulWidget {
-  const PymeOrdersScreen({super.key});
+  final bool showAppBar;
+  const PymeOrdersScreen({super.key, this.showAppBar = true});
 
   @override
   State<PymeOrdersScreen> createState() => _PymeOrdersScreenState();
@@ -17,6 +19,9 @@ class _PymeOrdersScreenState extends State<PymeOrdersScreen> {
 
   @override
   Widget build(BuildContext context) {
+    if (!widget.showAppBar) {
+      return _buildBody();
+    }
     return Scaffold(
       backgroundColor: const Color(0xFFF4F1EA),
       appBar: AppBar(
@@ -28,7 +33,12 @@ class _PymeOrdersScreenState extends State<PymeOrdersScreen> {
         backgroundColor: const Color(0xFF2F3F2A),
         foregroundColor: const Color(0xFFF4F1EA),
       ),
-      body: StreamBuilder<List<Map<String, dynamic>>>(
+      body: _buildBody(),
+    );
+  }
+
+  Widget _buildBody() {
+    return StreamBuilder<List<Map<String, dynamic>>>(
         stream: _pymeService.getOrdersForPyme(_currentPymeId),
         builder: (context, snapshot) {
           // Robust error handling
@@ -51,45 +61,30 @@ class _PymeOrdersScreenState extends State<PymeOrdersScreen> {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());
           }
-
           final orders = snapshot.data ?? [];
-
           if (orders.isEmpty) {
             return Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(Icons.receipt_long_outlined,
-                      size: 64, color: const Color(0xFF2F3F2A).withOpacity(0.5)),
-                  const SizedBox(height: 16),
-                  Text(
-                    'No tienes pedidos pendientes.',
-                    style: GoogleFonts.poppins(
-                      color: const Color(0xFF2F3F2A).withOpacity(0.7),
-                      fontSize: 16,
-                    ),
-                  ),
-                ],
+              child: Text(
+                'No hay pedidos pendientes',
+                style: GoogleFonts.poppins(color: Colors.grey[600]),
               ),
             );
           }
-
           return ListView.builder(
-            padding: const EdgeInsets.all(16),
             itemCount: orders.length,
+            padding: const EdgeInsets.all(16),
             itemBuilder: (context, index) {
               final order = orders[index];
               return _buildOrderCard(order);
             },
           );
         },
-      ),
-    );
+      );
   }
 
   Widget _buildOrderCard(Map<String, dynamic> order) {
     final status = order['status'] ?? 'pending';
-    final date = order['createdAt'] as DateTime?;
+    final date = (order['createdAt'] as Timestamp?)?.toDate();
     final total = order['total'] ?? 0;
     final items = (order['items'] as List<dynamic>?) ?? [];
 

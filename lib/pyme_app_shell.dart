@@ -7,6 +7,7 @@ import 'screens/pyme_profile_vitrina_screen.dart';
 import 'screens/pyme_events_screen.dart';
 import 'screens/pyme_profile_screen.dart';
 import 'screens/pyme_orders_screen.dart';
+import 'screens/foundation_donations_goal_screen.dart';
 
 class PymeAppShell extends StatefulWidget {
   const PymeAppShell({super.key});
@@ -24,7 +25,7 @@ class _PymeAppShellState extends State<PymeAppShell> {
         PymeProfileVitrinaScreen(),
         PymeProductsScreen(),
         PymeEventsScreen(),
-        PymeOrdersScreen(),
+        FoundationDonationsGoalScreen(),
         PymeValidationScannerScreen(),
         PymeMetricsScreen(),
         PymeProfileScreen(),
@@ -70,8 +71,8 @@ class _PymeAppShellState extends State<PymeAppShell> {
                   label: 'Eventos',
                 ),
                 BottomNavigationBarItem(
-                  icon: Icon(Icons.receipt_long),
-                  label: 'Pedidos',
+                  icon: Icon(Icons.flag_outlined),
+                  label: 'Metas',
                 ),
                 BottomNavigationBarItem(
                   icon: Icon(Icons.qr_code_scanner),
