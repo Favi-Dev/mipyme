@@ -82,11 +82,8 @@ class _DonationScreenState extends State<DonationScreen> {
       final Uri url = Uri.parse(initPoint);
       final String? externalReference = result['external_reference'];
 
-      if (await canLaunchUrl(url)) {
-        await launchUrl(url, mode: LaunchMode.externalApplication);
-      } else {
-        throw 'No se pudo abrir el link de pago';
-      }
+      // Usar platformDefault para mayor compatibilidad web y evitar bloqueo de popups
+      await launchUrl(url, mode: LaunchMode.platformDefault);
 
       // 3. SECUENCIA REAL DE PAGO (Polling / Escucha Activa)
       if (!mounted) return;
