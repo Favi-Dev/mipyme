@@ -453,12 +453,11 @@ class _ClientCartScreenState extends State<ClientCartScreen> {
                         if (context.mounted) Navigator.pop(context);
 
                         // 3. Abrir Mercado Pago
+                        // Usamos platformDefault para mejor compatibilidad Web (evitar bloqueos estrictos)
                         final Uri url = Uri.parse(initPoint);
-                        if (await canLaunchUrl(url)) {
-                          await launchUrl(url, mode: LaunchMode.externalApplication);
-                        } else {
-                          throw 'No se pudo abrir Mercado Pago.';
-                        }
+                        
+                        // Intentamos abrir directamente sin verificar canLaunchUrl en web para evitar retardos
+                        await launchUrl(url, mode: LaunchMode.platformDefault);
 
                         if (!context.mounted) return;
 
