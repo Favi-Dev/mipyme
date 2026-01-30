@@ -41,9 +41,9 @@ class _ClientAppShellState extends State<ClientAppShell> {
         type: BottomNavigationBarType.fixed,
         backgroundColor: Theme.of(context).cardColor,
         selectedItemColor: Theme.of(context).colorScheme.primary,
-        unselectedItemColor: const Color(0xFF2F3F2A).withOpacity(0.5),
         currentIndex: _selectedIndex,
         onTap: _onItemTapped,
+        unselectedItemColor: const Color(0xFF2F3F2A).withValues(alpha: 0.5),
         items: [
           const BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Inicio'),
           const BottomNavigationBarItem(icon: Icon(Icons.volunteer_activism), label: 'Fundaciones'),

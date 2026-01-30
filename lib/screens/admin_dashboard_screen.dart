@@ -147,10 +147,10 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                         width: double.infinity,
                         child: _buildStatCard(
                           context,
-                          'Transacciones',
+                          'Finanzas y Liquidaciones',
                           stats['transactions'].toString(),
-                          Icons.receipt_long,
-                          theme.colorScheme.onSurface,
+                          Icons.attach_money,
+                          const Color(0xFF6F8F5E), // Green color for finance
                           () => _navigateTo(const AdminTransactionsScreen()),
                         ),
                       ),

@@ -286,18 +286,20 @@ class ClientService {
             .toList());
   }
 
-  Future<void> createOrder(OrderModel order) async {
-    if (currentUserId == null) return;
+  Future<String> createOrder(OrderModel order) async {
+    if (currentUserId == null) throw Exception("Usuario no autenticado");
     
     final orderData = order.toMap();
     // Override/Ensure server fields
     orderData['clientId'] = currentUserId;
     orderData['createdAt'] = FieldValue.serverTimestamp();
     
-    await _firestore.collection('orders').add(orderData);
+    final docRef = await _firestore.collection('orders').add(orderData);
     
     // Increment S+ Score for Pyme
     await PymeService().incrementSupporterCount(order.pymeId);
+
+    return docRef.id;
   }
 
   // --- Coupon ---

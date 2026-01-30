@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:url_launcher/url_launcher.dart';
+import '../services/payment_service.dart';
 import '../client_app_shell.dart';
 
 class ClientSubscriptionScreen extends StatefulWidget {
@@ -20,29 +22,77 @@ class _ClientSubscriptionScreenState extends State<ClientSubscriptionScreen> {
     setState(() => _isLoading = true);
 
     // Simulate Payment Delay
-    await Future.delayed(const Duration(seconds: 2));
+    // await Future.delayed(const Duration(seconds: 2));
 
     try {
       final user = FirebaseAuth.instance.currentUser;
-      if (user != null) {
-        // Update User Subscription in Firestore
-        // We set 'subscriptionDate' to now.
-        // Logic elsewhere (ClientQrScreen) determines when the coupon becomes active (e.g. +1 month or immediate).
-        // Since the user said "se crea el QR", enabling subscription is the key.
+      if (user != null && user.email != null) {
         
+        // 1. Solicitar link de suscripción al backend
+        // Asegúrate de que tu PaymentService apunte a la URL correcta de Cloud Functions
+        final result = await PaymentService().createSubscription(
+          title: "Suscripción SoyPlus",
+          price: 99.0, // Define el precio real aquí
+          payerEmail: user.email!,
+        );
+
+        final String? initPoint = result['init_point'];
+
+        if (initPoint != null) {
+          final Uri url = Uri.parse(initPoint);
+          if (await canLaunchUrl(url)) {
+            await launchUrl(url, mode: LaunchMode.externalApplication);
+          } else {
+            throw 'No se pudo abrir el link de pago';
+          }
+        }
+
+        // NOTA IMPORTANTE:
+        // En un flujo real de producción, NO debes actualizar la base de datos aquí inmediatamente.
+        // Debes esperar a que Mercado Pago notifique a tu backend (Webhook) que el pago fue exitoso.
+        // Sin embargo, para este MVP/Prueba, le pediremos confirmación al usuario o asumiremos éxito
+        // si regresa a la app. Aquí mostramos un diálogo para que el usuario confirme manual.
+
+        if (!mounted) return;
+        
+        final bool? confirmed = await showDialog<bool>(
+          context: context,
+          barrierDismissible: false,
+          builder: (context) => AlertDialog(
+            title: const Text('Completar Suscripción'),
+            content: const Text(
+              'Se ha abierto Mercado Pago en tu navegador. Por favor completa el proceso de suscripción.\n\nCuando termines, regresa aquí y confirma.'
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context, false),
+                child: const Text('Cancelar'),
+              ),
+              ElevatedButton(
+                onPressed: () => Navigator.pop(context, true),
+                child: const Text('¡Ya me suscribí!'),
+              ),
+            ],
+          ),
+        );
+
+        if (confirmed != true) {
+           throw 'Suscripción cancelada o no confirmada por el usuario.';
+        }
+
+        // Si el usuario confirma, procedemos a actualizar Firestore (Inseguro para prod, OK para MVP)
         await FirebaseFirestore.instance.collection('users').doc(user.uid).update({
           'isSubscribed': true,
           'subscriptionDate': DateTime.now(),
-          // Ensure coupon status is initialized if not present
           'monthlyCouponRedeemed': false, 
         });
 
-        // Record the payment (Mock)
         await FirebaseFirestore.instance.collection('payments').add({
           'userId': user.uid,
           'amount': 2000,
           'type': 'mandatory_subscription',
           'date': DateTime.now(),
+          'mp_preference_id': result['id'] ?? 'unknown',
         });
       }
 

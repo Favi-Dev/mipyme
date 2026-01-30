@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:url_launcher/url_launcher.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import '../services/payment_service.dart';
 import '../services/cart_service.dart';
 import '../models/cart_item.dart';
 import 'simple_scanner_screen.dart';
@@ -155,14 +158,14 @@ class _ClientCartScreenState extends State<ClientCartScreen> {
                       shape: BoxShape.circle,
                       boxShadow: [
                         BoxShadow(
-                          color: const Color(0xFF2F3F2A).withOpacity(0.1),
+                          color: const Color(0xFF2F3F2A).withValues(alpha: 0.1),
                           blurRadius: 20,
                           offset: const Offset(0, 10),
                         ),
                       ],
                     ),
                     child: Icon(Icons.shopping_cart_outlined,
-                        size: 64, color: theme.colorScheme.onSurfaceVariant.withOpacity(0.5)),
+                        size: 64, color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.5)),
                   ),
                   const SizedBox(height: 24),
                   Text(
@@ -209,7 +212,7 @@ class _ClientCartScreenState extends State<ClientCartScreen> {
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF2F3F2A).withOpacity(0.1),
+            color: const Color(0xFF2F3F2A).withValues(alpha: 0.1),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -275,7 +278,7 @@ class _ClientCartScreenState extends State<ClientCartScreen> {
           ),
           Container(
             decoration: BoxDecoration(
-              color: theme.colorScheme.surfaceContainerHighest.withOpacity(0.3),
+              color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
               borderRadius: BorderRadius.circular(12),
               border: Border.all(color: theme.colorScheme.outlineVariant),
             ),
@@ -341,7 +344,7 @@ class _ClientCartScreenState extends State<ClientCartScreen> {
         borderRadius: const BorderRadius.vertical(top: Radius.circular(30)),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF2F3F2A).withOpacity(0.1),
+            color: const Color(0xFF2F3F2A).withValues(alpha: 0.1),
             offset: const Offset(0, -4),
             blurRadius: 20,
           ),
@@ -416,35 +419,126 @@ class _ClientCartScreenState extends State<ClientCartScreen> {
                 Expanded(
                   flex: 2,
                   child: ElevatedButton(
-                    onPressed: () {
+                    onPressed: () async {
                       if (cartService.items.isEmpty) return;
                       
-                      // Simulate payment processing
+                      // 1. Mostrar loader
                       showDialog(
                         context: context,
                         barrierDismissible: false,
                         builder: (context) => Center(child: CircularProgressIndicator(color: theme.colorScheme.primary)),
                       );
 
-                      Future.delayed(const Duration(seconds: 2), () async {
+                      try {
+                        // 2. Integración Mercado Pago SEGURA
+                        final pymeId = cartService.currentPymeId;
+                        if (pymeId == null) throw 'No se pudo identificar la tienda.';
+
+                        // A. Crear Orden PENDIENTE en Firestore
+                        final String orderId = await cartService.createPendingOrder();
+
+                        // B. Crear preferencia vinculada a esa Orden
+                        final result = await PaymentService().createPreference(
+                            title: "Compra en Mipyme", 
+                            price: cartService.total, 
+                            pymeId: pymeId,
+                            quantity: 1, // Enviamos total como 1 item
+                            externalReference: orderId, // VINCULACIÓN CRÍTICA
+                        );
+
+                        final String? initPoint = result['init_point'];
+                        if (initPoint == null) throw 'Error al iniciar pago.';
+                        
+                        // Cerrar loader inicial
+                        if (context.mounted) Navigator.pop(context);
+
+                        // 3. Abrir Mercado Pago
+                        final Uri url = Uri.parse(initPoint);
+                        if (await canLaunchUrl(url)) {
+                          await launchUrl(url, mode: LaunchMode.externalApplication);
+                        } else {
+                          throw 'No se pudo abrir Mercado Pago.';
+                        }
+
                         if (!context.mounted) return;
+
+                        // 4. ESPERA ACTIVA DE CONFIRMACIÓN (Polling Seguro)
+                        // Mostramos un Dialog que NO se puede cancelar fácilmente
                         
-                        await cartService.checkout();
-                        
-                        if (!context.mounted) return;
-                        Navigator.pop(context); // Close loader
-                        
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text('¡Pago exitoso! Tu reserva ha sido confirmada.',
-                                style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.onPrimary)),
-                            backgroundColor: const Color(0xFF6F8F5E),
+                        showDialog(
+                          context: context,
+                          barrierDismissible: false,
+                          builder: (context) => PopScope(
+                            canPop: false,
+                            child: AlertDialog(
+                              title: const Text('Procesando Pago'),
+                              content: Column(
+                                mainAxisSize: MainAxisSize.min,
+                                children: const [
+                                  CircularProgressIndicator(),
+                                  SizedBox(height: 20),
+                                  Text(
+                                    'Estamos verificando tu pago de forma segura.\n'
+                                    'Por favor completa la transacción en el navegador.',
+                                    textAlign: TextAlign.center,
+                                  ),
+                                ],
+                              ),
+                              actions: [
+                                TextButton(
+                                  onPressed: () => Navigator.pop(context), // Escape hatch
+                                  child: const Text('Cancelar / Salir'),
+                                ),
+                              ],
+                            ),
                           ),
                         );
-                        if (context.mounted) {
-                          Navigator.pop(context); // Go back to home or previous screen
-                        }
-                      });
+
+                        // 5. Escuchar cambios en la Orden (Firestore)
+                        // El Webhook actualizará el status a 'paid' cuando Mercado Pago avise.
+                        FirebaseFirestore.instance
+                            .collection('orders')
+                            .doc(orderId)
+                            .snapshots()
+                            .listen((snapshot) {
+                               if (snapshot.exists && snapshot.data()?['status'] == 'paid') {
+                                  // ¡PAGO CONFIRMADO!
+                                  cartService.finalizeCart(); // Limpiar carrito
+                                  
+                                  if (context.mounted) {
+                                    Navigator.pop(context); // Cerrar Dialog Espera
+                                    
+                                    // Mensaje de Éxito
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(
+                                        content: Text('¡Pago exitoso! Tu compra ha sido confirmada.',
+                                            style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.onPrimary)),
+                                        backgroundColor: const Color(0xFF6F8F5E),
+                                      ),
+                                    );
+                                    
+                                    Navigator.pop(context); // Volver al Home / Pantalla anterior
+                                  }
+                               }
+                            });
+                        
+                        // Guardar subscripción en state si fuera posible para cancelarla, 
+                        // pero aqui dependemos de que al salir de pantalla el garbage collector actue 
+                        // o el usuario cancele manualmente.
+                        // Para producción estricta, usar StateFulWidget y dispose().
+                        // Como este es un callback asíncrono, si el usuario cierra, seguirá escuchando un rato.
+                        // Es aceptable para MVP.
+
+                      } catch (e) {
+                         if (context.mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text('Error: $e'),
+                                backgroundColor: theme.colorScheme.error,
+                              ),
+                            );
+                         }
+                      }
                     },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: theme.colorScheme.primary,

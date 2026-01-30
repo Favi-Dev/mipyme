@@ -94,9 +94,15 @@ class _PymeOrdersScreenState extends State<PymeOrdersScreen> {
     String actionText = '';
 
     switch (status) {
-      case 'pending':
+      case 'pending_payment': // Cliente creó orden pero no ha pagado
+        statusColor = Colors.orange.shade200;
+        statusText = 'Esperando Pago';
+        // No hay acción para la Pyme hasta que pague
+        break;
+      case 'paid': // Nuevo flujo seguro
+      case 'pending': // Flujo antiguo
         statusColor = Colors.orange;
-        statusText = 'Pendiente';
+        statusText = 'Nuevo Pedido';
         nextStatus = 'preparing';
         actionText = 'Aceptar Pedido';
         break;

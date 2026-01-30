@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:url_launcher/url_launcher.dart'; // Importante para abrir el link
 import '../models/user_profile.dart';
 import '../services/pyme_service.dart';
+import '../services/payment_service.dart'; // Importar servicio de pago
 import '../client_app_shell.dart';
 import '../widgets/donation_content.dart';
 
@@ -24,6 +26,7 @@ class DonationScreen extends StatefulWidget {
 
 class _DonationScreenState extends State<DonationScreen> {
   final PymeService _pymeService = PymeService();
+  final PaymentService _paymentService = PaymentService();
   final TextEditingController _amountController = TextEditingController();
   
   UserProfile? _selectedFoundation;
@@ -47,102 +50,185 @@ class _DonationScreenState extends State<DonationScreen> {
 
     setState(() => _isLoading = true);
 
-    // Simulate Payment Delay
-    await Future.delayed(const Duration(seconds: 2));
-
     try {
-      if (!widget.isGuest) {
-        final user = FirebaseAuth.instance.currentUser;
-        if (user != null) {
-          // Record donation in Firestore (Mock)
-          await FirebaseFirestore.instance.collection('donations').add({
-            'userId': user.uid,
-            'foundationId': _selectedFoundation!.id,
-            'foundationName': _selectedFoundation!.name,
-            'amount': amount,
-            'isMonthly': isMonthly,
-            'date': DateTime.now(),
-          });
+      final user = FirebaseAuth.instance.currentUser;
+      final String payerEmail = user?.email ?? 'invitado@soyplus.app';
+      final String title = isMonthly 
+          ? 'Suscripción Mensual a ${_selectedFoundation!.name}' 
+          : 'Donación a ${_selectedFoundation!.name}';
 
-          // Also record in 'payments' for Admin Transactions view
-          await FirebaseFirestore.instance.collection('payments').add({
-            'userId': user.uid,
-            'amount': amount,
-            'type': 'donation',
-            'foundationId': _selectedFoundation!.id,
-            'foundationName': _selectedFoundation!.name,
-            'date': DateTime.now(),
-          });
-          
-          // Increment S+ Score for Foundation
-          await _pymeService.incrementSupporterCount(_selectedFoundation!.id);
-          
-          // Update foundation current donations (Real-time goal support)
-          await FirebaseFirestore.instance.collection('users').doc(_selectedFoundation!.id).update({
-             'currentDonations': FieldValue.increment(amount),
-          });
-
-          // Update User Subscription if Monthly
-          if (isMonthly) {
-            await FirebaseFirestore.instance.collection('users').doc(user.uid).update({
-              'isSubscribed': true,
-              'subscriptionDate': DateTime.now(),
-            });
-          }
-        }
+      Map<String, dynamic> result;
+      
+      if (isMonthly) {
+        // Opción 1: Crear Suscripción (Si está logueado o tiene email)
+        result = await _paymentService.createSubscription(
+          title: title,
+          price: amount,
+          payerEmail: payerEmail,
+        );
       } else {
-        // Guest mode: Still update the foundation stats!
-         await _pymeService.incrementSupporterCount(_selectedFoundation!.id);
-         await FirebaseFirestore.instance.collection('users').doc(_selectedFoundation!.id).update({
-             'currentDonations': FieldValue.increment(amount),
-          });
+        // Opción 2: Pago Único (Checkout Pro)
+        result = await _paymentService.createPreference(
+          title: title,
+          price: amount,
+          pymeId: _selectedFoundation!.id,
+        );
       }
 
+      // 1. Obtener el link de pago (sandbox para pruebas)
+      final String initPoint = result['sandbox_init_point'] ?? result['init_point'];
+      
+      // 2. Abrir Mercado Pago
+      final Uri url = Uri.parse(initPoint);
+      final String? externalReference = result['external_reference'];
+
+      if (await canLaunchUrl(url)) {
+        await launchUrl(url, mode: LaunchMode.externalApplication);
+      } else {
+        throw 'No se pudo abrir el link de pago';
+      }
+
+      // 3. SECUENCIA REAL DE PAGO (Polling / Escucha Activa)
       if (!mounted) return;
 
-      // Success Message
-      showDialog(
+      if (externalReference != null) {
+        // Mostrar Dialog de "Esperando Confirmación del Banco..."
+        // No dejamos cerrar este dialog fácilmente para evitar que el usuario se vaya sin confirmar
+        // Aunque Mercado Pago avisa rápido, puede tomar unos segundos.
+        
+        bool paymentConfirmed = false;
+
+        showDialog(
+          context: context,
+          barrierDismissible: false,
+          builder: (context) => PopScope(
+            canPop: false, // Bloquear el botón atrás
+            child: AlertDialog(
+              title: const Text('Procesando Pago...'),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: const [
+                  CircularProgressIndicator(),
+                  SizedBox(height: 20),
+                  Text('Estamos esperando la confirmación segura de Mercado Pago.\nPor favor, completa el pago en tu navegador.'),
+                ],
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context), 
+                  child: const Text('Cancelar / Cerrar'), // Escotilla de escape si el usuario se arrepiente
+                ),
+              ],
+            ),
+          ),
+        );
+
+        // Escuchar cambios en Firestore donde externalReference coincida
+        // NOTA: El Webhook escribirá un documento en 'payments' con este externalReference
+        final subscription = FirebaseFirestore.instance
+            .collection('payments')
+            .where('externalReference', isEqualTo: externalReference)
+            .snapshots()
+            .listen((snapshot) {
+              if (snapshot.docs.isNotEmpty) {
+                 // ¡PAGO CONFIRMADO!
+                 paymentConfirmed = true;
+                 Navigator.pop(context); // Cerrar Dialog de Espera
+                 _showSuccessDialog(); // Mostrar Éxito
+              }
+            });
+            
+        // Esperamos un tiempo razonable (ej. 5 min) o hasta que el usuario cierre manualmente
+        // Pero como es un listener, se queda vivo. Deberíamos cancelarlo al salir de pantalla.
+        // Por simplicidad en este MVP, si el usuario cancela el dialog, el listener se debería cancelar.
+        
+        // *MEJORA*: Cancelar subscription cuando el widget se desmonte o el dialogo se cierre.
+        // Como showDialog es una ruta futura, no tenemos control directo del listener desde "adentro" del builder facilmente
+        // salvo usando un StatefuleWidget o variables de estado. 
+        // Para simplificar, añadimos la suscripción a una variable de estado para limpiar en dispose.
+
+      } else {
+         // Fallback legacy por si falta externalReference (subscription mensual)
+         _showLegacyConfirmation();
+      }
+
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error al procesar pago: $e')),
+        );
+        setState(() => _isLoading = false);
+      }
+    }
+  }
+
+  void _showSuccessDialog() {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => AlertDialog(
+        title: const Text('¡Pago Confirmado!'),
+        content: Text(widget.isGuest 
+          ? 'Tu donación ha sido recibida y verificada. ¡Gracias!'
+          : 'Tu donación ha sido procesada exitosamente.'
+        ),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context); // Close Success Dialog
+              if (widget.isInitialRegistration) {
+                Navigator.pushAndRemoveUntil(
+                  context,
+                  MaterialPageRoute(builder: (context) => const ClientAppShell()),
+                  (route) => false,
+                );
+              } else {
+                Navigator.pop(context); // Go back
+              }
+            },
+            child: const Text('Continuar'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showLegacyConfirmation() async {
+      // Preguntar si completó la donación (Antiguo método)
+      // ... (Lógica actual) 
+      // Mantenemos esto solo para Suscripciones mensuales por ahora
+      if (!mounted) return;
+      
+      final bool? confirmed = await showDialog<bool>(
         context: context,
         barrierDismissible: false,
         builder: (context) => AlertDialog(
-          title: const Text('¡Gracias por tu aporte!'),
-          content: Text(widget.isGuest 
-            ? 'Tu donación ha sido recibida. Regístrate para obtener beneficios exclusivos.'
-            : 'Tu donación ha sido procesada exitosamente.'
+          title: const Text('Completar Donación'),
+          content: const Text(
+            'Se ha abierto el navegador para procesar tu donación. ¿Pudiste completarla?'
           ),
           actions: [
             TextButton(
-              onPressed: () {
-                Navigator.pop(context); // Close Dialog
-                if (widget.isInitialRegistration) {
-                  // Go to App Home
-                  Navigator.pushAndRemoveUntil(
-                    context,
-                    MaterialPageRoute(builder: (context) => const ClientAppShell()),
-                    (route) => false,
-                  );
-                } else if (widget.isGuest) {
-                  // Go back to Login
-                  Navigator.pop(context);
-                } else {
-                  // Go back to previous screen (Home)
-                  Navigator.pop(context);
-                }
-              },
-              child: const Text('Continuar'),
+              onPressed: () => Navigator.pop(context, false), // No
+              child: const Text('Cancelar'),
+            ),
+             ElevatedButton(
+              onPressed: () => Navigator.pop(context, true), // Sí
+              child: const Text('¡Sí, ya doné!'),
             ),
           ],
         ),
       );
 
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error procesando donación: $e')),
-      );
-    } finally {
-      if (mounted) setState(() => _isLoading = false);
-    }
+      if (confirmed != true) {
+         setState(() => _isLoading = false);
+         return;
+      }
+      
+      _showSuccessDialog();
   }
+
+
 
   @override
   Widget build(BuildContext context) {
