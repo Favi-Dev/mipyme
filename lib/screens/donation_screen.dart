@@ -83,7 +83,9 @@ class _DonationScreenState extends State<DonationScreen> {
       final String? externalReference = result['external_reference'];
 
       // Usar platformDefault para mayor compatibilidad web y evitar bloqueo de popups
-      await launchUrl(url, mode: LaunchMode.platformDefault);
+      if (!await launchUrl(url, mode: LaunchMode.platformDefault)) {
+        throw 'No se pudo abrir la pasarela de pago. Por favor, revisa si tienes bloqueador de pop-ups.';
+      }
 
       // 3. SECUENCIA REAL DE PAGO (Polling / Escucha Activa)
       if (!mounted) return;
