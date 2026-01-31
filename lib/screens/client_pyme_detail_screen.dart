@@ -12,6 +12,7 @@ import '../models/product.dart';
 import '../services/cart_service.dart';
 import '../widgets/supporter_counter.dart';
 import '../widgets/donation_content.dart';
+import 'donation_screen.dart';
 import 'client_cart_screen.dart' as import_cart;
 
 class ClientPymeDetailScreen extends StatefulWidget {
