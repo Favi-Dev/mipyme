@@ -94,6 +94,19 @@ class _ClientPymeDetailScreenState extends State<ClientPymeDetailScreen> {
         pymeData: widget.pymeData,
         amounts: amounts,
         isGuest: _userId == null,
+        onDonate: (amount, isMonthly) async {
+            // Reutilizamos la lógica del DonationScreen pero adaptada a este modal
+            // Navegamos a DonationScreen que ya contiene toda la lógica segura de pago
+             Navigator.push(
+               context,
+               MaterialPageRoute(
+                 builder: (context) => DonationScreen(
+                   isGuest: _userId == null,
+                   preSelectedFoundation: widget.pymeData,
+                 ),
+               ),
+             );
+        },
       ),
     );
   }
