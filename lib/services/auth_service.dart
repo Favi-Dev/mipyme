@@ -20,20 +20,33 @@ class AuthService {
       
       User? user = result.user;
       if (user != null) {
+        if (!user.emailVerified) {
+          throw FirebaseAuthException(
+            code: 'email-not-verified',
+            message: 'Por favor verifica tu correo electrónico para continuar.',
+          );
+        }
+
         // Fetch user role from Firestore
+      // Update FCM Token and other logic...
         DocumentSnapshot userDoc = await _firestore.collection('users').doc(user.uid).get();
         if (userDoc.exists) {
-          // Update FCM Token
-          String? token = await NotificationService().getToken();
-          if (token != null) {
-            await _firestore.collection('users').doc(user.uid).update({
-              'fcmToken': token,
-            });
-          }
-          
-          return UserProfile.fromMap(userDoc.data() as Map<String, dynamic>, user.uid);
+            String? token = await NotificationService().getToken();
+            if (token != null) {
+                await _firestore.collection('users').doc(user.uid).update({
+                'fcmToken': token,
+                });
+            }
+            return UserProfile.fromMap(userDoc.data() as Map<String, dynamic>, user.uid);
         }
       }
+      return null;
+    } on FirebaseAuthException catch (e) {
+      if (e.code == 'email-not-verified') {
+        await _auth.signOut();
+        rethrow;
+      }
+      print(e.toString());
       return null;
     } catch (e) {
       print(e.toString());
@@ -99,6 +112,9 @@ class AuthService {
             'fcmToken': token,
           });
         }
+        
+        await user.sendEmailVerification();
+        await _auth.signOut(); // Sign out until verified
 
         return true;
       }

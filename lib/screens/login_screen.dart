@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../services/auth_service.dart';
 import '../services/client_service.dart';
@@ -32,49 +33,73 @@ class _LoginScreenState extends State<LoginScreen> {
     final email = _emailController.text.trim();
     final password = _passwordController.text.trim();
 
-    final userProfile = await _authService.login(email, password);
+    try {
+      final userProfile = await _authService.login(email, password);
 
-    if (!mounted) return;
+      if (!mounted) return;
 
-    setState(() => _isLoading = false);
+      setState(() => _isLoading = false);
 
-    if (userProfile != null) {
-      Widget destination;
-      switch (userProfile.role) {
-        case UserRole.client:
-          // Check subscription status for clients
-          if (userProfile.isSubscribed) {
-            destination = const ClientAppShell();
-          } else {
-            destination = const SubscriptionBlockerScreen();
-          }
-          break;
-        case UserRole.pyme:
-          VitrinaData.isFoundationUser = false;
-          VitrinaData.setCategory('Comercio/retail');
-          destination = const PymeAppShell();
-          break;
-        case UserRole.foundation:
-          VitrinaData.isFoundationUser = true;
-          VitrinaData.setCategory('Educación y cultura');
-          destination = const PymeAppShell();
-          break;
-        case UserRole.admin:
-          destination = const AdminAppShell();
-          break;
+      if (userProfile != null) {
+        Widget destination;
+        switch (userProfile.role) {
+          case UserRole.client:
+            // Check subscription status for clients
+            if (userProfile.isSubscribed) {
+              destination = const ClientAppShell();
+            } else {
+              destination = const SubscriptionBlockerScreen();
+            }
+            break;
+          case UserRole.pyme:
+            VitrinaData.isFoundationUser = false;
+            VitrinaData.setCategory('Comercio/retail');
+            destination = const PymeAppShell();
+            break;
+          case UserRole.foundation:
+            VitrinaData.isFoundationUser = true;
+            VitrinaData.setCategory('Educación y cultura');
+            destination = const PymeAppShell();
+            break;
+          case UserRole.admin:
+            destination = const AdminAppShell();
+            break;
+        }
+
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => destination),
+        );
       }
-
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (context) => destination),
-      );
-    } else {
+    } on FirebaseAuthException catch (e) {
+      if (!mounted) return;
+      setState(() => _isLoading = false);
+      String message = 'Error al iniciar sesión: ${e.message}';
+      if (e.code == 'email-not-verified') {
+        message = 'Por favor verifica tu correo electrónico antes de iniciar sesión';
+      } else if (e.code == 'user-not-found' || e.code == 'wrong-password' || e.code == 'invalid-credential') {
+        message = 'Credenciales incorrectas';
+      }
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Credenciales incorrectas'),
-          backgroundColor: Color(0xFF8B5A3C),
-        ),
+        SnackBar(content: Text(message), backgroundColor: const Color(0xFF8B5A3C)),
       );
+    } catch (e) {
+      if (!mounted) return; // Prevent setState if unmounted
+      setState(() => _isLoading = false);
+      print('Login error: $e'); // Log for debugging
+
+      String message = 'Error inesperado';
+      if (e is FirebaseAuthException) { // Re-check if it was missed by the on clause or wrapped
+        if (e.code == 'email-not-verified') {
+             message = 'Por favor verifica tu correo electrónico antes de iniciar sesión';
+        } else if (e.code == 'invalid-credential') {
+             message = 'Credenciales incorrectas';
+        }
+      }
+      
+       ScaffoldMessenger.of(context).showSnackBar(
+         SnackBar(content: Text(message), backgroundColor: const Color(0xFF8B5A3C)),
+       );
     }
   }
 

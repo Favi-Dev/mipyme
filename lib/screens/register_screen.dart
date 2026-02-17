@@ -72,6 +72,19 @@ class _RegisterScreenState extends State<RegisterScreen> {
   ];
 
   void _register() async {
+    // Password Strength Check
+    final password = _passwordController.text;
+    final hasUpperCase = password.contains(RegExp(r'[A-Z]'));
+    final hasLowerCase = password.contains(RegExp(r'[a-z]'));
+    final hasDigits = password.contains(RegExp(r'[0-9]'));
+    final hasSpecialCharacters = password.contains(RegExp(r'[!@#$%^&*(),.?":{}|<>]'));
+    final hasMinLength = password.length >= 8;
+
+    if (!hasMinLength || !hasUpperCase || !hasLowerCase || !hasDigits || !hasSpecialCharacters) {
+      _showError('La contraseña debe tener al menos 8 caracteres, una mayúscula, una minúscula, un número y un carácter especial.');
+      return;
+    }
+
     if (_passwordController.text != _confirmPasswordController.text) {
       _showError('Las contraseñas no coinciden');
       return;
@@ -228,25 +241,24 @@ class _RegisterScreenState extends State<RegisterScreen> {
     setState(() => _isLoading = false);
 
     if (success) {
-      if (_selectedRole == UserRole.client) {
-        // Auto-login logic would be ideal here, but for now we assume AuthService.register 
-        // might sign them in or we ask them to sign in. 
-        // However, the requirement is "immediate donation".
-        // If AuthService.register signs them in (Firebase usually does), we can proceed.
-        // Let's check AuthService.register. It uses createUserWithEmailAndPassword which signs in automatically.
-        
+      if (!mounted) return;
+      
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Cuenta creada con éxito. Hemos enviado un correo de verificación. Por favor verifícalo antes de iniciar sesión.'),
+          backgroundColor: Colors.green,
+          duration: Duration(seconds: 5),
+        ),
+      );
+      
+      // Navigate back to login
+      if (Navigator.canPop(context)) {
+        Navigator.pop(context);
+      } else {
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (context) => const ClientAppShell()),
+          MaterialPageRoute(builder: (context) => const LoginScreen()),
         );
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Registro exitoso. Por favor inicia sesión.'),
-            backgroundColor: Colors.green,
-          ),
-        );
-        Navigator.pop(context); // Go back to login
       }
     } else {
       _showError('Error en el registro');
