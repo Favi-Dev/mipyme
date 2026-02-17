@@ -10,6 +10,27 @@ class AuthService {
   // Get current user
   User? get currentUser => _auth.currentUser;
 
+  // Resend Verification Email
+  Future<void> resendVerificationEmail(String email, String password) async {
+    try {
+      UserCredential result = await _auth.signInWithEmailAndPassword(
+        email: email,
+        password: password,
+      );
+      
+      if (result.user != null && !result.user!.emailVerified) {
+        await result.user!.sendEmailVerification();
+        await _auth.signOut();
+      }
+    } catch (e) {
+      // If we signed in successfully but threw an error later, sign out
+      if (_auth.currentUser != null) {
+        await _auth.signOut();
+      }
+      rethrow;
+    }
+  }
+
   // Login
   Future<UserProfile?> login(String email, String password) async {
     try {

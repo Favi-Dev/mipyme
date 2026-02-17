@@ -7,6 +7,7 @@ import '../client_app_shell.dart';
 import '../services/auth_service.dart';
 import '../services/product_service.dart';
 import '../models/user_profile.dart';
+import '../utils/rut_formatter.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -351,6 +352,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 _buildSectionTitle('Identificación'),
                 TextField(
                   controller: _runController,
+                  inputFormatters: [RutInputFormatter()],
                   style: const TextStyle(color: Color(0xFF2F3F2A)),
                   decoration: _inputDecoration('RUN (Rol Único Nacional) *', Icons.badge),
                 ),
@@ -366,6 +368,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 _buildSectionTitle('Identificación'),
                 TextField(
                   controller: _rutController,
+                  inputFormatters: [RutInputFormatter()],
                   style: const TextStyle(color: Color(0xFF2F3F2A)),
                   decoration: _inputDecoration('RUT Empresa *', Icons.badge),
                 ),
@@ -398,6 +401,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 const SizedBox(height: 16),
                 TextField(
                   controller: _repRutController,
+                  inputFormatters: [RutInputFormatter()],
                   style: const TextStyle(color: Color(0xFF2F3F2A)),
                   decoration: _inputDecoration('RUT Representante Legal *', Icons.badge),
                 ),
@@ -447,6 +451,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 _buildSectionTitle('Identificación'),
                 TextField(
                   controller: _rutController,
+                  inputFormatters: [RutInputFormatter()],
                   style: const TextStyle(color: Color(0xFF2F3F2A)),
                   decoration: _inputDecoration('RUT Fundación *', Icons.badge),
                 ),
@@ -473,6 +478,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 const SizedBox(height: 16),
                 TextField(
                   controller: _repRutController,
+                  inputFormatters: [RutInputFormatter()],
                   style: const TextStyle(color: Color(0xFF2F3F2A)),
                   decoration: _inputDecoration('RUT Representante Legal *', Icons.badge),
                 ),
@@ -546,6 +552,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 const SizedBox(height: 16),
                 TextField(
                   controller: _bankAccountHolderRutController,
+                  inputFormatters: [RutInputFormatter()],
                   style: const TextStyle(color: Color(0xFF2F3F2A)),
                   decoration: _inputDecoration('RUT Titular (Si es distinto al de la empresa)', Icons.badge),
                 ),

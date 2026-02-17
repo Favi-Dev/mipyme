@@ -83,6 +83,14 @@ class _PymeProfileVitrinaScreenState extends State<PymeProfileVitrinaScreen> {
                     backgroundColor: const Color(0xFF2F3F2A),
                     actions: [
                       IconButton(
+                        icon: const Icon(Icons.notifications_none, color: Color(0xFFF4F1EA)),
+                        onPressed: () {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text('No tienes notificaciones nuevas')),
+                          );
+                        },
+                      ),
+                      IconButton(
                         icon: const Icon(Icons.settings, color: Color(0xFFF4F1EA)),
                         onPressed: () async {
                           await Navigator.push(

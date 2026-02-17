@@ -75,13 +75,55 @@ class _LoginScreenState extends State<LoginScreen> {
       if (!mounted) return;
       setState(() => _isLoading = false);
       String message = 'Error al iniciar sesión: ${e.message}';
+      
+      SnackBarAction? action;
+      
       if (e.code == 'email-not-verified') {
-        message = 'Por favor verifica tu correo electrónico antes de iniciar sesión';
+        message = 'Por favor verifica tu correo electrónico para iniciar sesión.';
+        action = SnackBarAction(
+          label: 'REENVIAR',
+          textColor: const Color(0xFFF4F1EA),
+          onPressed: () async {
+            try {
+              final email = _emailController.text.trim();
+              final password = _passwordController.text.trim();
+              
+              if (email.isEmpty || password.isEmpty) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Ingresa tu correo y contraseña para reenviar.')),
+                );
+                return;
+              }
+
+              await _authService.resendVerificationEmail(email, password);
+              
+              if (mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Correo de verificación enviado. Revisa tu bandeja de entrada.'),
+                    backgroundColor: Colors.green,
+                  ),
+                );
+              }
+            } catch (e) {
+              if (mounted) {
+                 ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text('Error al reenviar: $e')),
+                );
+              }
+            }
+          },
+        );
       } else if (e.code == 'user-not-found' || e.code == 'wrong-password' || e.code == 'invalid-credential') {
         message = 'Credenciales incorrectas';
       }
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(message), backgroundColor: const Color(0xFF8B5A3C)),
+        SnackBar(
+          content: Text(message), 
+          backgroundColor: const Color(0xFF8B5A3C),
+          action: action,
+          duration: const Duration(seconds: 8),
+        ),
       );
     } catch (e) {
       if (!mounted) return; // Prevent setState if unmounted
