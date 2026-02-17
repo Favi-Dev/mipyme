@@ -3,6 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:geocoding/geocoding.dart';
 import 'login_screen.dart';
 import 'client_subscription_screen.dart';
+import '../client_app_shell.dart';
 import '../services/auth_service.dart';
 import '../services/product_service.dart';
 import '../models/user_profile.dart';
@@ -236,7 +237,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
         
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (context) => const ClientSubscriptionScreen(isInitialRegistration: true)),
+          MaterialPageRoute(builder: (context) => const ClientAppShell()),
         );
       } else {
         ScaffoldMessenger.of(context).showSnackBar(

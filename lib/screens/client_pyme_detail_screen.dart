@@ -10,10 +10,12 @@ import '../services/product_service.dart';
 import '../services/pyme_service.dart';
 import '../models/product.dart';
 import '../services/cart_service.dart';
+import '../services/client_service.dart';
 import '../widgets/supporter_counter.dart';
 import '../widgets/donation_content.dart';
 import 'donation_screen.dart';
 import 'client_cart_screen.dart' as import_cart;
+import 'client_subscription_screen.dart';
 
 class ClientPymeDetailScreen extends StatefulWidget {
   final String pymeId;
@@ -33,6 +35,7 @@ class _ClientPymeDetailScreenState extends State<ClientPymeDetailScreen> {
   final ScrollController _scrollController = ScrollController();
   final ProductService _productService = ProductService();
   final PymeService _pymeService = PymeService();
+  final ClientService _clientService = ClientService();
   final String? _userId = FirebaseAuth.instance.currentUser?.uid;
   
   bool get _isFoundation => widget.pymeData.role == UserRole.foundation;
@@ -820,7 +823,49 @@ class _ClientPymeDetailScreenState extends State<ClientPymeDetailScreen> {
                       // Add Button
                       Expanded(
                         child: ElevatedButton(
-                          onPressed: () {
+                          onPressed: () async {
+                            // Check Subscription Status first
+                            bool isSubscribed = false;
+                            try {
+                              isSubscribed = await _clientService.getSubscriptionStatus().first;
+                            } catch (e) {
+                              print('Error checking subscription: $e');
+                            }
+
+                            if (!isSubscribed) {
+                              if (!mounted) return;
+                              Navigator.pop(context); // Close product detail
+                              
+                              showDialog(
+                                context: context,
+                                builder: (context) => AlertDialog(
+                                  title: const Text('Beneficio Exclusivo'),
+                                  content: const Text('Para adquirir productos o inscribirte en talleres, necesitas ser Beneficiario Plus.'),
+                                  actions: [
+                                    TextButton(
+                                      child: const Text('Cancelar'), 
+                                      onPressed: () => Navigator.pop(context)
+                                    ),
+                                    ElevatedButton(
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor: theme.colorScheme.primary,
+                                        foregroundColor: theme.colorScheme.onPrimary,
+                                      ),
+                                      child: const Text('Suscribirse (\$2.000)'),
+                                      onPressed: () {
+                                        Navigator.pop(context); // Close dialog
+                                        Navigator.push(
+                                          context, 
+                                          MaterialPageRoute(builder: (_) => const ClientSubscriptionScreen())
+                                        );
+                                      },
+                                    ),
+                                  ],
+                                ),
+                              );
+                              return;
+                            }
+
                             // Logic to add specific quantity
                             // Since CartService might handle 1 by 1 or custom, 
                             // we loop or update CartService to accept quantity.

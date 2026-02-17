@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 import '../services/client_service.dart';
+import 'client_subscription_screen.dart';
 
 
 class ClientQrScreen extends StatefulWidget {
@@ -38,32 +39,88 @@ class _ClientQrScreenState extends State<ClientQrScreen> {
         ),
         centerTitle: true,
       ),
-      body: StreamBuilder<DateTime?>(
-        stream: _clientService.getSubscriptionDate(),
-        builder: (context, dateSnapshot) {
-          final subscriptionDate = dateSnapshot.data;
+      body: StreamBuilder<bool>(
+        stream: _clientService.getSubscriptionStatus(),
+        builder: (context, subscriptionSnapshot) {
+          if (subscriptionSnapshot.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator());
+          }
           
-          // Check if in first month delay
-          if (subscriptionDate != null) {
-            final firstCouponDate = DateTime(
-              subscriptionDate.year, 
-              subscriptionDate.month + 1, 
-              subscriptionDate.day
-            );
-            
-            if (DateTime.now().isBefore(firstCouponDate)) {
-              return _buildLockedView(theme, firstCouponDate);
-            }
+          final isSubscribed = subscriptionSnapshot.data ?? false;
+          
+          if (!isSubscribed) {
+             return _buildSubscriptionRequiredView(theme);
           }
 
-          return StreamBuilder<bool>(
-            stream: _clientService.getMonthlyCouponStatus(),
-            builder: (context, couponSnapshot) {
-              final isRedeemed = couponSnapshot.data ?? false;
-              return _buildCouponView(theme, isRedeemed, userId);
-            },
+          return StreamBuilder<DateTime?>(
+            stream: _clientService.getSubscriptionDate(),
+            builder: (context, dateSnapshot) {
+              final subscriptionDate = dateSnapshot.data;
+              
+              // Check if in first month delay
+              if (subscriptionDate != null) {
+                final firstCouponDate = DateTime(
+                  subscriptionDate.year, 
+                  subscriptionDate.month + 1, 
+                  subscriptionDate.day
+                );
+                
+                if (DateTime.now().isBefore(firstCouponDate)) {
+                  return _buildLockedView(theme, firstCouponDate);
+                }
+              }
+
+              return StreamBuilder<bool>(
+                stream: _clientService.getMonthlyCouponStatus(),
+                builder: (context, couponSnapshot) {
+                  final isRedeemed = couponSnapshot.data ?? false;
+                  return _buildCouponView(theme, isRedeemed, userId);
+                },
+              );
+            }
           );
         }
+      ),
+    );
+  }
+
+  Widget _buildSubscriptionRequiredView(ThemeData theme) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(24.0),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.lock_person, size: 80, color: theme.colorScheme.primary),
+            const SizedBox(height: 24),
+            Text(
+              'Beneficio Exclusivo',
+              style: theme.textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              'Para acceder a tu código QR de descuentos, necesitas ser Beneficiario Plus.',
+              textAlign: TextAlign.center,
+              style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+            ),
+            const SizedBox(height: 32),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const ClientSubscriptionScreen()),
+                );
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: theme.colorScheme.primary,
+                foregroundColor: theme.colorScheme.onPrimary,
+                padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              ),
+              child: const Text('Suscribirse (\$2.000)'),
+            ),
+          ],
+        ),
       ),
     );
   }
