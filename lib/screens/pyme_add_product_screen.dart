@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:image_picker/image_picker.dart';
+import '../services/storage_service.dart';
 import '../models/product.dart';
 import '../models/vitrina_data.dart';
 import '../services/product_service.dart';
@@ -24,14 +26,19 @@ class _PymeAddProductScreenState extends State<PymeAddProductScreen> {
   final _codeController = TextEditingController();
   final _priceController = TextEditingController();
   final _stockController = TextEditingController();
-  final _imageController = TextEditingController();
+  
+  // Removed _imageControllerText in favor of state variable
+  String? _imageUrl;
+  
   final _descController = TextEditingController();
 
   // Dynamic Controllers Map
   final Map<String, TextEditingController> _dynamicControllers = {};
 
   final ProductService _productService = ProductService();
+  final StorageService _storageService = StorageService();
   late String _currentCategory;
+  bool _isLoading = false;
 
   @override
   void initState() {
@@ -54,7 +61,7 @@ class _PymeAddProductScreenState extends State<PymeAddProductScreen> {
     _codeController.text = p.code;
     _priceController.text = p.price.toStringAsFixed(0);
     _stockController.text = p.stock.toString();
-    _imageController.text = p.imageUrl;
+    _imageUrl = p.imageUrl;
     _descController.text = p.description;
     
     // Load dynamic attributes
@@ -101,11 +108,15 @@ class _PymeAddProductScreenState extends State<PymeAddProductScreen> {
       case 'Educación y cultura':
          // Education products (books, kits) rather than classes
         _dynamicControllers['nivel'] = TextEditingController();
-        _dynamicControllers['material_incluido'] = TextEditingController();
+        _dynamicControllers['material_incluido'] = TextEditingController(); // Keep just in case needed later
+        _dynamicControllers['modalidad'] = TextEditingController();
+        _dynamicControllers['duracion'] = TextEditingController();
+        _dynamicControllers['certificado'] = TextEditingController(text: 'No');
         break;
       case 'Transporte y logística':
         _dynamicControllers['tipo_vehiculo'] = TextEditingController();
         _dynamicControllers['capacidad'] = TextEditingController();
+        _dynamicControllers['cobertura'] = TextEditingController();
         break;
     }
   }
@@ -119,7 +130,7 @@ class _PymeAddProductScreenState extends State<PymeAddProductScreen> {
     _codeController.dispose();
     _priceController.dispose();
     _stockController.dispose();
-    _imageController.dispose();
+    // _imageController.dispose(); // Removed
     _descController.dispose();
     for (var controller in _dynamicControllers.values) {
       controller.dispose();
@@ -127,50 +138,92 @@ class _PymeAddProductScreenState extends State<PymeAddProductScreen> {
     super.dispose();
   }
 
-  void _saveProduct() {
-    if (_formKey.currentState!.validate()) {
-      // Collect dynamic attributes
-      Map<String, dynamic> attributes = {};
-      _dynamicControllers.forEach((key, controller) {
-        if (controller.text.isNotEmpty) {
-          attributes[key] = controller.text;
-        }
-      });
+  Future<void> _pickAndUploadImage() async {
+    final ImagePicker picker = ImagePicker();
+    final XFile? image = await picker.pickImage(source: ImageSource.gallery, maxWidth: 1000, imageQuality: 80);
 
-      final newProduct = Product(
-        id: widget.product?.id ?? DateTime.now().millisecondsSinceEpoch.toString(),
-        pymeId: widget.pymeId ?? FirebaseAuth.instance.currentUser?.uid ?? '',
-        name: _nameController.text,
-        description: _descController.text,
-        price: double.tryParse(_priceController.text) ?? 0,
-        imageUrl: _imageController.text.isEmpty
-            ? 'https://picsum.photos/200'
-            : _imageController.text,
-        code: _codeController.text,
-        stock: int.tryParse(_stockController.text) ?? 0,
-        category: _currentCategory,
-        isService: widget.isService,
-        customAttributes: attributes,
-      );
+    if (image == null) return;
 
-      if (widget.product != null) {
-        _productService.updateProduct(newProduct);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Actualizado en $_currentCategory exitosamente', style: GoogleFonts.poppins(color: const Color(0xFFF4F1EA))),
-            backgroundColor: const Color(0xFF2F3F2A),
-          ),
-        );
-      } else {
-        _productService.addProduct(newProduct);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Producto agregado a $_currentCategory exitosamente', style: GoogleFonts.poppins(color: const Color(0xFFF4F1EA))),
-            backgroundColor: const Color(0xFF2F3F2A),
-          ),
-        );
+    setState(() => _isLoading = true);
+
+    try {
+      final userId = FirebaseAuth.instance.currentUser?.uid;
+      if (userId == null) return;
+      
+      final url = await _storageService.uploadProductImage(image, userId);
+      if (url != null) {
+        setState(() => _imageUrl = url);
       }
-      Navigator.pop(context);
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error al subir imagen: $e')));
+      }
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  Future<void> _saveProduct() async {
+    if (_formKey.currentState!.validate()) {
+      if (_imageUrl == null) {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Debes seleccionar una imagen para el producto')));
+        return;
+      }
+      
+      setState(() => _isLoading = true);
+
+      try {
+        // Collect dynamic attributes
+        Map<String, dynamic> attributes = {};
+        _dynamicControllers.forEach((key, controller) {
+          if (controller.text.isNotEmpty) {
+            attributes[key] = controller.text;
+          }
+        });
+
+        final newProduct = Product(
+          id: widget.product?.id ?? DateTime.now().millisecondsSinceEpoch.toString(),
+          pymeId: widget.pymeId ?? FirebaseAuth.instance.currentUser?.uid ?? '',
+          name: _nameController.text,
+          description: _descController.text,
+          price: double.tryParse(_priceController.text) ?? 0,
+          imageUrl: _imageUrl!,
+          code: _codeController.text,
+          stock: int.tryParse(_stockController.text) ?? 0,
+          category: _currentCategory,
+          isService: widget.isService,
+          customAttributes: attributes,
+        );
+
+        if (widget.product != null) {
+          await _productService.updateProduct(newProduct);
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('Actualizado en $_currentCategory exitosamente', style: GoogleFonts.poppins(color: const Color(0xFFF4F1EA))),
+                backgroundColor: const Color(0xFF2F3F2A),
+              ),
+            );
+          }
+        } else {
+          await _productService.addProduct(newProduct);
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('Producto agregado a $_currentCategory exitosamente', style: GoogleFonts.poppins(color: const Color(0xFFF4F1EA))),
+                backgroundColor: const Color(0xFF2F3F2A),
+              ),
+            );
+          }
+        }
+        if (mounted) Navigator.pop(context);
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error al guardar: $e')));
+        }
+      } finally {
+        if (mounted) setState(() => _isLoading = false);
+      }
     }
   }
 
@@ -195,7 +248,7 @@ class _PymeAddProductScreenState extends State<PymeAddProductScreen> {
               _buildCard([
                 _buildTextField(_nameController, 'Nombre del Producto', Icons.label_outline),
                 const SizedBox(height: 16),
-                _buildTextField(_descController, 'Descripción', Icons.description_outlined, maxLines: 3),
+                _buildTextField(_descController, 'Descripción', Icons.description_outlined, maxLines: 5),
                 const SizedBox(height: 16),
                 Row(
                   children: [
@@ -215,13 +268,44 @@ class _PymeAddProductScreenState extends State<PymeAddProductScreen> {
               const SizedBox(height: 24),
               _buildSectionTitle('Multimedia'),
               _buildCard([
-                _buildTextField(_imageController, 'URL de la Imagen', Icons.image_outlined),
-                const SizedBox(height: 10),
-                if (_imageController.text.isNotEmpty)
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(8),
-                    child: Image.network(_imageController.text, height: 150, width: double.infinity, fit: BoxFit.cover, errorBuilder: (_,__,___) => const SizedBox()),
-                  )
+                 GestureDetector(
+                  onTap: _pickAndUploadImage,
+                  child: Container(
+                    height: 200,
+                    width: double.infinity,
+                    decoration: BoxDecoration(
+                      color: Colors.grey[300],
+                      borderRadius: BorderRadius.circular(12),
+                      image: _imageUrl != null
+                          ? DecorationImage(
+                              image: NetworkImage(_imageUrl!),
+                              fit: BoxFit.cover,
+                            )
+                          : null,
+                    ),
+                    child: _imageUrl == null
+                        ? Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              const Icon(Icons.add_a_photo, size: 50, color: Colors.grey),
+                              Text('Añadir Imagen', style: GoogleFonts.poppins(color: Colors.grey))
+                            ],
+                          )
+                        : Container(
+                            alignment: Alignment.bottomRight,
+                            padding: const EdgeInsets.all(8),
+                            child: const CircleAvatar(
+                              backgroundColor: Colors.white,
+                              child: Icon(Icons.edit, color: Colors.black),
+                            ),
+                          ),
+                  ),
+                ),
+                if (_isLoading)
+                  const Padding(
+                    padding: EdgeInsets.all(8.0),
+                    child: Center(child: CircularProgressIndicator()),
+                  ),
               ]),
 
               const SizedBox(height: 32),
@@ -276,11 +360,13 @@ class _PymeAddProductScreenState extends State<PymeAddProductScreen> {
     );
   }
 
-  Widget _buildTextField(TextEditingController controller, String label, IconData icon, {bool isNumber = false, int maxLines = 1, bool isRequired = true}) {
+  Widget _buildTextField(TextEditingController controller, String label, IconData icon, 
+    {bool isNumber = false, int maxLines = 1, bool isRequired = true, int? maxLength}) {
     return TextFormField(
       controller: controller,
       keyboardType: isNumber ? TextInputType.number : TextInputType.text,
       maxLines: maxLines,
+      maxLength: maxLength,
       style: GoogleFonts.poppins(),
       decoration: InputDecoration(
         labelText: label,
@@ -295,6 +381,10 @@ class _PymeAddProductScreenState extends State<PymeAddProductScreen> {
       validator: (value) {
         if (isRequired && (value == null || value.isEmpty)) {
           return 'Campo requerido';
+        }
+        if (isNumber && value != null && value.isNotEmpty) {
+           final number = double.tryParse(value);
+           // Removed explicit upper limit check as per request
         }
         return null;
       },
@@ -315,11 +405,11 @@ class _PymeAddProductScreenState extends State<PymeAddProductScreen> {
           ];
         } else {
           fields = [
-            _buildTextField(_dynamicControllers['talla']!, 'Talla / Medida', Icons.straighten),
+            _buildTextField(_dynamicControllers['talla']!, 'Talla / Medida', Icons.straighten, isRequired: false),
             const SizedBox(height: 16),
-            _buildTextField(_dynamicControllers['color']!, 'Color', Icons.palette_outlined),
+            _buildTextField(_dynamicControllers['color']!, 'Color', Icons.palette_outlined, isRequired: false),
             const SizedBox(height: 16),
-            _buildTextField(_dynamicControllers['material']!, 'Material', Icons.layers_outlined),
+            _buildTextField(_dynamicControllers['material']!, 'Material', Icons.layers_outlined, isRequired: false),
             if (_currentCategory == 'Reciclaje Textil') ...[
               const SizedBox(height: 16),
               _buildTextField(_dynamicControllers['pieza_unica']!, '¿Es Pieza Única?', Icons.star_border),

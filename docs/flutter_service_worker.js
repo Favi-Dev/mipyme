@@ -3,13 +3,13 @@ const MANIFEST = 'flutter-app-manifest';
 const TEMP = 'flutter-temp-cache';
 const CACHE_NAME = 'flutter-app-cache';
 
-const RESOURCES = {"assets/AssetManifest.bin": "63811f66bf042a5fa57175920c0e66cc",
-"assets/AssetManifest.bin.json": "6a3cf1e92653f058cd5e29e665c675c0",
-"assets/AssetManifest.json": "818a8989575bd9854d1c16d4db06616f",
+const RESOURCES = {"assets/AssetManifest.bin": "cf2400b92d98382d10ea1252a84e214b",
+"assets/AssetManifest.bin.json": "0f45fd8e09eff3c84fa4dc1cdee8533c",
+"assets/AssetManifest.json": "762f5b95a7346dd5e490ad7fb41721c5",
 "assets/assets/images/logo%2520el%2520roble%2520calzados.jpg": "8e77cd12e2fbb41780bacbe601356ff7",
 "assets/assets/images/logo%2520farmayuda.jpg": "0f05b5c58421ed66d19d18ebb5abe44d",
 "assets/assets/images/Logo%2520los%2520robles.jpg": "cf27f9b8b0aaa702174d0bccd618cb9e",
-"assets/assets/images/LOGOSOYPLUS.jpg": "0da81e7b99797d9d26aefa549aefc52e",
+"assets/assets/images/LOGOSOYPLUS.png": "13630dcbdd8b4921baab06e5952641ad",
 "assets/assets/images/logosSOYPLUS.jpg": "a957fd45e5bc5cefaf90f34a068ea7f5",
 "assets/assets/images/mapa.jpg": "5545a0dcc2de32d176d019031fba5da1",
 "assets/assets/images/metamorfosis.jpg": "51c52810dd70732093b7ec06be12246b",
@@ -37,14 +37,14 @@ const RESOURCES = {"assets/AssetManifest.bin": "63811f66bf042a5fa57175920c0e66cc
 "canvaskit/skwasm_heavy.wasm": "8034ad26ba2485dab2fd49bdd786837b",
 "favicon.png": "5dcef449791fa27946b3d35ad8803796",
 "flutter.js": "888483df48293866f9f41d3d9274a779",
-"flutter_bootstrap.js": "151a4fe1f3f2beff19a8357931489db2",
+"flutter_bootstrap.js": "727973ec5967be836621adc82166c903",
 "icons/Icon-192.png": "ac9a721a12bbc803b44f645561ecb1e1",
 "icons/Icon-512.png": "96e752610906ba2a93c65f8abe1645f1",
 "icons/Icon-maskable-192.png": "c457ef57daa1d16f64b27b786ec2ea3c",
 "icons/Icon-maskable-512.png": "301a7604d45b3e739efc881eb04896ea",
 "index.html": "b9c2ef52c1a578ca804c2f789ac1c007",
 "/": "b9c2ef52c1a578ca804c2f789ac1c007",
-"main.dart.js": "f760a349c1fc577ed9efa2645872285b",
+"main.dart.js": "6588fc2badaf38e780602054d8de6d76",
 "manifest.json": "8d5a4835d943044e3e18c67899c33ac6",
 "version.json": "222c4c7f362d8de7c5e95eb92edf900d"};
 // The application shell files that are downloaded before a service worker can

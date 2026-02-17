@@ -20,8 +20,8 @@ class PymeVitrinaSettingsScreen extends StatefulWidget {
 class _PymeVitrinaSettingsScreenState extends State<PymeVitrinaSettingsScreen> {
   late TextEditingController _nameController;
   late TextEditingController _descriptionController;
-  late TextEditingController _hoursController;
-  late TextEditingController _locationController;
+  // late TextEditingController _hoursController; 
+  // late TextEditingController _locationController;
   late TextEditingController _webController;
   late TextEditingController _instagramController;
   late TextEditingController _whatsappController;
@@ -35,13 +35,38 @@ class _PymeVitrinaSettingsScreenState extends State<PymeVitrinaSettingsScreen> {
   String? _profileImageUrl;
   String? _coverImageUrl;
 
+  String? _selectedLocation;
+  String? _selectedHours;
+
+  final List<String> _communes = [
+    'Cerrillos', 'Cerro Navia', 'Conchalí', 'El Bosque', 'Estación Central',
+    'Huechuraba', 'Independencia', 'La Cisterna', 'La Florida', 'La Granja',
+    'La Pintana', 'La Reina', 'Las Condes', 'Lo Barnechea', 'Lo Espejo',
+    'Lo Prado', 'Macul', 'Maipú', 'Ñuñoa', 'Pedro Aguirre Cerda', 'Peñalolén',
+    'Providencia', 'Pudahuel', 'Quilicura', 'Quinta Normal', 'Recoleta',
+    'Renca', 'San Joaquín', 'San Miguel', 'San Ramón', 'Santiago',
+    'Vitacura', 'Puente Alto', 'San Bernardo'
+  ];
+
+  final List<String> _scheduleOptions = [
+    'Lunes a Viernes 09:00 - 18:00',
+    'Lunes a Viernes 09:00 - 19:00',
+    'Lunes a Sábado 09:00 - 20:00',
+    'Lunes a Domingo 09:00 - 21:00',
+    'Martes a Domingo 10:00 - 20:00',
+    'Siempre Abierto (24/7)',
+    'Atención con Cita Previa',
+    'Horario Flexible'
+  ];
+
   @override
   void initState() {
     super.initState();
     _nameController = TextEditingController();
     _descriptionController = TextEditingController();
-    _hoursController = TextEditingController();
-    _locationController = TextEditingController();
+    // _hoursController and _locationController are removed/unused for text input now
+    // but kept if needed for custom input or migration. 
+    // Actually, let's remove them from init and use state string vars.
     _webController = TextEditingController();
     _instagramController = TextEditingController();
     _whatsappController = TextEditingController();
@@ -64,8 +89,19 @@ class _PymeVitrinaSettingsScreenState extends State<PymeVitrinaSettingsScreen> {
           setState(() {
             _nameController.text = userProfile.name;
             _descriptionController.text = userProfile.description ?? '';
-            _hoursController.text = userProfile.hours ?? '';
-            _locationController.text = userProfile.location ?? '';
+            // Handle new selectable fields
+            _selectedLocation = userProfile.location;
+            if (_selectedLocation != null && !_communes.contains(_selectedLocation)) {
+               // If existing value is not in list, maybe add it or ignore? 
+               // Adding it allows legacy values to be shown and changed.
+               _communes.add(_selectedLocation!);
+            }
+            
+            _selectedHours = userProfile.hours;
+            if (_selectedHours != null && !_scheduleOptions.contains(_selectedHours)) {
+               _scheduleOptions.add(_selectedHours!);
+            }
+            
             _webController.text = userProfile.webUrl ?? '';
             _instagramController.text = userProfile.instagramHandle ?? '';
             _whatsappController.text = userProfile.whatsappNumber ?? '';
@@ -157,8 +193,8 @@ class _PymeVitrinaSettingsScreenState extends State<PymeVitrinaSettingsScreen> {
   void dispose() {
     _nameController.dispose();
     _descriptionController.dispose();
-    _hoursController.dispose();
-    _locationController.dispose();
+    // _hoursController.dispose();
+    // _locationController.dispose();
     _webController.dispose();
     _instagramController.dispose();
     _whatsappController.dispose();
@@ -174,8 +210,8 @@ class _PymeVitrinaSettingsScreenState extends State<PymeVitrinaSettingsScreen> {
       await _pymeService.updatePymeProfile(_targetPymeId!, {
         'name': _nameController.text,
         'description': _descriptionController.text,
-        'hours': _hoursController.text,
-        'location': _locationController.text,
+        'hours': _selectedHours,
+        'location': _selectedLocation,
         'webUrl': _webController.text,
         'instagramHandle': _instagramController.text,
         'whatsappNumber': _whatsappController.text,
@@ -341,9 +377,31 @@ class _PymeVitrinaSettingsScreenState extends State<PymeVitrinaSettingsScreen> {
             _buildTextField('Descripción', _descriptionController, maxLines: 4),
             const SizedBox(height: 24),
             _buildSectionHeader('Detalles Operativos'),
-            _buildTextField('Horarios', _hoursController, maxLines: 2),
+            DropdownButtonFormField<String>(
+              value: _selectedHours,
+              decoration: InputDecoration(
+                labelText: 'Horario de Atención',
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                prefixIcon: const Icon(Icons.access_time, color: Color(0xFF6F8F5E)),
+                filled: true,
+                fillColor: const Color(0xFFFFFFFF),
+              ),
+              items: _scheduleOptions.map((e) => DropdownMenuItem(value: e, child: Text(e, style: const TextStyle(fontSize: 14), overflow: TextOverflow.ellipsis))).toList(),
+              onChanged: (val) => setState(() => _selectedHours = val),
+            ),
             const SizedBox(height: 16),
-            _buildTextField('Ubicación', _locationController),
+            DropdownButtonFormField<String>(
+              value: _selectedLocation,
+              decoration: InputDecoration(
+                labelText: 'Ubicación / Comuna',
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                prefixIcon: const Icon(Icons.location_on, color: Color(0xFF6F8F5E)),
+                filled: true,
+                fillColor: const Color(0xFFFFFFFF),
+              ),
+              items: _communes.map((e) => DropdownMenuItem(value: e, child: Text(e, style: const TextStyle(fontSize: 14)))).toList(),
+              onChanged: (val) => setState(() => _selectedLocation = val),
+            ),
             const SizedBox(height: 24),
             _buildSectionHeader('Contacto'),
             _buildTextField('Sitio Web', _webController,

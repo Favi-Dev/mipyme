@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:image_picker/image_picker.dart';
-import 'dart:io';
+import 'package:flutter/foundation.dart';
+import '../services/storage_service.dart';
 import '../services/client_service.dart';
 import '../services/pyme_service.dart';
 import '../models/vitrina_data.dart';
@@ -27,6 +28,7 @@ class ClientProfileScreen extends StatefulWidget {
 
 class _ClientProfileScreenState extends State<ClientProfileScreen> {
   final ClientService _clientService = ClientService();
+  final StorageService _storageService = StorageService();
   bool _isUploading = false;
   
   Future<void> _pickAndUploadImage() async {
@@ -44,18 +46,25 @@ class _ClientProfileScreenState extends State<ClientProfileScreen> {
         _isUploading = true;
       });
 
-      final File imageFile = File(image.path);
-      await _clientService.updateProfileImage(imageFile);
-      
-      // Force reload auth user to get new photoURL if needed, 
-      // though the stream below should catch it.
-      await FirebaseAuth.instance.currentUser?.reload();
-      setState(() {});
+      final userId = FirebaseAuth.instance.currentUser?.uid;
+      if (userId == null) return;
 
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Foto de perfil actualizada')),
-        );
+      final downloadUrl = await _storageService.uploadProfileImage(image, userId);
+      
+      if (downloadUrl != null) {
+        await _clientService.updateProfilePhotoUrl(downloadUrl);
+        
+        // Force reload auth user to get new photoURL if needed
+        await FirebaseAuth.instance.currentUser?.reload();
+        setState(() {});
+
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Foto de perfil actualizada')),
+          );
+        }
+      } else {
+        throw 'Error al subir la imagen';
       }
     } catch (e) {
       if (mounted) {

@@ -146,13 +146,31 @@ class _PymeProfileScreenState extends State<PymeProfileScreen> {
                 },
               ),
               _buildOptionTile(
-                icon: Icons.credit_card,
-                title: 'Métodos de Cobro',
+                icon: Icons.account_balance, // Changed icon to represent bank
+                title: 'Datos Bancarios', // Changed title
                 onTap: () {
-                   Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (context) => const ClientPaymentMethodsScreen(title: 'Métodos de Cobro')),
-                  );
+                   showDialog(
+                     context: context,
+                     builder: (context) => AlertDialog(
+                       title: Text('Datos Bancarios Registrados', style: GoogleFonts.poppins(fontWeight: FontWeight.bold)),
+                       content: Column(
+                         mainAxisSize: MainAxisSize.min,
+                         crossAxisAlignment: CrossAxisAlignment.start,
+                         children: [
+                           _buildBankDetail('Banco:', userData.bankName),
+                           _buildBankDetail('Tipo de Cuenta:', userData.bankAccountType),
+                           _buildBankDetail('N° Cuenta:', userData.bankAccountNumber),
+                           _buildBankDetail('RUT Titular:', userData.bankAccountHolderRut),
+                         ],
+                       ),
+                       actions: [
+                         TextButton(
+                           onPressed: () => Navigator.pop(context),
+                           child: const Text('Cerrar'),
+                         ),
+                       ],
+                     ),
+                   );
                 },
               ),
               _buildOptionTile(
@@ -301,7 +319,20 @@ class _PymeProfileScreenState extends State<PymeProfileScreen> {
       ),
     );
   }
-
+  Widget _buildBankDetail(String label, String? value) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8.0),
+      child: RichText(
+        text: TextSpan(
+          style: GoogleFonts.poppins(color: Colors.black87),
+          children: [
+            TextSpan(text: '$label ', style: const TextStyle(fontWeight: FontWeight.bold)),
+            TextSpan(text: value ?? 'No registrado'),
+          ],
+        ),
+      ),
+    );
+  }
   Widget _buildOptionTile({
     required IconData icon,
     required String title,

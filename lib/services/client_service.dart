@@ -24,27 +24,30 @@ class ClientService {
     await FirebaseAuth.instance.currentUser?.updateDisplayName(name);
   }
 
-  Future<void> updateProfileImage(File imageFile) async {
+  Future<void> updateProfilePhotoUrl(String photoUrl) async {
     if (currentUserId == null) return;
     
     try {
-      final storageRef = FirebaseStorage.instance
-          .ref()
-          .child('user_profiles')
-          .child(currentUserId!)
-          .child('profile.jpg');
-          
-      await storageRef.putFile(imageFile);
-      final downloadUrl = await storageRef.getDownloadURL();
-      
       await _firestore.collection('users').doc(currentUserId).update({
-        'logoUrl': downloadUrl, // Reusing logoUrl field as per UserProfile model usage
+        'logoUrl': photoUrl, 
       });
       
       // Also update Auth profile for consistency
-      await _auth.currentUser?.updatePhotoURL(downloadUrl);
+      await _auth.currentUser?.updatePhotoURL(photoUrl);
     } catch (e) {
-      print('Error uploading profile image: $e');
+      print('Error updating profile photo URL: $e');
+      rethrow;
+    }
+  }
+
+  Future<void> updateCoverPhotoUrl(String photoUrl) async {
+    if (currentUserId == null) return;
+    try {
+      await _firestore.collection('users').doc(currentUserId).update({
+        'coverImageUrl': photoUrl,
+      });
+    } catch (e) {
+      print('Error updating cover photo URL: $e');
       rethrow;
     }
   }

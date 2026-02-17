@@ -19,7 +19,7 @@ class RoleSelectionScreen extends StatelessWidget {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-              Image.asset('assets/images/LOGOSOYPLUS.jpg', height: 200),
+              Image.asset('assets/images/LOGOSOYPLUS.png', height: 200),
               const SizedBox(height: 24),
               Text(
                 'Selecciona tu perfil para ingresar',

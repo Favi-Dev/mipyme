@@ -84,7 +84,17 @@ class _PymeOrdersScreenState extends State<PymeOrdersScreen> {
 
   Widget _buildOrderCard(Map<String, dynamic> order) {
     final status = order['status'] ?? 'pending';
-    final date = (order['createdAt'] as Timestamp?)?.toDate();
+    // Fix: Handle both Timestamp and DateTime (Service converts it, but just in case)
+    DateTime?date;
+    if (order['createdAt'] is Timestamp) {
+      date = (order['createdAt'] as Timestamp).toDate();
+    } else if (order['createdAt'] is DateTime) {
+      date = order['createdAt'] as DateTime;
+    } else if (order['createdAt'] is String) {
+       // Just in case serialized
+       date = DateTime.tryParse(order['createdAt']);
+    }
+
     final total = order['total'] ?? 0;
     final items = (order['items'] as List<dynamic>?) ?? [];
 

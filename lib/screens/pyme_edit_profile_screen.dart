@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:geocoding/geocoding.dart';
+import 'package:image_picker/image_picker.dart';
 import '../services/pyme_service.dart';
+import '../services/storage_service.dart';
 import '../models/user_profile.dart';
 
 class PymeEditProfileScreen extends StatefulWidget {
@@ -24,6 +26,9 @@ class _PymeEditProfileScreenState extends State<PymeEditProfileScreen> {
   late TextEditingController _donationGoalController;
   bool _isLoading = false;
   final PymeService _pymeService = PymeService();
+  final StorageService _storageService = StorageService();
+  String? _logoUrl;
+  String? _coverImageUrl;
 
   @override
   void initState() {
@@ -34,6 +39,37 @@ class _PymeEditProfileScreenState extends State<PymeEditProfileScreen> {
     _phoneController = TextEditingController(text: widget.currentData.whatsappNumber ?? '');
     _websiteController = TextEditingController(text: widget.currentData.webUrl ?? '');
     _donationGoalController = TextEditingController(text: (widget.currentData.donationGoal ?? 100000).toInt().toString());
+    _logoUrl = widget.currentData.logoUrl;
+    _coverImageUrl = widget.currentData.coverImageUrl;
+  }
+
+  Future<void> _pickAndUploadImage(bool isCover) async {
+    final ImagePicker picker = ImagePicker();
+    final XFile? image = await picker.pickImage(source: ImageSource.gallery, maxWidth: 1200, imageQuality: 80);
+
+    if (image == null) return;
+
+    setState(() => _isLoading = true);
+
+    try {
+      final userId = FirebaseAuth.instance.currentUser?.uid;
+      if (userId == null) return;
+
+      String? url;
+      if (isCover) {
+        url = await _storageService.uploadCoverImage(image, userId);
+        if (url != null) setState(() => _coverImageUrl = url);
+      } else {
+        url = await _storageService.uploadProfileImage(image, userId);
+        if (url != null) setState(() => _logoUrl = url);
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error al subir imagen: $e')));
+      }
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
   }
 
   @override
@@ -62,6 +98,8 @@ class _PymeEditProfileScreenState extends State<PymeEditProfileScreen> {
         'location': _addressController.text,
         'whatsappNumber': _phoneController.text,
         'webUrl': _websiteController.text,
+        'logoUrl': _logoUrl,
+        'coverImageUrl': _coverImageUrl,
       };
 
       if (widget.currentData.role == UserRole.foundation) {
@@ -119,6 +157,8 @@ class _PymeEditProfileScreenState extends State<PymeEditProfileScreen> {
           key: _formKey,
           child: Column(
             children: [
+              _buildImagesSection(),
+              const SizedBox(height: 24),
               _buildTextField('Nombre de la Empresa', _companyNameController, Icons.business),
               const SizedBox(height: 16),
               _buildTextField('Descripción', _descriptionController, Icons.description, maxLines: 3),
@@ -154,6 +194,62 @@ class _PymeEditProfileScreenState extends State<PymeEditProfileScreen> {
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildImagesSection() {
+    return Column(
+      children: [
+        Stack(
+          alignment: Alignment.center,
+          clipBehavior: Clip.none,
+          children: [
+            // Cover Image
+            GestureDetector(
+              onTap: () => _pickAndUploadImage(true),
+              child: Container(
+                height: 150,
+                width: double.infinity,
+                decoration: BoxDecoration(
+                  color: Colors.grey[300],
+                  borderRadius: BorderRadius.circular(12),
+                  image: _coverImageUrl != null
+                      ? DecorationImage(
+                          image: NetworkImage(_coverImageUrl!),
+                          fit: BoxFit.cover,
+                        )
+                      : null,
+                ),
+                child: _coverImageUrl == null
+                    ? const Icon(Icons.camera_alt, color: Colors.grey, size: 40)
+                    : null,
+              ),
+            ),
+            // Profile Image (Logo)
+            Positioned(
+              bottom: -40,
+              child: GestureDetector(
+                onTap: () => _pickAndUploadImage(false),
+                child: CircleAvatar(
+                  radius: 50,
+                  backgroundColor: Colors.white,
+                  child: CircleAvatar(
+                    radius: 46,
+                    backgroundColor: Colors.grey[200],
+                    backgroundImage: _logoUrl != null ? NetworkImage(_logoUrl!) : null,
+                    child: _logoUrl == null
+                        ? const Icon(Icons.person, size: 40, color: Colors.grey)
+                        : null,
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 40),
+        Text('Toca las imágenes para editar', 
+             style: GoogleFonts.poppins(fontSize: 12, color: Colors.grey[600])),
+      ],
     );
   }
 
