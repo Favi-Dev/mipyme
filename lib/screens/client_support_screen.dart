@@ -116,7 +116,7 @@ class _ClientSupportScreenState extends State<ClientSupportScreen> {
                       ),
                       const SizedBox(height: 16),
                       DropdownButtonFormField<String>(
-                        value: _selectedIssueType,
+                        initialValue: _selectedIssueType,
                         decoration: InputDecoration(
                           labelText: 'Tipo de Problema',
                           border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),

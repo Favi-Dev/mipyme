@@ -2,8 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../services/auth_service.dart';
-import '../services/client_service.dart';
-import '../services/seeding_service.dart';
 import '../client_app_shell.dart';
 import '../pyme_app_shell.dart';
 import '../admin_app_shell.dart';

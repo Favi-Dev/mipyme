@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import '../services/pyme_service.dart';
 
 class PymeOffersManagementScreen extends StatefulWidget {
@@ -78,7 +77,7 @@ class _PymeOffersManagementScreenState
                         style: GoogleFonts.poppins(fontSize: 12, color: const Color(0xFF2F3F2A).withOpacity(0.6)),
                       ),
                       value: isSpecial,
-                      activeColor: const Color(0xFF6F8F5E),
+                      activeThumbColor: const Color(0xFF6F8F5E),
                       onChanged: (val) => setStateDialog(() => isSpecial = val),
                     ),
                   ),

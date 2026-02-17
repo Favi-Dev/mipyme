@@ -148,7 +148,7 @@ class _AdminUserDetailScreenState extends State<AdminUserDetailScreen> {
                   Switch(
                     value: _isSuspended,
                     onChanged: _toggleSuspension,
-                    activeColor: const Color(0xFF6F8F5E), // Green when active? Or error color? Screenshot has grey when off.
+                    activeThumbColor: const Color(0xFF6F8F5E), // Green when active? Or error color? Screenshot has grey when off.
                     // Let's use standard colors, user can refine.
                   ),
                 ],

@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import '../models/vitrina_data.dart';
 import '../models/user_profile.dart';
 import '../models/product.dart';
 import '../services/product_service.dart';
@@ -1245,7 +1244,7 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(
-        border: Border.all(color: tagColor!.withOpacity(0.3)),
+        border: Border.all(color: tagColor.withOpacity(0.3)),
         borderRadius: BorderRadius.circular(20),
         color: tagColor.withOpacity(0.05),
       ),

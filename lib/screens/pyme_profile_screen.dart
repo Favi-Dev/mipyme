@@ -6,7 +6,6 @@ import '../models/user_profile.dart';
 import 'pyme_vitrina_settings_screen.dart';
 import 'pyme_support_screen.dart';
 import 'login_screen.dart';
-import 'client_payment_methods_screen.dart';
 
 class PymeProfileScreen extends StatefulWidget {
   const PymeProfileScreen({super.key});
@@ -111,7 +110,7 @@ class _PymeProfileScreenState extends State<PymeProfileScreen> {
         foregroundColor: const Color(0xFF2F3F2A),
       ),
       body: FutureBuilder<UserProfile?>(
-        future: _pymeService.getPymeById(_currentUser!.uid),
+        future: _pymeService.getPymeById(_currentUser.uid),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());
@@ -192,7 +191,7 @@ class _PymeProfileScreenState extends State<PymeProfileScreen> {
                     ),
                   ),
                   value: true, 
-                  activeColor: const Color(0xFF6F8F5E),
+                  activeThumbColor: const Color(0xFF6F8F5E),
                   onChanged: (val) {},
                   secondary: Container(
                     padding: const EdgeInsets.all(8),

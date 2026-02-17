@@ -444,7 +444,7 @@ class _PymeAddProductScreenState extends State<PymeAddProductScreen> {
               title: Text('¿Es un Operativo / Evento Único?', style: GoogleFonts.poppins()),
               subtitle: Text('Activa esto si es una fecha específica', style: GoogleFonts.poppins(fontSize: 12)),
               value: _dynamicControllers['is_event']?.text == 'true',
-              activeColor: const Color(0xFF6F8F5E),
+              activeThumbColor: const Color(0xFF6F8F5E),
               onChanged: (val) {
                 setState(() {
                   _dynamicControllers['is_event']?.text = val.toString();
@@ -500,7 +500,7 @@ class _PymeAddProductScreenState extends State<PymeAddProductScreen> {
           SwitchListTile(
             title: Text('¿Es Personalizado?', style: GoogleFonts.poppins()),
             value: _dynamicControllers['personalizado']?.text == 'Sí',
-            activeColor: const Color(0xFF6F8F5E),
+            activeThumbColor: const Color(0xFF6F8F5E),
             onChanged: (val) {
               setState(() {
                 _dynamicControllers['personalizado']?.text = val ? 'Sí' : 'No';
@@ -520,7 +520,7 @@ class _PymeAddProductScreenState extends State<PymeAddProductScreen> {
           SwitchListTile(
             title: Text('¿Incluye Certificado?', style: GoogleFonts.poppins()),
             value: _dynamicControllers['certificado']?.text == 'Sí',
-            activeColor: const Color(0xFF6F8F5E),
+            activeThumbColor: const Color(0xFF6F8F5E),
             onChanged: (val) {
               setState(() {
                 _dynamicControllers['certificado']?.text = val ? 'Sí' : 'No';

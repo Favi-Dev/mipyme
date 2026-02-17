@@ -1,7 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:firebase_storage/firebase_storage.dart';
-import 'dart:io';
 import '../models/order_model.dart';
 import 'pyme_service.dart';
 
@@ -113,7 +111,7 @@ class ClientService {
     }
     
     // Add to subcollection
-    final docRef = await _firestore
+    await _firestore
         .collection('users')
         .doc(currentUserId)
         .collection('addresses')

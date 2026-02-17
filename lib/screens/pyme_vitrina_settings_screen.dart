@@ -378,7 +378,7 @@ class _PymeVitrinaSettingsScreenState extends State<PymeVitrinaSettingsScreen> {
             const SizedBox(height: 24),
             _buildSectionHeader('Detalles Operativos'),
             DropdownButtonFormField<String>(
-              value: _selectedHours,
+              initialValue: _selectedHours,
               decoration: InputDecoration(
                 labelText: 'Horario de Atención',
                 border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
@@ -391,7 +391,7 @@ class _PymeVitrinaSettingsScreenState extends State<PymeVitrinaSettingsScreen> {
             ),
             const SizedBox(height: 16),
             DropdownButtonFormField<String>(
-              value: _selectedLocation,
+              initialValue: _selectedLocation,
               decoration: InputDecoration(
                 labelText: 'Ubicación / Comuna',
                 border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),

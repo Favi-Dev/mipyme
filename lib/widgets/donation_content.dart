@@ -330,8 +330,8 @@ class _DonationContentState extends State<DonationContent> {
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(
                             content: Text(isMonthly 
-                              ? '¡Gracias por suscribirte con \$${amount}/mes! (Simulación)' 
-                              : '¡Gracias por tu donación de \$${amount}! (Simulación)'),
+                              ? '¡Gracias por suscribirte con \$$amount/mes! (Simulación)' 
+                              : '¡Gracias por tu donación de \$$amount! (Simulación)'),
                             backgroundColor: const Color(0xFF6F8F5E),
                           ),
                         );

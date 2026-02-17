@@ -174,7 +174,7 @@ class _ClientPymeDetailScreenState extends State<ClientPymeDetailScreen> {
                   const SizedBox(width: 8),
                   if (_userId != null)
                     StreamBuilder<bool>(
-                      stream: _pymeService.isFollowing(_userId!, widget.pymeId),
+                      stream: _pymeService.isFollowing(_userId, widget.pymeId),
                       builder: (context, snapshot) {
                         final isFollowing = snapshot.data ?? false;
                         return IconButton(
@@ -183,7 +183,7 @@ class _ClientPymeDetailScreenState extends State<ClientPymeDetailScreen> {
                             color: isFollowing ? theme.colorScheme.primary : const Color(0xFFF4F1EA),
                           ),
                           onPressed: () async {
-                            await _pymeService.toggleFollow(_userId!, widget.pymeId);
+                            await _pymeService.toggleFollow(_userId, widget.pymeId);
                             if (mounted) {
                               ScaffoldMessenger.of(context).showSnackBar(
                                 SnackBar(

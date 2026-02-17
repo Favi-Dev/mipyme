@@ -278,7 +278,7 @@ class _DonationScreenState extends State<DonationScreen> {
                       ),
                       const SizedBox(height: 8),
                       DropdownButtonFormField<UserProfile>(
-                        value: _selectedFoundation, // Ensure this object is equal to one in list (Equatable or same refs)
+                        initialValue: _selectedFoundation, // Ensure this object is equal to one in list (Equatable or same refs)
                         // If objects are recreated in stream, equality might fail unless UserProfile overrides ==
                         // We rely on 'id' ideally, but Dropdown uses object identity by default if 'value' not in 'items'.
                         // Since 'foundations' come from stream, they are new objects. 

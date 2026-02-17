@@ -144,8 +144,9 @@ class QrScannerOverlayShape extends ShapeBorder {
     final width = rect.width;
     final height = rect.height;
     final borderOffset = borderWidth / 2;
-    final _cutOutSize = cutOutSize;
-    final _cutOutBottomOffset = cutOutBottomOffset;
+    // Removed local variable declarations that were causing errors
+
+    /* Lines 147-148 omitted */
 
     final backgroundPaint = Paint()
       ..color = overlayColor
@@ -156,15 +157,11 @@ class QrScannerOverlayShape extends ShapeBorder {
       ..style = PaintingStyle.stroke
       ..strokeWidth = borderWidth;
 
-    final boxPaint = Paint()
-      ..color = borderColor
-      ..style = PaintingStyle.fill;
-
     final cutOutRect = Rect.fromLTWH(
-      rect.left + width / 2 - _cutOutSize / 2 + borderOffset,
-      rect.top + height / 2 - _cutOutSize / 2 + borderOffset + _cutOutBottomOffset,
-      _cutOutSize - borderOffset * 2,
-      _cutOutSize - borderOffset * 2,
+      rect.left + width / 2 - cutOutSize / 2 + borderOffset,
+      rect.top + height / 2 - cutOutSize / 2 + borderOffset + cutOutBottomOffset,
+      cutOutSize - borderOffset * 2,
+      cutOutSize - borderOffset * 2,
     );
 
     canvas

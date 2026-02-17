@@ -340,7 +340,7 @@ class _AddressEditorDialogState extends State<AddressEditorDialog> {
                 ),
                 const SizedBox(height: 12),
                 DropdownButtonFormField<String>(
-                  value: _selectedRegion,
+                  initialValue: _selectedRegion,
                   decoration: InputDecoration(
                     labelText: 'Región',
                     border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
@@ -359,7 +359,7 @@ class _AddressEditorDialogState extends State<AddressEditorDialog> {
                 ),
                 const SizedBox(height: 12),
                 DropdownButtonFormField<String>(
-                  value: _selectedComuna,
+                  initialValue: _selectedComuna,
                   decoration: InputDecoration(
                     labelText: 'Comuna',
                     border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),

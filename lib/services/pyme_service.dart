@@ -62,8 +62,6 @@ class PymeService {
       return snapshot.docs.map((doc) {
         final data = doc.data();
         data['id'] = doc.id;
-        // Extract Pyme ID from path: users/{pymeId}/offers/{offerId}
-        final parentPath = doc.reference.parent.path; // users/xyz/offers
         final pymeId = doc.reference.parent.parent?.id; 
         data['pymeId'] = pymeId;
         return data;

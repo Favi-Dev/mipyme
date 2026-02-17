@@ -2,8 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:geocoding/geocoding.dart';
 import 'login_screen.dart';
-import 'client_subscription_screen.dart';
-import '../client_app_shell.dart';
 import '../services/auth_service.dart';
 import '../services/product_service.dart';
 import '../models/user_profile.dart';
@@ -24,15 +22,15 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final _rutController = TextEditingController(); // RUT Empresa / Fundación
   final _repRutController = TextEditingController(); // RUT Representante Legal
   final _giroController = TextEditingController(); // Giro (PYME)
-  final _contactRoleController = TextEditingController(); // Cargo
+  // final _contactRoleController = TextEditingController(); // Cargo (unused)
   final _phoneController = TextEditingController(); // Teléfono
   final _addressController = TextEditingController(); // Domicilio Tributario / Dirección Legal
   final _websiteController = TextEditingController(); // Sitio Web
   final _legalStatusController = TextEditingController(); // N° Personalidad Jurídica (Fundación)
   
   // Bank Account Controllers
-  final _bankNameController = TextEditingController();
-  final _bankAccountTypeController = TextEditingController();
+  // final _bankNameController = TextEditingController();
+  // final _bankAccountTypeController = TextEditingController();
   final _bankAccountNumberController = TextEditingController();
   final _bankAccountHolderRutController = TextEditingController();
 
@@ -274,7 +272,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
+    // final theme = Theme.of(context);
     return Scaffold(
       backgroundColor: const Color(0xFFF4F1EA),
       appBar: AppBar(
@@ -429,7 +427,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 ),
                 const SizedBox(height: 16),
                 DropdownButtonFormField<String>(
-                  value: _selectedCategory,
+                  initialValue: _selectedCategory,
                   style: const TextStyle(color: Color(0xFF2F3F2A)),
                   decoration: _inputDecoration('Categoría *', Icons.category),
                   dropdownColor: const Color(0xFFFFFFFF),
@@ -512,7 +510,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     ? 'Datos Bancarios (Para recibir donaciones)' 
                     : 'Datos Bancarios (Para recibir pagos)'),
                 DropdownButtonFormField<String>(
-                  value: _selectedBank,
+                  initialValue: _selectedBank,
                   decoration: _inputDecoration('Banco *', Icons.account_balance),
                   items: _banks.map((String bank) {
                     return DropdownMenuItem<String>(
@@ -528,7 +526,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 ),
                 const SizedBox(height: 16),
                 DropdownButtonFormField<String>(
-                  value: _selectedAccountType,
+                  initialValue: _selectedAccountType,
                   decoration: _inputDecoration('Tipo de Cuenta *', Icons.credit_card),
                   items: _accountTypes.map((String type) {
                     return DropdownMenuItem<String>(

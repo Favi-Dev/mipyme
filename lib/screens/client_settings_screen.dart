@@ -220,8 +220,8 @@ class _ClientSettingsScreenState extends State<ClientSettingsScreen> {
         subtitle: Text(subtitle, style: GoogleFonts.poppins(fontSize: 12, color: const Color(0xFF6E6E6A))),
         value: value,
         onChanged: onChanged,
-        activeColor: const Color(0xFF2F3F2A),
-        trackColor: MaterialStateProperty.resolveWith((states) => states.contains(MaterialState.selected) ? const Color(0xFF6F8F5E) : null),
+        activeThumbColor: const Color(0xFF2F3F2A),
+        trackColor: WidgetStateProperty.resolveWith((states) => states.contains(WidgetState.selected) ? const Color(0xFF6F8F5E) : null),
       ),
     );
   }
