@@ -22,10 +22,19 @@ class ClientHomeScreen extends StatefulWidget {
 
 class _ClientHomeScreenState extends State<ClientHomeScreen> {
   final TextEditingController _searchController = TextEditingController();
+  late Stream<List<UserProfile>> _pymeStream;
   String _searchQuery = '';
   // final Set<String> _followedPymes = {};
   final Set<String> _selectedTags = {};
   String? _selectedCategory;
+
+  @override
+  void initState() {
+    super.initState();
+    _pymeStream = widget.showFoundationsOnly 
+        ? PymeService().getFoundations()
+        : PymeService().getPymes();
+  }
 
   void _showNotifications() {
     final theme = Theme.of(context);
@@ -287,9 +296,7 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
           final followedIds = (followedSnapshot.data ?? []).toSet();
 
           return StreamBuilder<List<UserProfile>>(
-            stream: widget.showFoundationsOnly 
-                ? PymeService().getFoundations() 
-                : PymeService().getPymes(),
+            stream: _pymeStream,
             builder: (context, snapshot) {
               if (snapshot.hasError) {
                 return Center(child: Text('Error: ${snapshot.error}'));
@@ -730,12 +737,37 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
 
   Widget _buildPymesList(List<UserProfile> pymes) {
     if (pymes.isEmpty) {
-      return const Center(
-        child: Padding( 
-          padding: EdgeInsets.all(20.0),
-          child: Text(
-            'No se encontraron resultados',
-            style: TextStyle(color: Color(0xFF2F3F2A)),
+      final theme = Theme.of(context);
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 40, horizontal: 20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                widget.showFoundationsOnly ? Icons.volunteer_activism : Icons.storefront_outlined,
+                size: 64,
+                color: theme.colorScheme.outline.withOpacity(0.5),
+              ),
+              const SizedBox(height: 16),
+              Text(
+                'No se encontraron resultados',
+                style: theme.textTheme.titleMedium?.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                _searchQuery.isNotEmpty 
+                  ? 'Intenta con otro término de búsqueda'
+                  : 'No hay ${widget.showFoundationsOnly ? 'fundaciones' : 'pymes'} disponibles aún.',
+                textAlign: TextAlign.center,
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
+              ),
+            ],
           ),
         ),
       );

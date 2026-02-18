@@ -5,6 +5,7 @@ import 'screens/client_home_screen.dart';
 import 'screens/client_map_screen.dart';
 import 'screens/client_cart_screen.dart';
 import 'screens/client_qr_screen.dart';
+import 'screens/client_history_screen.dart';
 import 'screens/client_profile_screen.dart';
 
 class ClientAppShell extends StatefulWidget {

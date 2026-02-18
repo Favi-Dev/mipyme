@@ -27,11 +27,26 @@ class ClientHistoryScreen extends StatelessWidget {
 
           if (orders.isEmpty) {
             return Center(
-              child: Text(
-                'No tienes compras recientes.',
-                style: theme.textTheme.bodyLarge?.copyWith(
-                  color: theme.colorScheme.onSurfaceVariant,
-                ),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.receipt_long_outlined, size: 80, color: theme.colorScheme.primary.withValues(alpha: 0.3)),
+                  const SizedBox(height: 16),
+                  Text(
+                    'No tienes compras recientes.',
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      color: theme.colorScheme.onSurfaceVariant,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    '¡Explora las vitrinas y apoya a las Pymes!',
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      color: theme.colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                ],
               ),
             );
           }
