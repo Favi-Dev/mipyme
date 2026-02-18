@@ -7,6 +7,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import '../services/pyme_service.dart';
 import '../services/auth_service.dart';
+import '../services/product_service.dart';
 import 'login_screen.dart';
 
 class PymeVitrinaSettingsScreen extends StatefulWidget {
@@ -28,6 +29,7 @@ class _PymeVitrinaSettingsScreenState extends State<PymeVitrinaSettingsScreen> {
   late TextEditingController _whatsappController;
 
   final PymeService _pymeService = PymeService();
+  final ProductService _productService = ProductService();
   final ImagePicker _picker = ImagePicker();
   
   bool _isLoading = true;
@@ -38,6 +40,8 @@ class _PymeVitrinaSettingsScreenState extends State<PymeVitrinaSettingsScreen> {
 
   String? _selectedLocation;
   String? _selectedHours;
+  String? _selectedCategory;
+  String? _originalCategory;
 
   final List<String> _communes = [
     'Cerrillos', 'Cerro Navia', 'Conchalí', 'El Bosque', 'Estación Central',
@@ -108,6 +112,8 @@ class _PymeVitrinaSettingsScreenState extends State<PymeVitrinaSettingsScreen> {
             _whatsappController.text = userProfile.whatsappNumber ?? '';
             _profileImageUrl = userProfile.logoUrl;
             _coverImageUrl = userProfile.coverImageUrl;
+            _selectedCategory = userProfile.category;
+            _originalCategory = userProfile.category;
           });
         }
       }
@@ -207,6 +213,52 @@ class _PymeVitrinaSettingsScreenState extends State<PymeVitrinaSettingsScreen> {
 
     setState(() => _isLoading = true);
 
+    // Check for category change
+    if (_selectedCategory != _originalCategory && _originalCategory != null) {
+      bool confirm = await showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: const Text('¿Cambiar Categoría?'),
+          content: const Text(
+            'Al cambiar la categoría de tu negocio, se eliminarán permanentemente todos tus productos y ofertas actuales, ya que pueden no ser compatibles con la nueva categoría.\n\n¿Deseas continuar?',
+            style: TextStyle(color: Colors.red),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: const Text('Cancelar'),
+            ),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+              onPressed: () => Navigator.pop(context, true),
+              child: const Text('Sí, cambiar y eliminar datos'),
+            ),
+          ],
+        ),
+      ) ?? false;
+
+      if (!confirm) {
+        if(mounted) setState(() => _isLoading = false);
+        return;
+      }
+      
+      try {
+         await _productService.deleteAllProductsByPyme(_targetPymeId!);
+         await _pymeService.deleteAllOffersByPyme(_targetPymeId!);
+      } catch (e) {
+         if (mounted) {
+           ScaffoldMessenger.of(context).showSnackBar(
+             SnackBar(content: Text('Error al eliminar productos: $e')),
+           );
+         }
+         // Continue even if delete fails? Or abort? 
+         // Probably continue to at least update info, or abort to avoid inconsistency.
+         // Let's abort for safety.
+         if (mounted) setState(() => _isLoading = false);
+         return;
+      }
+    }
+
     try {
       await _pymeService.updatePymeProfile(_targetPymeId!, {
         'name': _nameController.text,
@@ -216,6 +268,7 @@ class _PymeVitrinaSettingsScreenState extends State<PymeVitrinaSettingsScreen> {
         'webUrl': _webController.text,
         'instagramHandle': _instagramController.text,
         'whatsappNumber': _whatsappController.text,
+        'category': _selectedCategory,
       });
 
       if (mounted) {
@@ -373,6 +426,19 @@ class _PymeVitrinaSettingsScreenState extends State<PymeVitrinaSettingsScreen> {
               ),
 
             _buildSectionHeader('Información General'),
+            DropdownButtonFormField<String>(
+              value: _selectedCategory,
+              decoration: InputDecoration(
+                labelText: 'Categoría',
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                prefixIcon: const Icon(Icons.category, color: Color(0xFF6F8F5E)),
+                filled: true,
+                fillColor: const Color(0xFFFFFFFF),
+              ),
+              items: ProductService.categories.map((e) => DropdownMenuItem(value: e, child: Text(e, style: const TextStyle(fontSize: 14), overflow: TextOverflow.ellipsis))).toList(),
+              onChanged: (val) => setState(() => _selectedCategory = val),
+            ),
+            const SizedBox(height: 16),
             _buildTextField('Nombre del Negocio', _nameController),
             const SizedBox(height: 16),
             _buildTextField('Descripción', _descriptionController, maxLines: 4),
