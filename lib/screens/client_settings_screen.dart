@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../services/client_service.dart';
+import '../services/auth_service.dart';
 import 'login_screen.dart';
 
 class ClientSettingsScreen extends StatefulWidget {
@@ -113,8 +114,6 @@ class _ClientSettingsScreenState extends State<ClientSettingsScreen> {
               Text('• Encriptación de datos sensibles.', style: TextStyle(fontSize: 14)),
               Text('• No compartimos información con terceros sin consentimiento.', style: TextStyle(fontSize: 14)),
               Text('• Control total sobre tus preferencias de notificaciones.', style: TextStyle(fontSize: 14)),
-              SizedBox(height: 10),
-              Text('Para eliminar tu cuenta o solicitar tus datos, contacta a soporte.', style: TextStyle(fontSize: 12, color: Colors.grey)),
             ],
           ),
         ),
@@ -126,6 +125,51 @@ class _ClientSettingsScreenState extends State<ClientSettingsScreen> {
         ],
       ),
     );
+  }
+
+  Future<void> _confirmDeleteAccount(BuildContext context) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('¿Eliminar cuenta?'),
+        content: const Text(
+          'Tu cuenta será programada para eliminación en 30 días. Si inicias sesión durante este periodo, la eliminación se cancelará.\n\nEsta acción cerrará tu sesión actual.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancelar'),
+          ),
+          FilledButton(
+            style: FilledButton.styleFrom(backgroundColor: Colors.red),
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Eliminar cuenta'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true && mounted) {
+      try {
+        final auth = AuthService();
+        await auth.deleteAccount();
+        if (mounted) {
+          Navigator.of(context).pushAndRemoveUntil(
+            MaterialPageRoute(builder: (context) => const LoginScreen()),
+            (route) => false,
+          );
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Cuenta programada para eliminación.')),
+          );
+        }
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Error: $e')),
+          );
+        }
+      }
+    }
   }
 
   @override
@@ -167,8 +211,25 @@ class _ClientSettingsScreenState extends State<ClientSettingsScreen> {
               _buildActionTile('Editar Perfil', Icons.person_outline, () => _showEditProfileDialog(context)),
               _buildActionTile('Cambiar Contraseña', Icons.lock_outline, () => _changePassword(context)),
               _buildActionTile('Privacidad y Seguridad', Icons.security, () => _showPrivacySecurity(context)),
+              
+              const SizedBox(height: 16),
+              // Delete Account (Hidden/Discret)
+              Align(
+                alignment: Alignment.centerLeft,
+                child: TextButton.icon(
+                  onPressed: () => _confirmDeleteAccount(context),
+                  icon: Icon(Icons.delete_forever, size: 16, color: Colors.red.withOpacity(0.6)),
+                  label: Text(
+                    'Eliminar Cuenta',
+                    style: GoogleFonts.poppins(
+                      fontSize: 12,
+                      color: Colors.red.withOpacity(0.6),
+                    ),
+                  ),
+                ),
+              ),
 
-              const SizedBox(height: 40),
+              const SizedBox(height: 24),
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(

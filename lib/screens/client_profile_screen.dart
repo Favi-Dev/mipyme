@@ -356,18 +356,6 @@ class _ClientProfileScreenState extends State<ClientProfileScreen> {
                 );
               },
             ),
-            const SizedBox(height: 10),
-            TextButton.icon(
-              onPressed: () => _confirmDeleteAccount(context),
-              icon: Icon(Icons.delete_forever, size: 18, color: theme.colorScheme.error.withOpacity(0.7)),
-              label: Text(
-                'Eliminar cuenta',
-                style: theme.textTheme.bodyMedium?.copyWith(
-                  color: theme.colorScheme.error.withOpacity(0.7),
-                  fontSize: 12,
-                ),
-              ),
-            ),
             const SizedBox(height: 30),
           ],
         ),

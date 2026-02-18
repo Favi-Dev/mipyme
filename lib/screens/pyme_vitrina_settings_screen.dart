@@ -6,6 +6,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import '../services/pyme_service.dart';
+import '../services/auth_service.dart';
 import 'login_screen.dart';
 
 class PymeVitrinaSettingsScreen extends StatefulWidget {
@@ -438,11 +439,68 @@ class _PymeVitrinaSettingsScreenState extends State<PymeVitrinaSettingsScreen> {
                   ),
                 ),
               ),
-            const SizedBox(height: 40),
+              const SizedBox(height: 16),
+              Align(
+                alignment: Alignment.centerLeft,
+                child: TextButton.icon(
+                  onPressed: () => _confirmDeleteAccount(context),
+                  icon: Icon(Icons.delete_forever, size: 16, color: Colors.red.withOpacity(0.6)),
+                  label: Text(
+                    'Eliminar Cuenta',
+                    style: GoogleFonts.poppins(fontSize: 12, color: Colors.red.withOpacity(0.6)),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 40),
           ],
         ),
       ),
     );
+  }
+
+  Future<void> _confirmDeleteAccount(BuildContext context) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('¿Eliminar cuenta?'),
+        content: const Text(
+          'Tu cuenta será programada para eliminación en 30 días. Si inicias sesión durante este periodo, la eliminación se cancelará.\n\nEsta acción cerrará tu sesión actual.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancelar'),
+          ),
+          FilledButton(
+            style: FilledButton.styleFrom(backgroundColor: Colors.red),
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Eliminar cuenta'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true && mounted) {
+      try {
+        final auth = AuthService();
+        await auth.deleteAccount();
+        if (mounted) {
+           Navigator.of(context).pushAndRemoveUntil(
+            MaterialPageRoute(builder: (context) => const LoginScreen()),
+            (route) => false,
+          );
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Cuenta programada para eliminación.')),
+          );
+        }
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Error: $e')),
+          );
+        }
+      }
+    }
   }
 
   Widget _buildSectionHeader(String title) {
