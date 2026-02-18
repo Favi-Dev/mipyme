@@ -426,19 +426,6 @@ class _PymeVitrinaSettingsScreenState extends State<PymeVitrinaSettingsScreen> {
               ),
 
             _buildSectionHeader('Información General'),
-            DropdownButtonFormField<String>(
-              value: _selectedCategory,
-              decoration: InputDecoration(
-                labelText: 'Categoría',
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                prefixIcon: const Icon(Icons.category, color: Color(0xFF6F8F5E)),
-                filled: true,
-                fillColor: const Color(0xFFFFFFFF),
-              ),
-              items: ProductService.categories.map((e) => DropdownMenuItem(value: e, child: Text(e, style: const TextStyle(fontSize: 14), overflow: TextOverflow.ellipsis))).toList(),
-              onChanged: (val) => setState(() => _selectedCategory = val),
-            ),
-            const SizedBox(height: 16),
             _buildTextField('Nombre del Negocio', _nameController),
             const SizedBox(height: 16),
             _buildTextField('Descripción', _descriptionController, maxLines: 4),
@@ -479,6 +466,28 @@ class _PymeVitrinaSettingsScreenState extends State<PymeVitrinaSettingsScreen> {
             const SizedBox(height: 16),
             _buildTextField('WhatsApp', _whatsappController,
                 icon: Icons.message),
+            const SizedBox(height: 24),
+
+            _buildSectionHeader('Categoría'),
+            DropdownButtonFormField<String>(
+              value: _selectedCategory,
+              decoration: InputDecoration(
+                labelText: 'Rubro del Negocio',
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                prefixIcon: const Icon(Icons.category, color: Color(0xFF6F8F5E)),
+                filled: true,
+                fillColor: const Color(0xFFFFFFFF),
+              ),
+              items: ProductService.categories.map((e) => DropdownMenuItem(value: e, child: Text(e, style: const TextStyle(fontSize: 14), overflow: TextOverflow.ellipsis))).toList(),
+              onChanged: (val) => setState(() => _selectedCategory = val),
+            ),
+            const Padding(
+               padding: EdgeInsets.only(top: 8, left: 4),
+               child: Text(
+                 'Nota: Cambiar la categoría eliminará tus productos actuales.',
+                 style: TextStyle(color: Colors.grey, fontSize: 12),
+               ),
+            ),
             const SizedBox(height: 40),
             
             if (widget.pymeId == null)
