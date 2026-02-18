@@ -13,9 +13,9 @@ import '../services/cart_service.dart';
 import '../services/client_service.dart';
 import '../widgets/supporter_counter.dart';
 import '../widgets/donation_content.dart';
-import 'donation_screen.dart';
 import 'client_cart_screen.dart' as import_cart;
 import 'client_subscription_screen.dart';
+import '../services/payment_service.dart';
 
 class ClientPymeDetailScreen extends StatefulWidget {
   final String pymeId;
@@ -36,7 +36,9 @@ class _ClientPymeDetailScreenState extends State<ClientPymeDetailScreen> {
   final ProductService _productService = ProductService();
   final PymeService _pymeService = PymeService();
   final ClientService _clientService = ClientService();
+  final PaymentService _paymentService = PaymentService();
   final String? _userId = FirebaseAuth.instance.currentUser?.uid;
+  bool _isLoadingPayment = false;
   
   bool get _isFoundation => widget.pymeData.role == UserRole.foundation;
   String get _pymeName => widget.pymeData.name;
@@ -84,7 +86,6 @@ class _ClientPymeDetailScreenState extends State<ClientPymeDetailScreen> {
   }
 
   void _showDonationModal() {
-    // final theme = Theme.of(context);
     List<int> amounts = [1000, 3000, 5000, 10000];
 
     showModalBottomSheet(
@@ -98,21 +99,163 @@ class _ClientPymeDetailScreenState extends State<ClientPymeDetailScreen> {
         pymeData: widget.pymeData,
         amounts: amounts,
         isGuest: _userId == null,
-        onDonate: (amount, isMonthly) async {
-            // Reutilizamos la lógica del DonationScreen pero adaptada a este modal
-            // Navegamos a DonationScreen que ya contiene toda la lógica segura de pago
-             Navigator.push(
-               context,
-               MaterialPageRoute(
-                 builder: (context) => DonationScreen(
-                   isGuest: _userId == null,
-                   preSelectedFoundation: widget.pymeData,
-                 ),
-               ),
-             );
-        },
+        onDonate: _processDonation,
       ),
     );
+  }
+
+  Future<void> _processDonation(double amount, bool isMonthly) async {
+    // Navigator.pop(context); // Close modal first? Or keep it open with loader? 
+    // Keeping it open might be better. Let's close it if we want full screen loader or show loader in dialog.
+    // The original code uses a Dialog for loading which covers everything.
+    // If I pop here, the modal closes and we are back to pyme details showing a loading dialog. That's fine.
+    Navigator.pop(context);
+
+    // setState(() => _isLoadingPayment = true); // Not really used in UI currently but good for state
+
+    try {
+      final user = FirebaseAuth.instance.currentUser;
+      final String payerEmail = user?.email ?? 'invitado@soyplus.app';
+      final String title = isMonthly 
+          ? 'Suscripción Mensual a ${widget.pymeData.name}' 
+          : 'Donación a ${widget.pymeData.name}';
+
+      Map<String, dynamic> result;
+      
+      if (isMonthly) {
+        // Opción 1: Crear Suscripción (Si está logueado o tiene email)
+        result = await _paymentService.createSubscription(
+          title: title,
+          price: amount,
+          payerEmail: payerEmail,
+        );
+      } else {
+        // Opción 2: Pago Único (Checkout Pro)
+        result = await _paymentService.createPreference(
+          title: title,
+          price: amount,
+          pymeId: widget.pymeData.id,
+        );
+      }
+
+      // 1. Obtener el link de pago (sandbox para pruebas)
+      final String initPoint = result['sandbox_init_point'] ?? result['init_point'];
+      
+      // 2. Abrir Mercado Pago
+      final Uri url = Uri.parse(initPoint);
+      final String? externalReference = result['external_reference'];
+
+      // Usar platformDefault para mayor compatibilidad web y evitar bloqueo de popups
+      if (!await launchUrl(url, mode: LaunchMode.platformDefault)) {
+        throw 'No se pudo abrir la pasarela de pago. Por favor, revisa si tienes bloqueador de pop-ups.';
+      }
+
+      // 3. SECUENCIA REAL DE PAGO (Polling / Escucha Activa)
+      if (!mounted) return;
+
+      if (externalReference != null) {
+        showDialog(
+          context: context,
+          barrierDismissible: false,
+          builder: (context) => PopScope(
+            canPop: false, // Bloquear el botón atrás
+            child: AlertDialog(
+              title: const Text('Procesando Pago...'),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: const [
+                  CircularProgressIndicator(),
+                  SizedBox(height: 20),
+                  Text('Estamos esperando la confirmación segura de Mercado Pago.\nPor favor, completa el pago en tu navegador.'),
+                ],
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context), 
+                  child: const Text('Cancelar / Cerrar'), // Escotilla de escape si el usuario se arrepiente
+                ),
+              ],
+            ),
+          ),
+        );
+
+        // Escuchar cambios en Firestore donde externalReference coincida
+        FirebaseFirestore.instance
+            .collection('payments')
+            .where('externalReference', isEqualTo: externalReference)
+            .snapshots()
+            .listen((snapshot) {
+              if (snapshot.docs.isNotEmpty && mounted) {
+                 Navigator.pop(context); // Cerrar Dialog de Espera
+                 _showSuccessDialog(); // Mostrar Éxito
+              }
+            });
+
+      } else {
+         // Fallback legacy por si falta externalReference (subscription mensual)
+         _showLegacyConfirmation();
+      }
+
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error al procesar pago: $e')),
+        );
+      }
+    } finally {
+      // setState(() => _isLoadingPayment = false);
+    }
+  }
+
+  void _showSuccessDialog() {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => AlertDialog(
+        title: const Text('¡Pago Confirmado!'),
+        content: Text(_userId == null 
+          ? 'Tu donación ha sido recibida y verificada. ¡Gracias!'
+          : 'Tu donación ha sido procesada exitosamente.'
+        ),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context); // Close Success Dialog
+            },
+            child: const Text('Continuar'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showLegacyConfirmation() async {
+      if (!mounted) return;
+      
+      final bool? confirmed = await showDialog<bool>(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) => AlertDialog(
+          title: const Text('Completar Donación'),
+          content: const Text(
+            'Se ha abierto el navegador para procesar tu donación. ¿Pudiste completarla?'
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context, false), // No
+              child: const Text('Cancelar'),
+            ),
+             ElevatedButton(
+              onPressed: () => Navigator.pop(context, true), // Sí
+              child: const Text('¡Sí, ya doné!'),
+            ),
+          ],
+        ),
+      );
+
+      if (confirmed == true) {
+        _showSuccessDialog();
+      }
   }
 
 
