@@ -4,6 +4,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:geocoding/geocoding.dart';
 import 'package:image_picker/image_picker.dart';
 import '../services/pyme_service.dart';
+import '../services/product_service.dart';
 import '../services/storage_service.dart';
 import '../models/user_profile.dart';
 
@@ -26,9 +27,11 @@ class _PymeEditProfileScreenState extends State<PymeEditProfileScreen> {
   late TextEditingController _donationGoalController;
   bool _isLoading = false;
   final PymeService _pymeService = PymeService();
+  final ProductService _productService = ProductService();
   final StorageService _storageService = StorageService();
   String? _logoUrl;
   String? _coverImageUrl;
+  String? _selectedCategory;
 
   @override
   void initState() {
@@ -41,6 +44,7 @@ class _PymeEditProfileScreenState extends State<PymeEditProfileScreen> {
     _donationGoalController = TextEditingController(text: (widget.currentData.donationGoal ?? 100000).toInt().toString());
     _logoUrl = widget.currentData.logoUrl;
     _coverImageUrl = widget.currentData.coverImageUrl;
+    _selectedCategory = widget.currentData.category;
   }
 
   Future<void> _pickAndUploadImage(bool isCover) async {
@@ -86,14 +90,48 @@ class _PymeEditProfileScreenState extends State<PymeEditProfileScreen> {
   Future<void> _saveProfile() async {
     if (!_formKey.currentState!.validate()) return;
 
+    final userId = FirebaseAuth.instance.currentUser?.uid;
+    if (userId == null) return;
+
+    // Check if category changed
+    if (_selectedCategory != widget.currentData.category && widget.currentData.category != null) {
+      bool confirm = await showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: const Text('¿Cambiar Categoría?'),
+          content: const Text(
+            'Al cambiar la categoría de tu negocio, se eliminarán permanentemente todos tus productos y ofertas actuales, ya que pueden no ser compatibles con la nueva categoría.\n\n¿Deseas continuar?',
+            style: TextStyle(color: Colors.red),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: const Text('Cancelar'),
+            ),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+              onPressed: () => Navigator.pop(context, true),
+              child: const Text('Sí, cambiar y eliminar datos'),
+            ),
+          ],
+        ),
+      ) ?? false;
+
+      if (!confirm) return;
+    }
+
     setState(() => _isLoading = true);
 
     try {
-      final userId = FirebaseAuth.instance.currentUser?.uid;
-      if (userId == null) return;
+      // Delete products and offers if category changed
+      if (_selectedCategory != widget.currentData.category && widget.currentData.category != null) {
+         await _productService.deleteAllProductsByPyme(userId);
+         await _pymeService.deleteAllOffersByPyme(userId);
+      }
 
       Map<String, dynamic> updates = {
         'name': _companyNameController.text,
+        'category': _selectedCategory,
         'description': _descriptionController.text,
         'location': _addressController.text,
         'whatsappNumber': _phoneController.text,
@@ -158,6 +196,31 @@ class _PymeEditProfileScreenState extends State<PymeEditProfileScreen> {
           child: Column(
             children: [
               _buildImagesSection(),
+              
+              DropdownButtonFormField<String>(
+                value: _selectedCategory,
+                decoration: InputDecoration(
+                  labelText: 'Categoría',
+                  prefixIcon: const Icon(Icons.category, color: Color(0xFF2F3F2A)),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                  filled: true,
+                  fillColor: Colors.white,
+                ),
+                items: ProductService.categories.map((String category) {
+                  return DropdownMenuItem<String>(
+                    value: category,
+                    child: Text(category, style: GoogleFonts.poppins()),
+                  );
+                }).toList(),
+                onChanged: (String? newValue) {
+                  setState(() {
+                    _selectedCategory = newValue;
+                  });
+                },
+                validator: (value) => value == null ? 'Selecciona una categoría' : null,
+              ),
+              const SizedBox(height: 16),
+
               const SizedBox(height: 24),
               _buildTextField('Nombre de la Empresa', _companyNameController, Icons.business),
               const SizedBox(height: 16),

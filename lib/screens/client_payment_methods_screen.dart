@@ -34,8 +34,27 @@ class ClientPaymentMethodsScreen extends StatelessWidget {
               const SizedBox(height: 16),
               if (paymentMethods.isEmpty)
                  Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: Center(child: Text('No hay métodos de pago guardados.', style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.onSurfaceVariant))),
+                  padding: const EdgeInsets.symmetric(vertical: 40.0, horizontal: 16.0),
+                  child: Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          Icons.credit_card_off,
+                          size: 64,
+                          color: theme.colorScheme.onSurfaceVariant.withOpacity(0.5),
+                        ),
+                        const SizedBox(height: 16),
+                        Text(
+                          'No hay métodos de pago guardados.',
+                          style: theme.textTheme.bodyMedium?.copyWith(
+                            color: theme.colorScheme.onSurfaceVariant,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                      ],
+                    ),
+                  ),
                 ),
               ...paymentMethods.map((method) => _buildPaymentCard(context, method, clientService)),
               const SizedBox(height: 24),

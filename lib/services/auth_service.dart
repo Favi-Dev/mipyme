@@ -75,6 +75,51 @@ class AuthService {
     }
   }
 
+  // Update User Name
+  Future<void> updateUserName(String uid, String newName) async {
+    try {
+      // Update Auth Profile
+      User? user = _auth.currentUser;
+      if (user != null) {
+        await user.updateDisplayName(newName);
+      }
+      
+      // Update Firestore Profile
+      await _firestore.collection('users').doc(uid).update({
+        'name': newName,
+      });
+    } catch (e) {
+      print('Error updating user name: $e');
+      throw e;
+    }
+  }
+
+  // Delete Account
+  Future<void> deleteAccount() async {
+    try {
+      User? user = _auth.currentUser;
+      if (user == null) throw Exception('No user signed in');
+
+      // Recommended: Mark as deleted in Firestore instead of hard delete immediately
+      // This allows for the "30 days" recovery logic if backend supports it.
+      await _firestore.collection('users').doc(user.uid).update({
+        'deletedAt': FieldValue.serverTimestamp(),
+        'status': 'scheduled_for_deletion',
+      });
+
+      // Sign out
+      await _auth.signOut();
+      
+      // Note: Actual deletion from Auth usually requires re-authentication.
+      // For this implementation, we mark in Firestore and sign out.
+      // If we want to fully delete the Auth user:
+      // await user.delete(); 
+    } catch (e) {
+      print('Error deleting account: $e');
+      throw e;
+    }
+  }
+
   // Register
   Future<bool> register(String email, String password, String name, UserRole role, {Map<String, dynamic>? additionalData}) async {
     try {

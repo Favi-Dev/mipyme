@@ -371,26 +371,48 @@ class _ClientPymeDetailScreenState extends State<ClientPymeDetailScreen> {
                                     );
                                   }
                                 ),
-                              ] else if (eventProducts.isNotEmpty) ...[
-                                Text(
-                                  'Próximos Eventos',
-                                  style: theme.textTheme.titleLarge?.copyWith(
-                                    fontWeight: FontWeight.bold,
-                                    color: theme.colorScheme.onSurface,
+                              ] else ...[
+                                if (eventProducts.isNotEmpty) ...[
+                                  Text(
+                                    'Próximos Eventos',
+                                    style: theme.textTheme.titleLarge?.copyWith(
+                                      fontWeight: FontWeight.bold,
+                                      color: theme.colorScheme.onSurface,
+                                    ),
                                   ),
-                                ),
-                                const SizedBox(height: 12),
-                                SingleChildScrollView(
-                                  scrollDirection: Axis.horizontal,
-                                  child: Row(
-                                    children: eventProducts.map((product) {
-                                      return Padding(
-                                        padding: const EdgeInsets.only(right: 12),
-                                        child: _buildProductCard(product),
-                                      );
-                                    }).toList(),
+                                  const SizedBox(height: 12),
+                                  SingleChildScrollView(
+                                    scrollDirection: Axis.horizontal,
+                                    child: Row(
+                                      children: eventProducts.map((product) {
+                                        return Padding(
+                                          padding: const EdgeInsets.only(right: 12),
+                                          child: _buildProductCard(product),
+                                        );
+                                      }).toList(),
+                                    ),
                                   ),
-                                ),
+                                ] else ...[
+                                  Center(
+                                    child: Column(
+                                      mainAxisAlignment: MainAxisAlignment.center,
+                                      children: [
+                                        Icon(
+                                          Icons.event_busy,
+                                          size: 48,
+                                          color: theme.colorScheme.onSurfaceVariant.withOpacity(0.5),
+                                        ),
+                                        const SizedBox(height: 12),
+                                        Text(
+                                          'No hay eventos próximos',
+                                          style: theme.textTheme.bodyMedium?.copyWith(
+                                            color: theme.colorScheme.onSurfaceVariant,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ],
                                 const SizedBox(height: 24),
                               ],
 

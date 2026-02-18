@@ -224,7 +224,9 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        isFoundationMode ? 'Fundaciones' : 'Hola, ${userProfile?.name.split(' ').first ?? 'Invitado'}',
+                        !isFoundationMode 
+                          ? 'Hola, ${userProfile?.name.split(' ').first ?? 'Invitado'}'
+                          : 'Hola, ${userProfile?.name.split(' ').first ?? 'Invitado'}', // Show user name in both modes
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: theme.textTheme.titleLarge?.copyWith(
@@ -232,15 +234,18 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
                           fontWeight: FontWeight.bold,
                         ),
                       ),
-                      if (!isFoundationMode)
-                        Row(
+                      Row(
                           children: [
-                            Icon(Icons.location_on,
-                                size: 12, color: const Color(0xFFF4F1EA).withOpacity(0.9)),
-                            const SizedBox(width: 4),
+                            if (!isFoundationMode)
+                               Icon(Icons.location_on, size: 12, color: const Color(0xFFF4F1EA).withOpacity(0.9)),
+                            if (!isFoundationMode)
+                               const SizedBox(width: 4),
+
                             Expanded(
                               child: Text(
-                                userProfile?.location ?? 'Ubicación no disponible',
+                                isFoundationMode 
+                                  ? 'Apoya una fundación hoy ❤' 
+                                  : (userProfile?.location ?? 'Ubicación no disponible'),
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
                                 style: theme.textTheme.bodySmall?.copyWith(

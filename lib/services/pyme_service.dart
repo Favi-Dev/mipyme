@@ -307,6 +307,16 @@ class PymeService {
     await _usersCollection.doc(pymeId).collection('offers').doc(offerId).delete();
   }
 
+  // Delete All Offers (When changing category)
+  Future<void> deleteAllOffersByPyme(String pymeId) async {
+    final snapshot = await _usersCollection.doc(pymeId).collection('offers').get();
+    final batch = FirebaseFirestore.instance.batch();
+    for (var doc in snapshot.docs) {
+      batch.delete(doc.reference);
+    }
+    await batch.commit();
+  }
+
   // --- Support Tickets ---
   Future<void> createSupportTicket(Map<String, dynamic> ticketData) async {
     await FirebaseFirestore.instance.collection('support_tickets').add({

@@ -148,11 +148,22 @@ class _ClientPaymentsSubscriptionsScreenState extends State<ClientPaymentsSubscr
         
         if (payments.isEmpty) {
           return Center(
-            child: Text(
-              'No hay historial de pagos.',
-              style: theme.textTheme.bodyMedium?.copyWith(
-                color: theme.colorScheme.onSurfaceVariant,
-              ),
+             child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  Icons.receipt_long_outlined,
+                  size: 64,
+                  color: theme.colorScheme.onSurfaceVariant.withOpacity(0.5),
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  'No hay historial de pagos.',
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    color: theme.colorScheme.onSurfaceVariant,
+                  ),
+                ),
+              ],
             ),
           );
         }

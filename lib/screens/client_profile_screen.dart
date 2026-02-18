@@ -3,6 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:image_picker/image_picker.dart';
 import '../services/storage_service.dart';
 import '../services/client_service.dart';
+import '../services/auth_service.dart';
 import '../services/pyme_service.dart';
 import '../models/user_profile.dart';
 import 'client_pyme_detail_screen.dart';
@@ -134,9 +135,26 @@ class _ClientProfileScreenState extends State<ClientProfileScreen> {
                     ],
                   ),
                   const SizedBox(height: 15),
-                  Text(
-                    user?.displayName ?? 'Usuario',
-                    style: theme.textTheme.headlineMedium,
+                  InkWell(
+                    onTap: () => _updateName(context),
+                    borderRadius: BorderRadius.circular(12),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Flexible(
+                            child: Text(
+                              user?.displayName ?? 'Usuario',
+                              style: theme.textTheme.headlineMedium,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Icon(Icons.edit, size: 20, color: theme.colorScheme.onSurfaceVariant),
+                        ],
+                      ),
+                    ),
                   ),
                   const SizedBox(height: 5),
                   Container(
@@ -338,10 +356,131 @@ class _ClientProfileScreenState extends State<ClientProfileScreen> {
                 );
               },
             ),
+            const SizedBox(height: 10),
+            TextButton.icon(
+              onPressed: () => _confirmDeleteAccount(context),
+              icon: Icon(Icons.delete_forever, size: 18, color: theme.colorScheme.error.withOpacity(0.7)),
+              label: Text(
+                'Eliminar cuenta',
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  color: theme.colorScheme.error.withOpacity(0.7),
+                  fontSize: 12,
+                ),
+              ),
+            ),
+            const SizedBox(height: 30),
           ],
         ),
       ),
     );
+  }
+
+  Future<void> _updateName(BuildContext context) async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return;
+    
+    final nameController = TextEditingController(text: user.displayName);
+    
+    await showDialog(
+      context: context, 
+      builder: (context) => AlertDialog(
+        title: const Text('Editar nombre'),
+        content: TextField(
+          controller: nameController,
+          decoration: const InputDecoration(labelText: 'Nombre completo'),
+          textCapitalization: TextCapitalization.words,
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancelar')),
+          FilledButton(
+            onPressed: () async {
+              if (nameController.text.trim().isNotEmpty) {
+                 final newName = nameController.text.trim();
+                 try {
+                   // Call service to update
+                   // Assuming ClientService or AuthService has updateName. 
+                   // Since I added updateName to AuthService, I'll use it directly or via ClientService.
+                   // But wait, I added it to AuthService, not ClientService.
+                   // So I might need instances of AuthService here contextually or create new.
+                   // Actually, _clientService is used in this file. I should check if ClientService wraps AuthService or can access it.
+                   // For now, I'll instantiate AuthService or use FirebaseAuth directly + Firestore.
+                   // I added updateUserName to AuthService.
+                   
+                   // Using AuthService:
+                   final auth = AuthService(); // I need to import it if not imported. Ideally check imports.
+                   // It is imported as '../services/auth_service.dart' but not used in the state.
+                   // I'll check imports. The file has `import 'package:firebase_auth/firebase_auth.dart';`
+                   // I need to add `import '../services/auth_service.dart';` if it's not there.
+                   // Wait, checking line 5: `import '../services/client_service.dart';`. `AuthService` might be `../services/auth_service.dart`.
+                   // Let's check imports at the top of file.
+                   
+                   await auth.updateUserName(user.uid, newName);
+                   
+                   // Force reload to update UI
+                   await user.reload();
+                   if (mounted) {
+                     Navigator.pop(context);
+                     setState(() {});
+                     ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Nombre actualizado')));
+                   }
+                 } catch (e) {
+                   if (mounted) {
+                     ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e')));
+                   }
+                 }
+              }
+            }, 
+            child: const Text('Guardar'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _confirmDeleteAccount(BuildContext context) async {
+    final theme = Theme.of(context);
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('¿Eliminar cuenta?'),
+        content: const Text(
+          'Tu cuenta será programada para eliminación en 30 días. Si inicias sesión durante este periodo, la eliminación se cancelará.\n\nEsta acción cerrará tu sesión actual.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancelar'),
+          ),
+          FilledButton(
+            style: FilledButton.styleFrom(backgroundColor: theme.colorScheme.error),
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Eliminar cuenta'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true && mounted) {
+      try {
+        final auth = AuthService();
+        await auth.deleteAccount();
+        if (mounted) {
+          Navigator.of(context).pushAndRemoveUntil(
+            MaterialPageRoute(builder: (context) => const LoginScreen()),
+            (route) => false,
+          );
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Cuenta programada para eliminación.')),
+          );
+        }
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Error: $e')),
+          );
+        }
+      }
+    }
   }
 
   Widget _buildProfileOption(

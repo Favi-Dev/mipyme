@@ -62,4 +62,14 @@ class ProductService {
   Future<void> deleteProduct(String productId) {
     return _productsCollection.doc(productId).delete();
   }
+
+  // Delete all products by Pyme ID
+  Future<void> deleteAllProductsByPyme(String pymeId) async {
+    final snapshot = await _productsCollection.where('pymeId', isEqualTo: pymeId).get();
+    final batch = FirebaseFirestore.instance.batch();
+    for (var doc in snapshot.docs) {
+      batch.delete(doc.reference);
+    }
+    await batch.commit();
+  }
 }

@@ -56,12 +56,32 @@ class ClientAddressesScreen extends StatelessWidget {
               if (addresses.isEmpty)
                 Center(
                   child: Padding(
-                    padding: const EdgeInsets.all(20.0),
-                    child: Text(
-                      'No tienes direcciones guardadas.',
-                      style: theme.textTheme.bodyMedium?.copyWith(
-                        color: theme.colorScheme.onSurfaceVariant,
-                      ),
+                    padding: const EdgeInsets.symmetric(vertical: 60.0, horizontal: 20.0),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          Icons.location_off_outlined,
+                          size: 80,
+                          color: theme.colorScheme.onSurfaceVariant.withOpacity(0.5),
+                        ),
+                        const SizedBox(height: 20),
+                        Text(
+                          'No tienes direcciones guardadas.',
+                          style: theme.textTheme.titleMedium?.copyWith(
+                            color: theme.colorScheme.onSurfaceVariant,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          'Agrega una dirección para recibir tus pedidos.',
+                          style: theme.textTheme.bodyMedium?.copyWith(
+                            color: theme.colorScheme.onSurfaceVariant,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                      ],
                     ),
                   ),
                 ),
