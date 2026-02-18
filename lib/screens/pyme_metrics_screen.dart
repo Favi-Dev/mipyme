@@ -228,6 +228,7 @@ class _PymeMetricsScreenState extends State<PymeMetricsScreen> {
     );
   }
 
+/*
   Widget _buildBar(String label, double heightFactor, Color color) {
     return Column(
       children: [
@@ -242,12 +243,12 @@ class _PymeMetricsScreenState extends State<PymeMetricsScreen> {
         const SizedBox(height: 8),
         Text(
           label,
-          style: TextStyle(color: const Color(0xFF2F3F2A).withOpacity(0.7), fontSize: 10),
+          style: TextStyle(color: const Color(0xFF2F3F2A).withValues(alpha: 0.7), fontSize: 10),
         ),
       ],
     );
   }
-
+*/
   Widget _buildActivityItem({
     required IconData icon,
     required Color color,

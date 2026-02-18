@@ -2,14 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../services/auth_service.dart';
-import '../client_app_shell.dart';
-import '../pyme_app_shell.dart';
-import '../admin_app_shell.dart';
-import 'register_screen.dart';
-import 'subscription_blocker_screen.dart';
-import 'guest_foundations_screen.dart';
-import '../models/vitrina_data.dart';
-import '../models/user_profile.dart';
+import 'package:mipyme/client_app_shell.dart';
+import 'package:mipyme/pyme_app_shell.dart';
+import 'package:mipyme/admin_app_shell.dart';
+import 'package:mipyme/screens/register_screen.dart';
+import 'package:mipyme/screens/subscription_blocker_screen.dart';
+import 'package:mipyme/screens/guest_foundations_screen.dart';
+import 'package:mipyme/models/vitrina_data.dart';
+import 'package:mipyme/models/user_profile.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -42,12 +42,8 @@ class _LoginScreenState extends State<LoginScreen> {
         Widget destination;
         switch (userProfile.role) {
           case UserRole.client:
-            // Check subscription status for clients
-            if (userProfile.isSubscribed) {
-              destination = const ClientAppShell();
-            } else {
-              destination = const SubscriptionBlockerScreen();
-            }
+            // Always allow clients to enter, checks will be done contextually
+            destination = const ClientAppShell();
             break;
           case UserRole.pyme:
             VitrinaData.isFoundationUser = false;
@@ -145,7 +141,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
+    // final theme = Theme.of(context);
     return Scaffold(
       backgroundColor: const Color(0xFFFDF1D9),
       body: Center(

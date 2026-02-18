@@ -329,13 +329,14 @@ class _PymeAddProductScreenState extends State<PymeAddProductScreen> {
     );
   }
 
+/*
   String _getStockLabel() {
     if (_isService) {
       return 'Cupos / Disponibilidad';
     }
     return 'Stock Disponible';
   }
-
+*/
   Widget _buildSectionTitle(String title) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 12, left: 4),
@@ -383,7 +384,7 @@ class _PymeAddProductScreenState extends State<PymeAddProductScreen> {
           return 'Campo requerido';
         }
         if (isNumber && value != null && value.isNotEmpty) {
-           final number = double.tryParse(value);
+           // final number = double.tryParse(value);
            // Removed explicit upper limit check as per request
         }
         return null;

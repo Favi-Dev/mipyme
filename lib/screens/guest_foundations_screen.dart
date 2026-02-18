@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import '../services/pyme_service.dart';
-import '../models/user_profile.dart';
-import 'donation_screen.dart';
+import 'package:mipyme/services/pyme_service.dart';
+import 'package:mipyme/models/user_profile.dart';
+import 'package:mipyme/screens/donation_screen.dart';
 
 class GuestFoundationsScreen extends StatelessWidget {
   const GuestFoundationsScreen({super.key});

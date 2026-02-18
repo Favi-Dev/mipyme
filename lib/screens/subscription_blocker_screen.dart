@@ -23,6 +23,15 @@ class _SubscriptionBlockerScreenState extends State<SubscriptionBlockerScreen> {
     final theme = Theme.of(context);
     
     return Scaffold(
+      appBar: AppBar(
+        title: const Text('Volver'),
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        leading: IconButton(
+          icon: Icon(Icons.arrow_back, color: theme.colorScheme.primary),
+          onPressed: () => Navigator.of(context).pop(),
+        ),
+      ),
       backgroundColor: const Color(0xFFFDF1D9),
       body: SafeArea(
         child: Padding(

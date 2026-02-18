@@ -84,7 +84,7 @@ class _ClientPymeDetailScreenState extends State<ClientPymeDetailScreen> {
   }
 
   void _showDonationModal() {
-    final theme = Theme.of(context);
+    // final theme = Theme.of(context);
     List<int> amounts = [1000, 3000, 5000, 10000];
 
     showModalBottomSheet(
@@ -980,6 +980,48 @@ class _ClientPymeDetailScreenState extends State<ClientPymeDetailScreen> {
                   child: ElevatedButton(
                     onPressed: () async {
                       try {
+                        // Check Subscription Status for instant actions (Services/Events)
+                        if (product.isService) {
+                           bool isSubscribed = false;
+                            try {
+                              isSubscribed = await _clientService.getSubscriptionStatus().first;
+                            } catch (e) {
+                              print('Error checking subscription: $e');
+                            }
+
+                            if (!isSubscribed) {
+                              if (!mounted) return;
+                              showDialog(
+                                context: context,
+                                builder: (context) => AlertDialog(
+                                  title: const Text('Beneficio Exclusivo'),
+                                  content: const Text('Para adquirir productos o inscribirte en talleres, necesitas ser Beneficiario Plus.'),
+                                  actions: [
+                                    TextButton(
+                                      child: const Text('Cancelar'), 
+                                      onPressed: () => Navigator.pop(context)
+                                    ),
+                                    ElevatedButton(
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor: theme.colorScheme.primary,
+                                        foregroundColor: theme.colorScheme.onPrimary,
+                                      ),
+                                      child: const Text('Suscribirse (\$2.000)'),
+                                      onPressed: () {
+                                        Navigator.pop(context); // Close dialog
+                                        Navigator.push(
+                                          context, 
+                                          MaterialPageRoute(builder: (_) => const ClientSubscriptionScreen())
+                                        );
+                                      },
+                                    ),
+                                  ],
+                                ),
+                              );
+                              return;
+                            }
+                        }
+
                         if (product.isService) {
                           DateTime? pickedDate;
                           

@@ -51,7 +51,7 @@ class _AdminUserDetailScreenState extends State<AdminUserDetailScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
+    // final theme = Theme.of(context);
     final user = widget.userData;
     final role = user['role'];
     final isPymeOrFoundation = role == 'pyme' || role == 'foundation';

@@ -378,7 +378,7 @@ class _ClientProfileScreenState extends State<ClientProfileScreen> {
   }
 
   Widget _buildSupportedCard(BuildContext context, UserProfile data, {required bool isFoundation}) {
-    final theme = Theme.of(context);
+    // final theme = Theme.of(context);
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
       child: ListTile(

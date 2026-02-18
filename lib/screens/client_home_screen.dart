@@ -23,7 +23,7 @@ class ClientHomeScreen extends StatefulWidget {
 class _ClientHomeScreenState extends State<ClientHomeScreen> {
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
-  final Set<String> _followedPymes = {};
+  // final Set<String> _followedPymes = {};
   final Set<String> _selectedTags = {};
   String? _selectedCategory;
 
@@ -1018,7 +1018,7 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
     final bool isOpen = true; 
     final String name = pyme.name;
     // Hide rating if not available in model
-    final bool showRating = false;
+    // final bool showRating = false;
 
     return GestureDetector(
       onTap: () {
@@ -1153,7 +1153,7 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
                           fontWeight: FontWeight.bold,
                         ),
                       ),
-                      if (showRating)
+                      /* if (showRating)
                       Container(
                         padding: const EdgeInsets.symmetric(
                             horizontal: 8, vertical: 4),
@@ -1176,7 +1176,7 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
                             ),
                           ],
                         ),
-                      ),
+                      ), */
                     ],
                   ),
                   const SizedBox(height: 8),

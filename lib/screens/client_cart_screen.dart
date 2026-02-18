@@ -2,10 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import '../services/payment_service.dart';
 import '../services/cart_service.dart';
 import '../models/cart_item.dart';
 import 'simple_scanner_screen.dart';
+import 'client_subscription_screen.dart' as import_cart;
 
 class ClientCartScreen extends StatefulWidget {
   const ClientCartScreen({super.key});
@@ -421,6 +423,62 @@ class _ClientCartScreenState extends State<ClientCartScreen> {
                   child: ElevatedButton(
                     onPressed: () async {
                       if (cartService.items.isEmpty) return;
+
+                       // Check Subscription Status
+                       try {
+                         // We need ClientService instance or stream
+                         // Since we don't have it direct, we assume user is logged in if cart has items
+                         // But we should verify. 
+                         // Better yet, just reuse the simple check if we had ClientService here.
+                         // But ClientCartScreen doesn't seem to have ClientService injected.
+                         // We can create one or fetch from provider if available.
+                         // For now, let's skip complex dependency injection if not needed, 
+                         // but given we are stricter now.
+                         // Let's rely on AuthService or user Role. 
+                         // Actually, checking Firestore is best.
+                         
+                         // BUT, cartService might know the user?
+                         // Let's use Firestore directly for quick check if ClientService not available
+                         final user = FirebaseAuth.instance.currentUser;
+                         if (user != null) {
+                            final doc = await FirebaseFirestore.instance.collection('users').doc(user.uid).get();
+                            final isSubscribed = doc.data()?['isSubscribed'] ?? false;
+                            
+                            if (!isSubscribed) {
+                              if (!context.mounted) return;
+                               showDialog(
+                                context: context,
+                                builder: (context) => AlertDialog(
+                                  title: const Text('Beneficio Exclusivo'),
+                                  content: const Text('Para realizar compras, necesitas ser Beneficiario Plus.'),
+                                  actions: [
+                                    TextButton(
+                                      child: const Text('Cancelar'), 
+                                      onPressed: () => Navigator.pop(context)
+                                    ),
+                                    ElevatedButton(
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor: theme.colorScheme.primary,
+                                        foregroundColor: theme.colorScheme.onPrimary,
+                                      ),
+                                      child: const Text('Suscribirse (\$2.000)'),
+                                      onPressed: () {
+                                        Navigator.pop(context); // Close dialog
+                                        Navigator.push(
+                                          context, 
+                                          MaterialPageRoute(builder: (_) => const import_cart.ClientSubscriptionScreen())
+                                        );
+                                      },
+                                    ),
+                                  ],
+                                ),
+                              );
+                              return;
+                            }
+                         }
+                       } catch (e) {
+                          print('Error checking subscription in cart: $e');
+                       }
                       
                       // 1. Mostrar loader
                       showDialog(

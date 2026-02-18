@@ -2,10 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:geocoding/geocoding.dart';
 import 'login_screen.dart';
-import '../services/auth_service.dart';
-import '../services/product_service.dart';
-import '../models/user_profile.dart';
-import '../utils/rut_formatter.dart';
+import 'package:mipyme/services/auth_service.dart';
+import 'package:mipyme/services/product_service.dart';
+import 'package:mipyme/models/user_profile.dart';
+import 'package:mipyme/utils/rut_formatter.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});

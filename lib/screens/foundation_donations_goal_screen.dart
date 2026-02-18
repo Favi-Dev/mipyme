@@ -14,7 +14,7 @@ class FoundationDonationsGoalScreen extends StatefulWidget {
 class _FoundationDonationsGoalScreenState extends State<FoundationDonationsGoalScreen> {
   final TextEditingController _goalController = TextEditingController();
   final TextEditingController _descriptionController = TextEditingController();
-  final PymeService _pymeService = PymeService();
+  // final PymeService _pymeService = PymeService();
   final String _currentPymeId = FirebaseAuth.instance.currentUser?.uid ?? '';
   bool _isEditing = false;
   double _currentGoal = 0;

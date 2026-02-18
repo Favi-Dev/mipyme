@@ -2,11 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:url_launcher/url_launcher.dart'; // Importante para abrir el link
-import '../models/user_profile.dart';
-import '../services/pyme_service.dart';
-import '../services/payment_service.dart'; // Importar servicio de pago
-import '../client_app_shell.dart';
-import '../widgets/donation_content.dart';
+import 'package:mipyme/models/user_profile.dart';
+import 'package:mipyme/services/pyme_service.dart';
+import 'package:mipyme/services/payment_service.dart'; // Importar servicio de pago
+import 'package:mipyme/client_app_shell.dart';
+import 'package:mipyme/widgets/donation_content.dart';
 
 class DonationScreen extends StatefulWidget {
   final bool isGuest;
@@ -27,19 +27,19 @@ class DonationScreen extends StatefulWidget {
 class _DonationScreenState extends State<DonationScreen> {
   final PymeService _pymeService = PymeService();
   final PaymentService _paymentService = PaymentService();
-  final TextEditingController _amountController = TextEditingController();
+  // final TextEditingController _amountController = TextEditingController();
   
   UserProfile? _selectedFoundation;
-  bool _isMonthly = false;
+  // bool _isMonthly = false;
   bool _isLoading = false;
 
   @override
   void initState() {
     super.initState();
     // Default to monthly if it's initial registration (as per requirement)
-    if (widget.isInitialRegistration) {
+    /* if (widget.isInitialRegistration) {
       _isMonthly = true;
-    }
+    } */
     if (widget.preSelectedFoundation != null) {
       _selectedFoundation = widget.preSelectedFoundation;
     }
@@ -48,7 +48,7 @@ class _DonationScreenState extends State<DonationScreen> {
   Future<void> _processDonation(double amount, bool isMonthly) async {
     if (_selectedFoundation == null) return;
 
-    setState(() => _isLoading = true);
+    // setState(() => _isLoading = true);
 
     try {
       final user = FirebaseAuth.instance.currentUser;
@@ -95,7 +95,7 @@ class _DonationScreenState extends State<DonationScreen> {
         // No dejamos cerrar este dialog fácilmente para evitar que el usuario se vaya sin confirmar
         // Aunque Mercado Pago avisa rápido, puede tomar unos segundos.
         
-        bool paymentConfirmed = false;
+        // bool paymentConfirmed = false;
 
         showDialog(
           context: context,
@@ -124,14 +124,15 @@ class _DonationScreenState extends State<DonationScreen> {
 
         // Escuchar cambios en Firestore donde externalReference coincida
         // NOTA: El Webhook escribirá un documento en 'payments' con este externalReference
-        final subscription = FirebaseFirestore.instance
+        // final subscription = 
+        FirebaseFirestore.instance
             .collection('payments')
             .where('externalReference', isEqualTo: externalReference)
             .snapshots()
             .listen((snapshot) {
               if (snapshot.docs.isNotEmpty) {
                  // ¡PAGO CONFIRMADO!
-                 paymentConfirmed = true;
+                 // paymentConfirmed = true;
                  Navigator.pop(context); // Cerrar Dialog de Espera
                  _showSuccessDialog(); // Mostrar Éxito
               }
