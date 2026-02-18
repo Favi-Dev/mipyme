@@ -36,6 +36,18 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
         : PymeService().getPymes();
   }
 
+  @override
+  void didUpdateWidget(ClientHomeScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.showFoundationsOnly != oldWidget.showFoundationsOnly) {
+      setState(() {
+         _pymeStream = widget.showFoundationsOnly 
+            ? PymeService().getFoundations()
+            : PymeService().getPymes();
+      });
+    }
+  }
+
   void _showNotifications() {
     final theme = Theme.of(context);
     final clientService = ClientService();
