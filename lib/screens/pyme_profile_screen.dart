@@ -181,6 +181,19 @@ class _PymeProfileScreenState extends State<PymeProfileScreen> {
               ),
               const SizedBox(height: 24),
               _buildSectionTitle('Configuración'),
+               _buildOptionTile(
+                icon: Icons.settings_outlined,
+                title: 'Ajustes de Cuenta',
+                onTap: () async {
+                  await Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const PymeVitrinaSettingsScreen(),
+                    ),
+                  );
+                  setState(() {});
+                },
+              ),
               SwitchListTile(
                   title: Text(
                     'Notificaciones',
