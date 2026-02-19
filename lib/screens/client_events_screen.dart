@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:intl/intl.dart';
@@ -11,32 +12,21 @@ class ClientEventsScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) {
-      return const Scaffold(
-        body: Center(child: Text('Debes iniciar sesión para ver tus eventos.')),
+      return Scaffold(
+        backgroundColor: const Color(0xFFF4F1EA),
+        body: Center(child: Text('Debes iniciar sesión para ver tus eventos.', style: GoogleFonts.poppins())),
       );
     }
 
     return Scaffold(
       backgroundColor: const Color(0xFFF4F1EA),
       appBar: AppBar(
-        title: const Text('Mis Eventos y Talleres', style: TextStyle(color: Color(0xFF2F3F2A), fontWeight: FontWeight.bold)),
+        title: Text('Mis Eventos y Talleres', style: GoogleFonts.poppins(color: const Color(0xFF2F3F2A), fontWeight: FontWeight.bold)),
         backgroundColor: const Color(0xFFF4F1EA),
         elevation: 0,
         iconTheme: const IconThemeData(color: Color(0xFF2F3F2A)),
       ),
       body: StreamBuilder<QuerySnapshot>(
-        // Query products where user is in participants subcollection...
-        // Firestore doesn't support collection group queries on subcollections easily for "my participation"
-        // unless we store multiple documents or duplicate data.
-        // A better approach: Store `participations` collection at root: { userId, eventId, eventDetails... }
-        // BUT current implementation in ClientPymeDetailScreen stores in `products/{id}/participants/{uid}`.
-        // To list "My Events", we either:
-        // 1. Traverse all products (inefficient).
-        // 2. Change data model to also store in users/{uid}/participations or a root `participations` collection.
-        // Given I just wrote the previous code to write to `products/.../participants`, I should update it to ALSO write to `users/{uid}/participations`.
-        
-        // Let's assume for now I will fix the write logic to also save to user profile or root collection.
-        // I'll update ClientPymeDetailScreen to save to `users/{uid}/participations` as well.
         stream: FirebaseFirestore.instance
             .collection('users')
             .doc(user.uid)
@@ -53,11 +43,25 @@ class ClientEventsScreen extends StatelessWidget {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(Icons.event_busy, size: 64, color: Colors.grey[400]),
-                  const SizedBox(height: 16),
-                  Text(
+                   Container(
+                     padding: const EdgeInsets.all(24),
+                     decoration: BoxDecoration(
+                       color: Colors.white,
+                       shape: BoxShape.circle,
+                       boxShadow: [
+                         BoxShadow(
+                           color: Colors.black.withOpacity(0.05),
+                           blurRadius: 10,
+                           offset: const Offset(0, 4),
+                         ),
+                       ],
+                     ),
+                     child: Icon(Icons.event_busy, size: 64, color: Colors.grey[400]),
+                   ),
+                   const SizedBox(height: 24),
+                   Text(
                     'No te has inscrito a ningún evento aún.',
-                    style: TextStyle(color: Colors.grey[600], fontSize: 16),
+                    style: GoogleFonts.poppins(color: Colors.grey[600], fontSize: 16),
                   ),
                 ],
               ),
@@ -70,34 +74,121 @@ class ClientEventsScreen extends StatelessWidget {
             itemBuilder: (context, index) {
               final data = snapshot.data!.docs[index].data() as Map<String, dynamic>;
               final eventName = data['eventName'] ?? 'Evento';
-              final pymeName = data['pymeName'] ?? 'Organizador'; // Assuming we save this
+              final pymeName = data['pymeName'] ?? 'Organizador'; 
               final date = (data['eventDate'] as Timestamp?)?.toDate();
               
-              return Card(
+              return Container(
                 margin: const EdgeInsets.only(bottom: 16),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                child: ListTile(
-                  leading: Container(
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFE63946).withOpacity(0.1),
-                      shape: BoxShape.circle,
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(16),
+                  boxShadow: [
+                    BoxShadow(
+                      color: const Color(0xFF2F3F2A).withOpacity(0.08),
+                      blurRadius: 8,
+                      offset: const Offset(0, 4),
                     ),
-                    child: const Icon(Icons.event, color: Color(0xFFE63946)),
-                  ),
-                  title: Text(eventName, style: const TextStyle(fontWeight: FontWeight.bold)),
-                  subtitle: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(pymeName),
-                      if (date != null)
-                        Text(DateFormat('dd/MM/yyyy HH:mm').format(date), style: TextStyle(color: Colors.grey[600], fontSize: 12)),
-                    ],
-                  ),
-                  trailing: IconButton(
-                    icon: const Icon(Icons.cancel_outlined, color: Colors.grey),
-                    tooltip: 'Cancelar inscripción',
-                    onPressed: () => _confirmCancellation(context, snapshot.data!.docs[index].id, data),
+                  ],
+                ),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(16),
+                  child: Material(
+                    color: Colors.transparent,
+                    child: InkWell(
+                      onTap: () {
+                         // Could navigate to event detail Pyme page but pass event ID
+                      },
+                      child: Padding(
+                        padding: const EdgeInsets.all(16.0),
+                        child: Row(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(12),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFF6F8F5E).withOpacity(0.1),
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: Column(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Text(
+                                    date != null ? DateFormat('dd').format(date) : '--',
+                                    style: GoogleFonts.poppins(
+                                      color: const Color(0xFF6F8F5E),
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 20,
+                                    ),
+                                  ),
+                                  Text(
+                                    date != null ? DateFormat('MMM').format(date).toUpperCase() : '--',
+                                    style: GoogleFonts.poppins(
+                                      color: const Color(0xFF6F8F5E),
+                                      fontWeight: FontWeight.w600,
+                                      fontSize: 12,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            const SizedBox(width: 16),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    eventName,
+                                    style: GoogleFonts.poppins(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 16,
+                                      color: const Color(0xFF2F3F2A),
+                                    ),
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Row(
+                                    children: [
+                                      const Icon(Icons.storefront, size: 14, color: Colors.grey),
+                                      const SizedBox(width: 4),
+                                      Expanded(
+                                        child: Text(
+                                          pymeName,
+                                          style: GoogleFonts.poppins(
+                                            color: Colors.grey[600],
+                                            fontSize: 13,
+                                          ),
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  if (date != null) ...[
+                                    const SizedBox(height: 4),
+                                    Row(
+                                      children: [
+                                        const Icon(Icons.access_time, size: 14, color: Colors.grey),
+                                        const SizedBox(width: 4),
+                                        Text(
+                                          DateFormat('HH:mm').format(date),
+                                          style: GoogleFonts.poppins(
+                                            color: Colors.grey[600],
+                                            fontSize: 13,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ],
+                                ],
+                              ),
+                            ),
+                            IconButton(
+                              icon: const Icon(Icons.cancel_outlined, color: Color(0xFFE63946)),
+                              tooltip: 'Cancelar inscripción',
+                              onPressed: () => _confirmCancellation(context, snapshot.data!.docs[index].id, data),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
                   ),
                 ),
               );
