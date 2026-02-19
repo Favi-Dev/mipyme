@@ -143,7 +143,6 @@ class _ClientSettingsScreenState extends State<ClientSettingsScreen> {
         builder: (context, snapshot) {
           final settings = snapshot.data ?? {};
           final notifications = settings['notifications'] ?? true;
-          final darkMode = settings['darkMode'] ?? false;
 
           return ListView(
             padding: const EdgeInsets.all(16),
@@ -154,12 +153,6 @@ class _ClientSettingsScreenState extends State<ClientSettingsScreen> {
                 'Recibir alertas de ofertas y pedidos', 
                 notifications, 
                 (val) => _clientService.updateSetting('notifications', val)
-              ),
-              _buildSwitchTile(
-                'Modo Oscuro', 
-                'Cambiar la apariencia de la app', 
-                darkMode, 
-                (val) => _clientService.updateSetting('darkMode', val)
               ),
               
               const SizedBox(height: 24),

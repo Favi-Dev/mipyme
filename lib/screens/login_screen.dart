@@ -108,33 +108,33 @@ class _LoginScreenState extends State<LoginScreen> {
             }
           },
         );
-      } else if (e.code == 'user-not-found' || e.code == 'wrong-password' || e.code == 'invalid-credential') {
-        message = 'Credenciales incorrectas';
+      } else if (e.code == 'user-not-found' || 
+                 e.code == 'wrong-password' || 
+                 e.code == 'invalid-credential' ||
+                 e.code == 'INVALID_LOGIN_CREDENTIALS') { // Newer code
+        message = 'Credenciales incorrectas. Verifique correo y contraseña.';
+      } else {
+        message = 'Error (${e.code}): ${e.message}'; // Show raw error if unknown
       }
+      
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(message), 
-          backgroundColor: const Color(0xFF8B5A3C),
+          backgroundColor: const Color(0xFFD32F2F), // Red for error visibility
           action: action,
-          duration: const Duration(seconds: 8),
+          duration: const Duration(seconds: 4),
         ),
       );
     } catch (e) {
-      if (!mounted) return; // Prevent setState if unmounted
+      if (!mounted) return;
       setState(() => _isLoading = false);
-      print('Login error: $e'); // Log for debugging
+      print('Login generic error: $e');
 
-      String message = 'Error inesperado';
-      if (e is FirebaseAuthException) { // Re-check if it was missed by the on clause or wrapped
-        if (e.code == 'email-not-verified') {
-             message = 'Por favor verifica tu correo electrónico antes de iniciar sesión';
-        } else if (e.code == 'invalid-credential') {
-             message = 'Credenciales incorrectas';
-        }
-      }
-      
-       ScaffoldMessenger.of(context).showSnackBar(
-         SnackBar(content: Text(message), backgroundColor: const Color(0xFF8B5A3C)),
+      ScaffoldMessenger.of(context).showSnackBar(
+         SnackBar(
+           content: Text('Error inesperado: $e'), 
+           backgroundColor: const Color(0xFFD32F2F)
+         ),
        );
     }
   }

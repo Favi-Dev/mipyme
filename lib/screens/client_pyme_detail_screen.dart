@@ -352,13 +352,13 @@ class _ClientPymeDetailScreenState extends State<ClientPymeDetailScreen> {
                 flexibleSpace: FlexibleSpaceBar(
                   title: ConstrainedBox(
                     constraints: BoxConstraints(
-                      maxWidth: MediaQuery.of(context).size.width - 280, // 110 padding + ~170 for actions (Cart, Heart, Share)
+                      maxWidth: MediaQuery.of(context).size.width - 150, // Less aggressive constraint
                     ),
                     child: Text(
                       _pymeName,
-                      maxLines: 1,
+                      maxLines: 2, // Allow 2 lines
                       overflow: TextOverflow.ellipsis,
-                      style: theme.textTheme.titleLarge?.copyWith(
+                      style: theme.textTheme.titleMedium?.copyWith( // Smaller title for fit
                         color: const Color(0xFFF4F1EA),
                         fontWeight: FontWeight.bold,
                         shadows: [
@@ -472,9 +472,15 @@ class _ClientPymeDetailScreenState extends State<ClientPymeDetailScreen> {
                           
                           final products = snapshot.data ?? [];
                           
-                          // Filter events and other products
-                          final eventProducts = products.where((p) => p.customAttributes['is_event'] == 'true').toList();
-                          final standardProducts = products.where((p) => p.customAttributes['is_event'] != 'true').toList();
+                          // Filter events
+                          final eventProducts = products.where((p) => 
+                            p.customAttributes['is_event'].toString().toLowerCase() == 'true'
+                          ).toList();
+                          
+                          // Filter regular products
+                          final standardProducts = products.where((p) => 
+                            p.customAttributes['is_event'].toString().toLowerCase() != 'true'
+                          ).toList();
 
                           return Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
@@ -829,7 +835,7 @@ class _ClientPymeDetailScreenState extends State<ClientPymeDetailScreen> {
                   .doc(user.uid)
                   .get()
                   .then((doc) {
-                    if (mounted) {
+                    if (context.mounted) {
                         setStateModal(() {
                             isParticipating = doc.exists;
                             isLoadingParticipation = false;
@@ -993,6 +999,7 @@ class _ClientPymeDetailScreenState extends State<ClientPymeDetailScreen> {
                          setStateModal(() => isLoadingParticipation = true);
                          
                          try {
+                            // 1. Save in Product's participants subcollection
                             await FirebaseFirestore.instance
                                 .collection('products')
                                 .doc(event.id)
@@ -1001,8 +1008,26 @@ class _ClientPymeDetailScreenState extends State<ClientPymeDetailScreen> {
                                 .set({
                                     'userId': user.uid,
                                     'registeredAt': FieldValue.serverTimestamp(),
-                                    'email': user.email, // Useful for notifications
+                                    'email': user.email, 
+                                    'pymeId': event.pymeId,
+                                    'eventName': event.name,
+                                    'eventDate': eventDate,
                                 });
+
+                            // 2. Save in User's participations subcollection (for "My Events")
+                            await FirebaseFirestore.instance
+                                .collection('users')
+                                .doc(user.uid)
+                                .collection('participations')
+                                .doc(event.id)
+                                .set({
+                                    'eventId': event.id,
+                                    'eventName': event.name,
+                                    'eventDate': eventDate,
+                                    'pymeId': event.pymeId,
+                                    'pymeName': widget.pymeData.name, 
+                                    'registeredAt': FieldValue.serverTimestamp(),
+                                }, SetOptions(merge: true));
                             
                             setStateModal(() {
                                 isParticipating = true;

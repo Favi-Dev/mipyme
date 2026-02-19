@@ -15,6 +15,7 @@ import 'client_history_screen.dart';
 import 'client_settings_screen.dart';
 import 'client_support_screen.dart';
 import 'client_addresses_screen.dart';
+import 'client_events_screen.dart';
 
 class ClientProfileScreen extends StatefulWidget {
   const ClientProfileScreen({super.key});
@@ -193,6 +194,17 @@ class _ClientProfileScreenState extends State<ClientProfileScreen> {
                   MaterialPageRoute(
                     builder: (context) => const ClientQrScreen(),
                   ),
+                );
+              },
+            ),
+            _buildProfileOption(
+              context,
+              icon: Icons.event,
+              title: 'Mis Eventos',
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (c) => const ClientEventsScreen()),
                 );
               },
             ),

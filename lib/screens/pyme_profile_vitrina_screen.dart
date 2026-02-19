@@ -105,21 +105,27 @@ class _PymeProfileVitrinaScreenState extends State<PymeProfileVitrinaScreen> {
                       ),
                     ],
                     flexibleSpace: FlexibleSpaceBar(
-                      title: Text(
-                        profile.name,
-                        style: const TextStyle(
-                          color: Color(0xFFF4F1EA),
-                          fontWeight: FontWeight.bold,
-                          shadows: [
-                            Shadow(
-                              offset: Offset(0, 1),
-                              blurRadius: 3.0,
-                              color: Colors.black54,
-                            ),
-                          ],
+                      title: ConstrainedBox(
+                        constraints: const BoxConstraints(maxWidth: 200), // Reduce width slightly or use screen width calc
+                        child: Text(
+                          profile.name,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            color: Color(0xFFF4F1EA),
+                            fontWeight: FontWeight.bold,
+                            fontSize: 16, // Slightly reduce size for long names
+                            shadows: [
+                              Shadow(
+                                offset: Offset(0, 1),
+                                blurRadius: 3.0,
+                                color: Colors.black54,
+                              ),
+                            ],
+                          ),
                         ),
                       ),
-                      titlePadding: const EdgeInsets.only(left: 110, bottom: 16),
+                      titlePadding: const EdgeInsets.only(left: 110, bottom: 16, right: 16),
                       background: Stack(
                         fit: StackFit.expand,
                         children: [
@@ -251,12 +257,12 @@ class _PymeProfileVitrinaScreenState extends State<PymeProfileVitrinaScreen> {
                           
                           // Filter events
                           final events = allProducts.where((p) => 
-                            p.customAttributes['is_event'] == 'true'
+                            p.customAttributes['is_event'].toString().toLowerCase() == 'true'
                           ).toList();
                           
                           // Filter regular products
                           final regularProducts = allProducts.where((p) => 
-                            p.customAttributes['is_event'] != 'true'
+                            p.customAttributes['is_event'].toString().toLowerCase() != 'true'
                           ).toList();
 
                           return Column(

@@ -170,35 +170,52 @@ class PymeService {
 
   // Get Pyme Metrics
   Stream<Map<String, dynamic>> getPymeMetrics(String pymeId) {
+    // Combine Orders and Payments streams
+    // This is a bit complex with RxDart, but with standard streams we can listen to both
+    // For simplicity, let's just return a stream that combines the latest from both collections manually
+    // or just listen to 'payments' for sales and 'orders' for pending.
+    
+    // Better approach: Query 'payments' for confirmed sales.
     return FirebaseFirestore.instance
-        .collection('orders')
-        .where('pymeId', isEqualTo: pymeId)
+        .collection('payments')
+        .where('pymeId', isEqualTo: pymeId) // Ensure payments have pymeId
+        .where('status', isEqualTo: 'approved')
         .snapshots()
-        .map((snapshot) {
-      int totalOrders = 0;
+        .map((paymentSnapshot) {
+          
       double totalSales = 0;
       int completedOrders = 0;
-      int pendingOrders = 0;
-
-      for (var doc in snapshot.docs) {
+      
+      for (var doc in paymentSnapshot.docs) {
         final data = doc.data();
-        totalOrders++;
-        if (data['status'] == 'completed') {
-          completedOrders++;
-          totalSales += (data['total'] ?? 0);
-        } else if (data['status'] == 'pending') {
-          pendingOrders++;
-        }
+        totalSales += (data['transaction_amount'] ?? 0);
+        completedOrders++;
       }
 
+      // We still need pending quotes from 'orders'
+      // Since we can't easily combine streams here without rxdart, 
+      // let's just return sales data here and handle pending orders in the UI widget 
+      // or duplicate logic. 
+      // Or, we can use a StreamGroup or async generator?
+      
       return {
-        'totalOrders': totalOrders,
         'totalSales': totalSales,
         'completedOrders': completedOrders,
-        'pendingOrders': pendingOrders,
+        'pendingOrders': 0, // Placeholder, will be fetched in UI or via different stream
+        'totalOrders': completedOrders, // Confirmed orders
       };
     });
   }
+
+  // Get Pending Orders Count
+   Stream<int> getPendingOrdersCount(String pymeId) {
+     return FirebaseFirestore.instance
+         .collection('orders')
+         .where('pymeId', isEqualTo: pymeId)
+         .where('status', whereIn: ['pending', 'quote_requested'])
+         .snapshots()
+         .map((snapshot) => snapshot.docs.length);
+   }
 
   // --- Validation ---
   Future<void> redeemCouponForUser(String userId) async {
