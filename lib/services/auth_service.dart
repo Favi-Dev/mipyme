@@ -41,7 +41,17 @@ class AuthService {
       
       User? user = result.user;
       if (user != null) {
-        if (!user.emailVerified) {
+        // Bypass verification for test accounts - REMOVE BEFORE PRODUCTION
+        final testAccounts = [
+          'admin@ejemplo.cl',
+          'cliente@ejemplo.cl',
+          'pyme@ejemplo.cl', 
+          'fundacion@ejemplo.cl'
+        ];
+
+        if (testAccounts.contains(email)) {
+          // Allow login without verification
+        } else if (!user.emailVerified) {
           throw FirebaseAuthException(
             code: 'email-not-verified',
             message: 'Por favor verifica tu correo electrónico para continuar.',
