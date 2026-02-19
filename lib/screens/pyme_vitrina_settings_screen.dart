@@ -23,8 +23,7 @@ class PymeVitrinaSettingsScreen extends StatefulWidget {
 class _PymeVitrinaSettingsScreenState extends State<PymeVitrinaSettingsScreen> {
   late TextEditingController _nameController;
   late TextEditingController _descriptionController;
-  // late TextEditingController _hoursController; 
-  // late TextEditingController _locationController;
+  late TextEditingController _addressController; // Changed from _selectedLocation
   late TextEditingController _webController;
   late TextEditingController _instagramController;
   late TextEditingController _whatsappController;
@@ -39,44 +38,35 @@ class _PymeVitrinaSettingsScreenState extends State<PymeVitrinaSettingsScreen> {
   String? _profileImageUrl;
   String? _coverImageUrl;
 
-  String? _selectedLocation;
-  String? _selectedHours;
+  // Schedule State
+  final List<String> _daysOfWeek = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'];
+  final Map<String, bool> _isOpen = {};
+  final Map<String, TimeOfDay> _openTime = {};
+  final Map<String, TimeOfDay> _closeTime = {};
+
   String? _selectedCategory;
   String? _originalCategory;
   List<String> _tags = [];
 
-  final List<String> _communes = [
-    'Cerrillos', 'Cerro Navia', 'Conchalí', 'El Bosque', 'Estación Central',
-    'Huechuraba', 'Independencia', 'La Cisterna', 'La Florida', 'La Granja',
-    'La Pintana', 'La Reina', 'Las Condes', 'Lo Barnechea', 'Lo Espejo',
-    'Lo Prado', 'Macul', 'Maipú', 'Ñuñoa', 'Pedro Aguirre Cerda', 'Peñalolén',
-    'Providencia', 'Pudahuel', 'Quilicura', 'Quinta Normal', 'Recoleta',
-    'Renca', 'San Joaquín', 'San Miguel', 'San Ramón', 'Santiago',
-    'Vitacura', 'Puente Alto', 'San Bernardo'
-  ];
-
-  final List<String> _scheduleOptions = [
-    'Lunes a Viernes 09:00 - 18:00',
-    'Lunes a Viernes 09:00 - 19:00',
-    'Lunes a Sábado 09:00 - 20:00',
-    'Lunes a Domingo 09:00 - 21:00',
-    'Martes a Domingo 10:00 - 20:00',
-    'Siempre Abierto (24/7)',
-    'Atención con Cita Previa',
-    'Horario Flexible'
-  ];
+  // Locations removed as we now use free text input
+  // Schedule options removed as we use custom switches
 
   @override
   void initState() {
     super.initState();
     _nameController = TextEditingController();
     _descriptionController = TextEditingController();
-    // _hoursController and _locationController are removed/unused for text input now
-    // but kept if needed for custom input or migration. 
-    // Actually, let's remove them from init and use state string vars.
+    _addressController = TextEditingController();
     _webController = TextEditingController();
     _instagramController = TextEditingController();
     _whatsappController = TextEditingController();
+    
+    // Initialize schedule defaults
+    for (var day in _daysOfWeek) {
+      _isOpen[day] = true;
+      _openTime[day] = const TimeOfDay(hour: 9, minute: 0);
+      _closeTime[day] = const TimeOfDay(hour: 18, minute: 0);
+    }
     
     _loadPymeData();
   }
@@ -96,17 +86,39 @@ class _PymeVitrinaSettingsScreenState extends State<PymeVitrinaSettingsScreen> {
           setState(() {
             _nameController.text = userProfile.name;
             _descriptionController.text = userProfile.description ?? '';
-            // Handle new selectable fields
-            _selectedLocation = userProfile.location;
-            if (_selectedLocation != null && !_communes.contains(_selectedLocation)) {
-               // If existing value is not in list, maybe add it or ignore? 
-               // Adding it allows legacy values to be shown and changed.
-               _communes.add(_selectedLocation!);
-            }
             
-            _selectedHours = userProfile.hours;
-            if (_selectedHours != null && !_scheduleOptions.contains(_selectedHours)) {
-               _scheduleOptions.add(_selectedHours!);
+            // Handle Address
+            _addressController.text = userProfile.location ?? '';
+            
+            // Handle Schedule
+            if (userProfile.hours != null && userProfile.hours!.isNotEmpty) {
+              final lines = userProfile.hours!.split('\n');
+              for (var line in lines) {
+                final parts = line.split(': ');
+                if (parts.length == 2) {
+                  final day = parts[0].trim();
+                  final timeRange = parts[1].trim();
+                  
+                  if (_daysOfWeek.contains(day)) {
+                    if (timeRange == 'Cerrado') {
+                      _isOpen[day] = false;
+                    } else {
+                      final times = timeRange.split(' - ');
+                      if (times.length == 2) {
+                        final openParts = times[0].split(':');
+                        final closeParts = times[1].split(':');
+                        if (openParts.length == 2 && closeParts.length == 2) {
+                          _isOpen[day] = true;
+                          _openTime[day] = TimeOfDay(hour: int.parse(openParts[0]), minute: int.parse(openParts[1]));
+                          _closeTime[day] = TimeOfDay(hour: int.parse(closeParts[0]), minute: int.parse(closeParts[1]));
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            } else {
+              // Default initialization already done in initState
             }
             
             _webController.text = userProfile.webUrl ?? '';
@@ -263,11 +275,29 @@ class _PymeVitrinaSettingsScreenState extends State<PymeVitrinaSettingsScreen> {
     }
 
     try {
+      // Format Schedule
+      String formattedSchedule = '';
+      for (var day in _daysOfWeek) {
+        if (_isOpen[day] == true) {
+           // We use context safely because we are in a state method
+           // but format(context) depends on localization. 
+           // It's safer to format manually if context might be unstable, 
+           // but here context is valid.
+           final open = _openTime[day]!;
+           final close = _closeTime[day]!;
+           final openStr = '${open.hour.toString().padLeft(2,'0')}:${open.minute.toString().padLeft(2,'0')}';
+           final closeStr = '${close.hour.toString().padLeft(2,'0')}:${close.minute.toString().padLeft(2,'0')}';
+           formattedSchedule += '$day: $openStr - $closeStr\n';
+        } else {
+           formattedSchedule += '$day: Cerrado\n';
+        }
+      }
+
       await _pymeService.updatePymeProfile(_targetPymeId!, {
         'name': _nameController.text,
         'description': _descriptionController.text,
-        'hours': _selectedHours,
-        'location': _selectedLocation,
+        'hours': formattedSchedule.trim(), // Save the formatted string
+        'location': _addressController.text, // Save the manual address
         'webUrl': _webController.text,
         'instagramHandle': _instagramController.text,
         'whatsappNumber': _whatsappController.text,
@@ -435,32 +465,80 @@ class _PymeVitrinaSettingsScreenState extends State<PymeVitrinaSettingsScreen> {
             _buildTextField('Descripción', _descriptionController, maxLines: 4),
             const SizedBox(height: 24),
             _buildSectionHeader('Detalles Operativos'),
-            DropdownButtonFormField<String>(
-              initialValue: _selectedHours,
+            
+            // Address Field
+            TextField(
+              controller: _addressController,
               decoration: InputDecoration(
-                labelText: 'Horario de Atención',
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                prefixIcon: const Icon(Icons.access_time, color: Color(0xFF6F8F5E)),
-                filled: true,
-                fillColor: const Color(0xFFFFFFFF),
-              ),
-              items: _scheduleOptions.map((e) => DropdownMenuItem(value: e, child: Text(e, style: const TextStyle(fontSize: 14), overflow: TextOverflow.ellipsis))).toList(),
-              onChanged: (val) => setState(() => _selectedHours = val),
-            ),
-            const SizedBox(height: 16),
-            DropdownButtonFormField<String>(
-              initialValue: _selectedLocation,
-              decoration: InputDecoration(
-                labelText: 'Ubicación / Comuna',
+                labelText: 'Dirección del Local',
+                hintText: 'Ej: Av. Providencia 1234, Local 5',
                 border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                 prefixIcon: const Icon(Icons.location_on, color: Color(0xFF6F8F5E)),
                 filled: true,
                 fillColor: const Color(0xFFFFFFFF),
               ),
-              items: _communes.map((e) => DropdownMenuItem(value: e, child: Text(e, style: const TextStyle(fontSize: 14)))).toList(),
-              onChanged: (val) => setState(() => _selectedLocation = val),
             ),
             const SizedBox(height: 24),
+            
+            // Schedule Section
+            const Text(
+              'Horario de Atención',
+              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Color(0xFF2F3F2A)),
+            ),
+            const SizedBox(height: 8),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: Colors.grey.withOpacity(0.3)),
+              ),
+              child: Column(
+                children: _daysOfWeek.map((day) {
+                  return Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 8),
+                    child: Row(
+                      children: [
+                        SizedBox(
+                          width: 80,
+                          child: Text(day, style: const TextStyle(fontWeight: FontWeight.w500)),
+                        ),
+                        Switch(
+                          value: _isOpen[day] ?? false,
+                          activeColor: const Color(0xFF6F8F5E),
+                          onChanged: (val) => setState(() => _isOpen[day] = val),
+                        ),
+                        if (_isOpen[day] == true) ...[
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.end,
+                              children: [
+                                _buildTimePickerButton(day, true),
+                                const Padding(
+                                  padding: EdgeInsets.symmetric(horizontal: 4),
+                                  child: Text('-'),
+                                ),
+                                _buildTimePickerButton(day, false),
+                              ],
+                            ),
+                          ),
+                        ] else ...[
+                          const Spacer(),
+                          Text(
+                            'Cerrado',
+                            style: TextStyle(color: Colors.grey[400], fontStyle: FontStyle.italic),
+                          ),
+                          const SizedBox(width: 16),
+                        ],
+                      ],
+                    ),
+                  );
+                }).toList(),
+              ),
+            ),
+            const SizedBox(height: 24),
+
             _buildSectionHeader('Contacto'),
             _buildTextField('Sitio Web', _webController,
                 icon: Icons.language),
@@ -591,7 +669,50 @@ class _PymeVitrinaSettingsScreenState extends State<PymeVitrinaSettingsScreen> {
     );
   }
 
-  // _confirmDeleteAccount removed
+  Widget _buildTimePickerButton(String day, bool isOpenTime) {
+    final TimeOfDay? time = isOpenTime ? _openTime[day] : _closeTime[day];
+    
+    return InkWell(
+      onTap: () async {
+        final TimeOfDay? picked = await showTimePicker(
+          context: context,
+          initialTime: time ?? TimeOfDay.now(),
+          builder: (context, child) {
+            return Theme(
+              data: Theme.of(context).copyWith(
+                colorScheme: const ColorScheme.light(
+                  primary: Color(0xFF6F8F5E), // Header background color
+                  onPrimary: Colors.white, // Header text color
+                  onSurface: Color(0xFF2F3F2A), // Body text color
+                ),
+              ),
+              child: child!,
+            );
+          },
+        );
+        if (picked != null) {
+          setState(() {
+            if (isOpenTime) {
+              _openTime[day] = picked;
+            } else {
+              _closeTime[day] = picked;
+            }
+          });
+        }
+      },
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        decoration: BoxDecoration(
+          border: Border.all(color: Colors.grey.shade300),
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: Text(
+          time?.format(context) ?? '--:--',
+          style: const TextStyle(fontSize: 14),
+        ),
+      ),
+    );
+  }
 
   Widget _buildSectionHeader(String title) {
     return Padding(

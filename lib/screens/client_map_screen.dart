@@ -146,13 +146,20 @@ class _ClientMapScreenState extends State<ClientMapScreen> {
                       // Pyme Markers
                       ...pymes.map((pyme) {
                         LatLng pos;
+                        // Use stored lat/lng or generate deterministic position if missing
                         if (pyme.latitude != null && pyme.longitude != null) {
                           pos = LatLng(pyme.latitude!, pyme.longitude!);
                         } else {
                           pos = _getPosition(pyme.id);
                         }
 
-                        final style = _getStyleForCategory(pyme.category);
+                        // Determine style based on Role and Category
+                        Map<String, dynamic> style;
+                        if (pyme.role == UserRole.foundation) {
+                            style = {'icon': Icons.volunteer_activism, 'color': const Color(0xFFE63946)};
+                        } else {
+                            style = _getStyleForCategory(pyme.category);
+                        }
 
                         return Marker(
                           point: pos,

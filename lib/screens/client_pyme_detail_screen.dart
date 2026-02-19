@@ -782,6 +782,272 @@ class _ClientPymeDetailScreenState extends State<ClientPymeDetailScreen> {
   }
 
 
+  void _showEventDetail(Product event) {
+    bool isParticipating = false; // State to track participation
+    bool isLoadingParticipation = true;
+    final theme = Theme.of(context);
+    final user = FirebaseAuth.instance.currentUser;
+
+    // Check participation status
+    if (user != null) {
+      FirebaseFirestore.instance
+          .collection('products')
+          .doc(event.id)
+          .collection('participants')
+          .doc(user.uid)
+          .get()
+          .then((doc) {
+        if (doc.exists) {
+            // Check if widget is mounted before calling setState 
+            // Since we are inside a builder, we might need a StatefulBuilder's setState 
+            // But this function is inside the main state, so we can use a local variable 
+            // and update it inside the StatefulBuilder of the modal.
+            isParticipating = true;
+        }
+        isLoadingParticipation = false;
+      });
+    } else {
+        isLoadingParticipation = false;
+    }
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setStateModal) {
+          
+          // Trigger the check once if needed, but since we did it outside, 
+          // we might just need to update the state once the future completes.
+          // Better approach: Move the logic inside here or use a FutureBuilder.
+          
+          if (user != null && isLoadingParticipation) {
+               FirebaseFirestore.instance
+                  .collection('products')
+                  .doc(event.id)
+                  .collection('participants')
+                  .doc(user.uid)
+                  .get()
+                  .then((doc) {
+                    if (mounted) {
+                        setStateModal(() {
+                            isParticipating = doc.exists;
+                            isLoadingParticipation = false;
+                        });
+                    }
+               });
+          }
+
+          final eventDateStr = event.customAttributes['event_date'];
+          DateTime? eventDate;
+          if (eventDateStr != null) {
+              try {
+                  eventDate = DateTime.parse(eventDateStr);
+              } catch (_) {}
+          }
+           final eventLocation = event.customAttributes['event_location'] ?? 'Ubicación por definir';
+
+
+          return Container(
+            height: MediaQuery.of(context).size.height * 0.85,
+            decoration: BoxDecoration(
+              color: theme.colorScheme.surface,
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+            ),
+            child: Column(
+              children: [
+                Container(
+                  margin: const EdgeInsets.symmetric(vertical: 12),
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: Colors.grey[300],
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+                Expanded(
+                  child: ListView(
+                    padding: const EdgeInsets.symmetric(horizontal: 24),
+                    children: [
+                      Hero(
+                        tag: 'event_${event.id}', // Use different tag prefix
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(16),
+                          child: Image.network(
+                            event.imageUrl,
+                            height: 300,
+                            width: double.infinity,
+                            fit: BoxFit.cover,
+                            errorBuilder: (_, __, ___) => Container(
+                              height: 300,
+                              color: theme.colorScheme.surfaceContainerHighest,
+                              child: Icon(Icons.event, size: 50, color: theme.colorScheme.onSurfaceVariant),
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 24),
+                      Text(
+                        event.name,
+                        style: theme.textTheme.headlineSmall?.copyWith(
+                          fontWeight: FontWeight.bold,
+                          color: theme.colorScheme.onSurface,
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      
+                      // Event Details
+                      Container(
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                            color: theme.colorScheme.surfaceContainerLowest,
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: theme.colorScheme.outlineVariant),
+                        ),
+                        child: Column(
+                            children: [
+                                if (eventDate != null) ...[
+                                    Row(
+                                        children: [
+                                            Icon(Icons.calendar_today, color: theme.colorScheme.primary),
+                                            const SizedBox(width: 12),
+                                            Text(
+                                                'Fecha: ${eventDate.day}/${eventDate.month}/${eventDate.year}',
+                                                style: theme.textTheme.bodyLarge,
+                                            ),
+                                        ],
+                                    ),
+                                    const SizedBox(height: 12),
+                                    Row(
+                                        children: [
+                                            Icon(Icons.access_time, color: theme.colorScheme.primary),
+                                            const SizedBox(width: 12),
+                                            Text(
+                                                'Hora: ${eventDate.hour}:${eventDate.minute.toString().padLeft(2, '0')}',
+                                                style: theme.textTheme.bodyLarge,
+                                            ),
+                                        ],
+                                    ),
+                                     const SizedBox(height: 12),
+                                ],
+                                Row(
+                                    children: [
+                                        Icon(Icons.location_on, color: theme.colorScheme.primary),
+                                        const SizedBox(width: 12),
+                                        Expanded(
+                                            child: Text(
+                                                'Lugar: $eventLocation',
+                                                style: theme.textTheme.bodyLarge,
+                                            ),
+                                        ),
+                                    ],
+                                ),
+                            ],
+                        ),
+                      ),
+
+                      const SizedBox(height: 24),
+                      Text(
+                        'Descripción',
+                        style: theme.textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        event.description,
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          color: theme.colorScheme.onSurfaceVariant,
+                          height: 1.5,
+                        ),
+                      ),
+                      const SizedBox(height: 100), // Spacing for fab
+                    ],
+                  ),
+                ),
+                
+                // Bottom Action Bar
+                Container(
+                  padding: const EdgeInsets.all(24),
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.surface,
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.05),
+                        blurRadius: 10,
+                        offset: const Offset(0, -4),
+                      ),
+                    ],
+                  ),
+                  child: SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      onPressed: (isLoadingParticipation || isParticipating) ? null : () async {
+                         if (user == null) {
+                             ScaffoldMessenger.of(context).showSnackBar(
+                                 const SnackBar(content: Text('Debes iniciar sesión para participar')),
+                             );
+                             return;
+                         }
+
+                         setStateModal(() => isLoadingParticipation = true);
+                         
+                         try {
+                            await FirebaseFirestore.instance
+                                .collection('products')
+                                .doc(event.id)
+                                .collection('participants')
+                                .doc(user.uid)
+                                .set({
+                                    'userId': user.uid,
+                                    'registeredAt': FieldValue.serverTimestamp(),
+                                    'email': user.email, // Useful for notifications
+                                });
+                            
+                            setStateModal(() {
+                                isParticipating = true;
+                                isLoadingParticipation = false;
+                            });
+
+                             ScaffoldMessenger.of(context).showSnackBar(
+                                 const SnackBar(
+                                     content: Text('¡Te has inscrito al evento!'),
+                                     backgroundColor: Color(0xFF6F8F5E),
+                                 ),
+                             );
+
+                         } catch (e) {
+                             setStateModal(() => isLoadingParticipation = false);
+                             ScaffoldMessenger.of(context).showSnackBar(
+                                 SnackBar(content: Text('Error al inscribirse: $e')),
+                             );
+                         }
+                      },
+                      style: ElevatedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        backgroundColor: isParticipating ? Colors.grey : theme.colorScheme.primary,
+                        foregroundColor: theme.colorScheme.onPrimary,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      child: Text(
+                        isLoadingParticipation 
+                            ? 'Cargando...' 
+                            : (isParticipating ? 'Inscrito' : 'Participar'),
+                        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          );
+        },
+      ),
+    );
+  }
+
   void _showProductDetail(Product product) {
     int quantity = 1;
     final theme = Theme.of(context);
@@ -1062,6 +1328,259 @@ class _ClientPymeDetailScreenState extends State<ClientPymeDetailScreen> {
     );
   }
 
+  void _showEventDetail(Product event) {
+    bool isParticipating = false; // State to track participation
+    bool isLoadingParticipation = true;
+    final theme = Theme.of(context);
+    final user = FirebaseAuth.instance.currentUser;
+    
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setStateModal) {
+            
+          // Check participation status on init
+          if (user != null && isLoadingParticipation) {
+               FirebaseFirestore.instance
+                  .collection('products')
+                  .doc(event.id)
+                  .collection('participants')
+                  .doc(user.uid)
+                  .get()
+                  .then((doc) {
+                      try {
+                        setStateModal(() {
+                            isParticipating = doc.exists;
+                            isLoadingParticipation = false;
+                        });
+                      } catch(e) {
+                          // Modal likely closed
+                      }
+               });
+          } else if (user == null && isLoadingParticipation) {
+              isLoadingParticipation = false;
+          }
+
+          final eventDateStr = event.customAttributes['event_date'];
+          DateTime? eventDate;
+          if (eventDateStr != null) {
+              try {
+                  eventDate = DateTime.parse(eventDateStr);
+              } catch (_) {}
+          }
+           final eventLocation = event.customAttributes['event_location'] ?? 'Ubicación por definir';
+
+
+          return Container(
+            height: MediaQuery.of(context).size.height * 0.85,
+            decoration: BoxDecoration(
+              color: theme.colorScheme.surface,
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+            ),
+            child: Column(
+              children: [
+                Container(
+                  margin: const EdgeInsets.symmetric(vertical: 12),
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: Colors.grey[300],
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+                Expanded(
+                  child: ListView(
+                    padding: const EdgeInsets.symmetric(horizontal: 24),
+                    children: [
+                      Hero(
+                        tag: 'event_${event.id}', // Use different tag prefix
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(16),
+                          child: Image.network(
+                            event.imageUrl,
+                            height: 300,
+                            width: double.infinity,
+                            fit: BoxFit.cover,
+                            errorBuilder: (_, __, ___) => Container(
+                              height: 300,
+                              color: theme.colorScheme.surfaceContainerHighest,
+                              child: Icon(Icons.event, size: 50, color: theme.colorScheme.onSurfaceVariant),
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 24),
+                      Text(
+                        event.name,
+                        style: theme.textTheme.headlineSmall?.copyWith(
+                          fontWeight: FontWeight.bold,
+                          color: theme.colorScheme.onSurface,
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      
+                      // Event Details
+                      Container(
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                            color: theme.colorScheme.surfaceContainerLowest,
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: theme.colorScheme.outlineVariant),
+                        ),
+                        child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                                if (eventDate != null) ...[
+                                    Row(
+                                        children: [
+                                            Icon(Icons.calendar_today, color: theme.colorScheme.primary),
+                                            const SizedBox(width: 12),
+                                            Text(
+                                                'Fecha: ${eventDate.day}/${eventDate.month}/${eventDate.year}',
+                                                style: theme.textTheme.bodyLarge,
+                                            ),
+                                        ],
+                                    ),
+                                    const SizedBox(height: 12),
+                                    Row(
+                                        children: [
+                                            Icon(Icons.access_time, color: theme.colorScheme.primary),
+                                            const SizedBox(width: 12),
+                                            Text(
+                                                'Hora: ${eventDate.hour}:${eventDate.minute.toString().padLeft(2, '0')}',
+                                                style: theme.textTheme.bodyLarge,
+                                            ),
+                                        ],
+                                    ),
+                                     const SizedBox(height: 12),
+                                ],
+                                Row(
+                                    children: [
+                                        Icon(Icons.location_on, color: theme.colorScheme.primary),
+                                        const SizedBox(width: 12),
+                                        Expanded(
+                                            child: Text(
+                                                'Lugar: $eventLocation',
+                                                style: theme.textTheme.bodyLarge,
+                                            ),
+                                        ),
+                                    ],
+                                ),
+                            ],
+                        ),
+                      ),
+
+                      const SizedBox(height: 24),
+                      Text(
+                        'Descripción',
+                        style: theme.textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        event.description,
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          color: theme.colorScheme.onSurfaceVariant,
+                          height: 1.5,
+                        ),
+                      ),
+                      const SizedBox(height: 100), // Spacing for fab
+                    ],
+                  ),
+                ),
+                
+                // Bottom Action Bar
+                Container(
+                  padding: const EdgeInsets.all(24),
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.surface,
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.05),
+                        blurRadius: 10,
+                        offset: const Offset(0, -4),
+                      ),
+                    ],
+                  ),
+                  child: SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      onPressed: (isLoadingParticipation || isParticipating) ? null : () async {
+                         if (user == null) {
+                             ScaffoldMessenger.of(context).showSnackBar(
+                                 const SnackBar(content: Text('Debes iniciar sesión para participar')),
+                             );
+                             return;
+                         }
+
+                         setStateModal(() => isLoadingParticipation = true);
+                         
+                         try {
+                            await FirebaseFirestore.instance
+                                .collection('products')
+                                .doc(event.id)
+                                .collection('participants')
+                                .doc(user.uid)
+                                .set({
+                                    'userId': user.uid,
+                                    'registeredAt': FieldValue.serverTimestamp(),
+                                    'email': user.email, 
+                                    'pymeId': event.pymeId,
+                                    'eventName': event.name,
+                                    'eventDate': eventDate,
+                                });
+                            
+                            setStateModal(() {
+                                isParticipating = true;
+                                isLoadingParticipation = false;
+                            });
+
+                             if (mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                     const SnackBar(
+                                         content: Text('¡Te has inscrito al evento! Te avisaremos cuando se acerque la fecha.'),
+                                         backgroundColor: Color(0xFF6F8F5E),
+                                     ),
+                                 );
+                             }
+
+                         } catch (e) {
+                             setStateModal(() => isLoadingParticipation = false);
+                             if (mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(content: Text('Error al inscribirse: $e')),
+                                );
+                             }
+                         }
+                      },
+                      style: ElevatedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        backgroundColor: isParticipating ? Colors.grey : theme.colorScheme.primary,
+                        foregroundColor: theme.colorScheme.onPrimary,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      child: Text(
+                        isLoadingParticipation 
+                            ? 'Cargando...' 
+                            : (isParticipating ? 'Inscrito' : 'Participar'),
+                        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          );
+        },
+      ),
+    );
+  }
+
   Widget _buildProductCard(Product product) {
     final theme = Theme.of(context);
     final bool isQuote = product.customAttributes['allow_quote'] == 'true';
@@ -1070,7 +1589,15 @@ class _ClientPymeDetailScreenState extends State<ClientPymeDetailScreen> {
 
     return GestureDetector(
       onTap: () {
-         if (isQuote) {
+         if (isEvent) {
+             // Handle event detail specifically
+             // Create a new method _showEventDetail(product) if needed,
+             // or reuse _showProductDetail with event flag logic inside.
+             // Given the requirement "solo se puede poner participar", 
+             // it's likely better to have a separate view or distinct logic.
+             // Let's assume we create _showEventDetail(product).
+             _showEventDetail(product);
+         } else if (isQuote) {
             _showQuoteDialog(product);
          } else {
             _showProductDetail(product);
@@ -1144,6 +1671,10 @@ class _ClientPymeDetailScreenState extends State<ClientPymeDetailScreen> {
                   height: 32,
                   child: ElevatedButton(
                     onPressed: () async {
+                      if (isEvent) {
+                          _showEventDetail(product);
+                          return;
+                      }
                       if (isQuote) {
                         _showQuoteDialog(product);
                         return;

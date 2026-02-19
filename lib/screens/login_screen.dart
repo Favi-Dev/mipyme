@@ -144,10 +144,18 @@ class _LoginScreenState extends State<LoginScreen> {
     // final theme = Theme.of(context);
     return Scaffold(
       backgroundColor: const Color(0xFFFDF1D9),
-      body: Center(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(24.0),
-          child: Column(
+      body: Stack(
+        children: [
+          // White Wave Background
+          Positioned.fill(
+            child: CustomPaint(
+              painter: WhiteWavePainter(),
+            ),
+          ),
+          Center(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(24.0),
+              child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Image.asset('assets/images/LOGOSOYPLUS.png', height: 200),
@@ -313,6 +321,34 @@ class _LoginScreenState extends State<LoginScreen> {
           ),
         ),
       ),
+      ],
+    ),
     );
+  }
+}
+
+class WhiteWavePainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    var paint = Paint()
+      ..color = Colors.white.withOpacity(0.8)
+      ..style = PaintingStyle.fill;
+
+    var path = Path();
+    path.moveTo(0, size.height * 0.7); // Start at 70% height
+    path.quadraticBezierTo(size.width * 0.25, size.height * 0.65,
+        size.width * 0.5, size.height * 0.7);
+    path.quadraticBezierTo(size.width * 0.75, size.height * 0.75,
+        size.width, size.height * 0.7);
+    path.lineTo(size.width, size.height);
+    path.lineTo(0, size.height);
+    path.close();
+
+    canvas.drawPath(path, paint);
+  }
+
+  @override
+  bool shouldRepaint(CustomPainter oldDelegate) {
+    return false;
   }
 }
