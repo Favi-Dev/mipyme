@@ -3,6 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../services/client_service.dart';
 import '../services/auth_service.dart';
+import 'terms_of_use_screen.dart';
 import 'login_screen.dart';
 
 class ClientSettingsScreen extends StatefulWidget {
@@ -127,51 +128,6 @@ class _ClientSettingsScreenState extends State<ClientSettingsScreen> {
     );
   }
 
-  Future<void> _confirmDeleteAccount(BuildContext context) async {
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('¿Eliminar cuenta?'),
-        content: const Text(
-          'Tu cuenta será programada para eliminación en 30 días. Si inicias sesión durante este periodo, la eliminación se cancelará.\n\nEsta acción cerrará tu sesión actual.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancelar'),
-          ),
-          FilledButton(
-            style: FilledButton.styleFrom(backgroundColor: Colors.red),
-            onPressed: () => Navigator.pop(context, true),
-            child: const Text('Eliminar cuenta'),
-          ),
-        ],
-      ),
-    );
-
-    if (confirmed == true && mounted) {
-      try {
-        final auth = AuthService();
-        await auth.deleteAccount();
-        if (mounted) {
-          Navigator.of(context).pushAndRemoveUntil(
-            MaterialPageRoute(builder: (context) => const LoginScreen()),
-            (route) => false,
-          );
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Cuenta programada para eliminación.')),
-          );
-        }
-      } catch (e) {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Error: $e')),
-          );
-        }
-      }
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -213,17 +169,22 @@ class _ClientSettingsScreenState extends State<ClientSettingsScreen> {
               _buildActionTile('Privacidad y Seguridad', Icons.security, () => _showPrivacySecurity(context)),
               
               const SizedBox(height: 16),
-              // Delete Account (Hidden/Discret)
+              // Link Terms & Delete Account
               Align(
                 alignment: Alignment.centerLeft,
                 child: TextButton.icon(
-                  onPressed: () => _confirmDeleteAccount(context),
-                  icon: Icon(Icons.delete_forever, size: 16, color: Colors.red.withOpacity(0.6)),
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => const TermsOfUseScreen()),
+                    );
+                  },
+                  icon: Icon(Icons.description, size: 16, color: Colors.grey[700]),
                   label: Text(
-                    'Eliminar Cuenta',
+                    'Términos y Borrar Cuenta',
                     style: GoogleFonts.poppins(
                       fontSize: 12,
-                      color: Colors.red.withOpacity(0.6),
+                      color: Colors.grey[700],
                     ),
                   ),
                 ),

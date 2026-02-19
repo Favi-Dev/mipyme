@@ -59,10 +59,15 @@ class _PymeAddProductScreenState extends State<PymeAddProductScreen> {
     final p = widget.product!;
     _nameController.text = p.name;
     _codeController.text = p.code;
-    _priceController.text = p.price.toStringAsFixed(0);
+    _priceController.text = p.price == 0 && p.customAttributes['allow_quote'] == 'true' ? '' : p.price.toStringAsFixed(0);
     _stockController.text = p.stock.toString();
     _imageUrl = p.imageUrl;
     _descController.text = p.description;
+
+    // Check allow quote
+    if (p.customAttributes['allow_quote'] == 'true') {
+      _allowQuote = true;
+    }
     
     // Load dynamic attributes
     p.customAttributes.forEach((key, value) {
@@ -73,45 +78,63 @@ class _PymeAddProductScreenState extends State<PymeAddProductScreen> {
   }
 
   void _initializeDynamicControllers() {
+    
+    // Always add 'duracion' if it's a service
+    if (_isService) {
+      _dynamicControllers['duracion'] = TextEditingController();
+    }
+    
     // Initialize controllers based on category to ensure they exist
     switch (_currentCategory) {
       case 'Comercio/retail':
       case 'Reciclaje Textil': // Handle Metamorfosis category
-          _dynamicControllers['talla'] = TextEditingController();
-          _dynamicControllers['color'] = TextEditingController();
-          _dynamicControllers['material'] = TextEditingController();
-          if (_currentCategory == 'Reciclaje Textil') {
-             _dynamicControllers['pieza_unica'] = TextEditingController(text: 'Sí');
+          if (!_isService) {
+            _dynamicControllers['talla'] = TextEditingController();
+            _dynamicControllers['color'] = TextEditingController();
+            _dynamicControllers['material'] = TextEditingController();
+            if (_currentCategory == 'Reciclaje Textil') {
+              _dynamicControllers['pieza_unica'] = TextEditingController(text: 'Sí');
+            }
+          } else {
+             _dynamicControllers['tipo_servicio'] = TextEditingController(); 
           }
         break;
       case 'Alimentos y gastronomía':
-        _dynamicControllers['ingredientes'] = TextEditingController();
-        _dynamicControllers['porcion'] = TextEditingController();
-        _dynamicControllers['dietetico'] = TextEditingController(); // e.g. Vegano, Sin Gluten
+        if (!_isService) {
+          _dynamicControllers['ingredientes'] = TextEditingController();
+          _dynamicControllers['porcion'] = TextEditingController();
+          _dynamicControllers['dietetico'] = TextEditingController();
+        }
         break;
       case 'Servicios profesionales':
-        // Simplified for product-only context, though these categories hint at services.
-        // Keeping basic fields or adapting if these should be products.
-        // Assuming user wants to sell "service packages" as products if they use this screen.
-        // But per request "solo debe ser productos", we remove pure service fields like duration unless it's a "packaged product"
          _dynamicControllers['modalidad'] = TextEditingController(); 
         break;
       case 'Salud, belleza y bienestar':
-          _dynamicControllers['laboratorio'] = TextEditingController();
-          _dynamicControllers['receta'] = TextEditingController();
+          if (!_isService) {
+            _dynamicControllers['laboratorio'] = TextEditingController();
+            _dynamicControllers['receta'] = TextEditingController();
+          } else {
+             _dynamicControllers['duracion_sesion'] = TextEditingController();
+             _dynamicControllers['profesional'] = TextEditingController();
+          }
         break;
       case 'Oficios y manufactura':
-        _dynamicControllers['materiales'] = TextEditingController();
-        _dynamicControllers['tiempo_entrega'] = TextEditingController();
-        _dynamicControllers['personalizado'] = TextEditingController(text: 'No');
+        if (!_isService) {
+          _dynamicControllers['materiales'] = TextEditingController();
+          _dynamicControllers['tiempo_entrega'] = TextEditingController();
+          _dynamicControllers['personalizado'] = TextEditingController(text: 'No');
+        }
         break;
       case 'Educación y cultura':
-         // Education products (books, kits) rather than classes
-        _dynamicControllers['nivel'] = TextEditingController();
-        _dynamicControllers['material_incluido'] = TextEditingController(); // Keep just in case needed later
-        _dynamicControllers['modalidad'] = TextEditingController();
-        _dynamicControllers['duracion'] = TextEditingController();
-        _dynamicControllers['certificado'] = TextEditingController(text: 'No');
+         // Education products (books, kits)
+         if (!_isService) {
+            _dynamicControllers['nivel'] = TextEditingController();
+            _dynamicControllers['material_incluido'] = TextEditingController(); 
+         } else {
+            _dynamicControllers['modalidad'] = TextEditingController();
+            _dynamicControllers['duracion'] = TextEditingController(); // Already added above but ok
+            _dynamicControllers['certificado'] = TextEditingController(text: 'No');
+         }
         break;
       case 'Transporte y logística':
         _dynamicControllers['tipo_vehiculo'] = TextEditingController();
@@ -121,8 +144,8 @@ class _PymeAddProductScreenState extends State<PymeAddProductScreen> {
     }
   }
 
-  // Force false as we separated events/services
-  bool get _isService => false; 
+  bool get _isService => widget.isService;
+  bool _allowQuote = false; // Cotizar en vez de comprar
 
   @override
   void dispose() {
@@ -180,6 +203,11 @@ class _PymeAddProductScreenState extends State<PymeAddProductScreen> {
             attributes[key] = controller.text;
           }
         });
+
+        // Add allowQuote flag to attributes
+        if (_allowQuote) {
+          attributes['allow_quote'] = 'true';
+        }
 
         final newProduct = Product(
           id: widget.product?.id ?? DateTime.now().millisecondsSinceEpoch.toString(),
@@ -246,19 +274,61 @@ class _PymeAddProductScreenState extends State<PymeAddProductScreen> {
             children: [
               _buildSectionTitle('Información General'),
               _buildCard([
-                _buildTextField(_nameController, 'Nombre del Producto', Icons.label_outline),
+                _buildTextField(_nameController, 'Nombre', Icons.label_outline),
                 const SizedBox(height: 16),
                 _buildTextField(_descController, 'Descripción', Icons.description_outlined, maxLines: 5),
                 const SizedBox(height: 16),
-                Row(
-                  children: [
-                    Expanded(child: _buildTextField(_priceController, 'Precio', Icons.attach_money, isNumber: true)),
-                    const SizedBox(width: 16),
-                    Expanded(child: _buildTextField(_codeController, 'Código (SKU)', Icons.qr_code, isRequired: true)),
-                  ],
-                ),
+                
+                // Price Section
+                if (_isService) ...[
+                  SwitchListTile(
+                    title: Text('Opción de cotizar', style: GoogleFonts.poppins()),
+                    subtitle: Text('Si se activa, el precio no se mostrará y el cliente solicitará cotización.', style: GoogleFonts.poppins(fontSize: 12)),
+                    value: _allowQuote,
+                    activeColor: const Color(0xFF6F8F5E),
+                    onChanged: (val) {
+                      setState(() {
+                         _allowQuote = val;
+                         if (val) _priceController.clear();
+                      });
+                    },
+                  ),
+                  const SizedBox(height: 8),
+                ],
+
+                if (!_allowQuote) ...[
+                   Row(
+                    children: [
+                      Expanded(child: _buildTextField(_priceController, 'Precio', Icons.attach_money, isNumber: true, isRequired: !_allowQuote)),
+                      const SizedBox(width: 16),
+                      if (!_isService) // Only products really need SKU exposed, but kept for legacy
+                        Expanded(child: _buildTextField(_codeController, 'Código (SKU)', Icons.qr_code, isRequired: true))
+                       else
+                        Expanded(child: _buildTextField(_codeController, 'Código', Icons.qr_code, isRequired: false)),
+                    ],
+                  ),
+                ] else ...[
+                   Container(
+                     padding: const EdgeInsets.all(12),
+                     decoration: BoxDecoration(
+                       color: const Color(0xFF6F8F5E).withOpacity(0.1),
+                       borderRadius: BorderRadius.circular(8),
+                     ),
+                     child: Row(
+                       children: [
+                         const Icon(Icons.info_outline, color: Color(0xFF6F8F5E)),
+                         const SizedBox(width: 8),
+                         Expanded(child: Text('Los clientes verán un botón de "Cotizar" en lugar del precio.', style: GoogleFonts.poppins(fontSize: 12))),
+                       ],
+                     ),
+                   ),
+                   // Hidden SKU field just in case
+                   const SizedBox(height: 8), 
+                   _buildTextField(_codeController, 'Código Interno', Icons.qr_code, isRequired: false),
+                ],
+
                 const SizedBox(height: 16),
-                _buildTextField(_stockController, 'Stock Disponible', Icons.inventory_2_outlined, isNumber: true),
+                _buildTextField(_stockController, _isService ? 'Cupos Disponibles' : 'Stock Disponible', Icons.inventory_2_outlined, isNumber: true),
               ]),
 
               const SizedBox(height: 24),

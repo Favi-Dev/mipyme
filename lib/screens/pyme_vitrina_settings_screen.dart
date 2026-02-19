@@ -8,6 +8,7 @@ import 'package:firebase_storage/firebase_storage.dart';
 import '../services/pyme_service.dart';
 import '../services/auth_service.dart';
 import '../services/product_service.dart';
+import 'terms_of_use_screen.dart';
 import 'login_screen.dart';
 
 class PymeVitrinaSettingsScreen extends StatefulWidget {
@@ -42,6 +43,7 @@ class _PymeVitrinaSettingsScreenState extends State<PymeVitrinaSettingsScreen> {
   String? _selectedHours;
   String? _selectedCategory;
   String? _originalCategory;
+  List<String> _tags = [];
 
   final List<String> _communes = [
     'Cerrillos', 'Cerro Navia', 'Conchalí', 'El Bosque', 'Estación Central',
@@ -114,6 +116,7 @@ class _PymeVitrinaSettingsScreenState extends State<PymeVitrinaSettingsScreen> {
             _coverImageUrl = userProfile.coverImageUrl;
             _selectedCategory = userProfile.category;
             _originalCategory = userProfile.category;
+            _tags = List<String>.from(userProfile.tags ?? []);
           });
         }
       }
@@ -269,6 +272,7 @@ class _PymeVitrinaSettingsScreenState extends State<PymeVitrinaSettingsScreen> {
         'instagramHandle': _instagramController.text,
         'whatsappNumber': _whatsappController.text,
         'category': _selectedCategory,
+        'tags': _tags,
       });
 
       if (mounted) {
@@ -488,6 +492,55 @@ class _PymeVitrinaSettingsScreenState extends State<PymeVitrinaSettingsScreen> {
                  style: TextStyle(color: Colors.grey, fontSize: 12),
                ),
             ),
+            const SizedBox(height: 24),
+
+            _buildSectionHeader('Etiquetas'),
+            const Text(
+              'Agrega hasta 5 etiquetas para que te encuentren más fácil (máx. 15 caracteres).',
+              style: TextStyle(fontSize: 12, color: Colors.grey),
+            ),
+            const SizedBox(height: 8),
+            if (_tags.length < 5)
+              TextField(
+                decoration: InputDecoration(
+                  hintText: 'Escribe una etiqueta y presiona ENTER',
+                  filled: true,
+                  fillColor: Colors.white,
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                  suffixIcon: const Icon(Icons.tag, color: Colors.grey),
+                ),
+                onSubmitted: (value) {
+                  if (value.trim().isNotEmpty) {
+                    if (value.length > 15) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('La etiqueta no puede tener más de 15 caracteres')),
+                      );
+                      return;
+                    }
+                    if (!_tags.contains(value.trim())) {
+                      setState(() {
+                        _tags.add(value.trim());
+                      });
+                    }
+                  }
+                },
+              ),
+            const SizedBox(height: 12),
+            Wrap(
+              spacing: 8,
+              runSpacing: 4,
+              children: _tags.map((tag) => Chip(
+                label: Text(tag),
+                backgroundColor: const Color(0xFF6F8F5E).withOpacity(0.1),
+                deleteIcon: const Icon(Icons.close, size: 18),
+                onDeleted: () {
+                  setState(() {
+                    _tags.remove(tag);
+                  });
+                },
+              )).toList(),
+            ),
+
             const SizedBox(height: 40),
             
             if (widget.pymeId == null)
@@ -518,11 +571,16 @@ class _PymeVitrinaSettingsScreenState extends State<PymeVitrinaSettingsScreen> {
               Align(
                 alignment: Alignment.centerLeft,
                 child: TextButton.icon(
-                  onPressed: () => _confirmDeleteAccount(context),
-                  icon: Icon(Icons.delete_forever, size: 16, color: Colors.red.withOpacity(0.6)),
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => const TermsOfUseScreen()),
+                    );
+                  },
+                  icon: Icon(Icons.description, size: 16, color: Colors.grey[700]),
                   label: Text(
-                    'Eliminar Cuenta',
-                    style: GoogleFonts.poppins(fontSize: 12, color: Colors.red.withOpacity(0.6)),
+                    'Términos y Borrar Cuenta',
+                    style: GoogleFonts.poppins(fontSize: 12, color: Colors.grey[700]),
                   ),
                 ),
               ),
@@ -533,50 +591,7 @@ class _PymeVitrinaSettingsScreenState extends State<PymeVitrinaSettingsScreen> {
     );
   }
 
-  Future<void> _confirmDeleteAccount(BuildContext context) async {
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('¿Eliminar cuenta?'),
-        content: const Text(
-          'Tu cuenta será programada para eliminación en 30 días. Si inicias sesión durante este periodo, la eliminación se cancelará.\n\nEsta acción cerrará tu sesión actual.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancelar'),
-          ),
-          FilledButton(
-            style: FilledButton.styleFrom(backgroundColor: Colors.red),
-            onPressed: () => Navigator.pop(context, true),
-            child: const Text('Eliminar cuenta'),
-          ),
-        ],
-      ),
-    );
-
-    if (confirmed == true && mounted) {
-      try {
-        final auth = AuthService();
-        await auth.deleteAccount();
-        if (mounted) {
-           Navigator.of(context).pushAndRemoveUntil(
-            MaterialPageRoute(builder: (context) => const LoginScreen()),
-            (route) => false,
-          );
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Cuenta programada para eliminación.')),
-          );
-        }
-      } catch (e) {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Error: $e')),
-          );
-        }
-      }
-    }
-  }
+  // _confirmDeleteAccount removed
 
   Widget _buildSectionHeader(String title) {
     return Padding(

@@ -33,6 +33,45 @@ class _PymeEventsScreenState extends State<PymeEventsScreen> {
     }
   }
 
+  Future<void> _showDeleteConfirmation(BuildContext context, Product event) async {
+    return showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text('¿Eliminar evento?', style: GoogleFonts.poppins(fontWeight: FontWeight.bold)),
+        content: Text(
+          'Esta acción no se puede deshacer. El evento "${event.name}" será eliminado permanentemente.',
+          style: GoogleFonts.poppins(),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: Text('Cancelar', style: GoogleFonts.poppins(color: Colors.grey)),
+          ),
+          TextButton(
+            onPressed: () async {
+              Navigator.pop(ctx);
+              try {
+                await _productService.deleteProduct(event.id);
+                if (mounted) {
+                  ScaffoldMessenger.of(this.context).showSnackBar(
+                    const SnackBar(content: Text('Evento eliminado')),
+                  );
+                }
+              } catch (e) {
+                if (mounted) {
+                  ScaffoldMessenger.of(this.context).showSnackBar(
+                    SnackBar(content: Text('Error al eliminar: $e')),
+                  );
+                }
+              }
+            },
+            child: Text('Eliminar', style: GoogleFonts.poppins(color: const Color(0xFFD32F2F))),
+          ),
+        ],
+      ),
+    );
+  }
+
   void _shareEvent(Product event) {
     final date = event.customAttributes['event_date'] ?? 'Fecha por definir';
     final location = event.customAttributes['event_location'] ?? 'Ubicación por definir';
@@ -214,8 +253,7 @@ class _PymeEventsScreenState extends State<PymeEventsScreen> {
                             ),
                           ),
                         ),
-                        // Sharing and Edit Buttons
-                         Row(
+                        Row(
                           children: [
                              IconButton(
                               icon: const Icon(Icons.edit, color: Color(0xFF8B5A3C)),
@@ -227,6 +265,10 @@ class _PymeEventsScreenState extends State<PymeEventsScreen> {
                                   ),
                                 );
                               },
+                            ),
+                            IconButton(
+                              icon: const Icon(Icons.delete, color: Color(0xFFD32F2F)),
+                              onPressed: () => _showDeleteConfirmation(context, event),
                             ),
                             IconButton(
                               icon: const Icon(Icons.share, color: Color(0xFF6F8F5E)),

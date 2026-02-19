@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:image_picker/image_picker.dart';
+import '../services/storage_service.dart';
 import '../models/product.dart';
 import '../services/product_service.dart';
 
@@ -23,19 +25,23 @@ class _PymeAddEventScreenState extends State<PymeAddEventScreen> {
   late TextEditingController _titleController;
   late TextEditingController _descriptionController;
   late TextEditingController _locationController;
-  late TextEditingController _imageUrlController;
+  late TextEditingController _priceController;
   
   DateTime? _selectedDate;
   TimeOfDay? _selectedTime;
+  String? _imageUrl;
+  bool _isLoading = false;
 
   final ProductService _productService = ProductService();
+  final StorageService _storageService = StorageService();
 
   @override
   void initState() {
     super.initState();
     _titleController = TextEditingController(text: widget.event?.name ?? '');
     _descriptionController = TextEditingController(text: widget.event?.description ?? '');
-    _imageUrlController = TextEditingController(text: widget.event?.imageUrl ?? '');
+    _imageUrl = widget.event?.imageUrl;
+    _priceController = TextEditingController(text: widget.event?.price.toStringAsFixed(0) ?? '0');
     
     // Parse location and date/time from customAttributes if editing
     _locationController = TextEditingController(
@@ -66,8 +72,40 @@ class _PymeAddEventScreenState extends State<PymeAddEventScreen> {
     _titleController.dispose();
     _descriptionController.dispose();
     _locationController.dispose();
-    _imageUrlController.dispose();
+    _priceController.dispose();
     super.dispose();
+  }
+
+  Future<void> _pickAndUploadImage() async {
+    final ImagePicker picker = ImagePicker();
+    final XFile? image = await picker.pickImage(source: ImageSource.gallery, maxWidth: 1000, imageQuality: 80);
+
+    if (image == null) return;
+
+    setState(() => _isLoading = true);
+
+    try {
+      final userId = FirebaseAuth.instance.currentUser?.uid;
+      if (userId == null) return;
+      
+      // Use 'products' folder or 'events' folder? StorageService currently has 'uploadProductImage'
+      // which puts it in 'products/$id/'. Since I don't have event ID yet (unless editing), 
+      // I might need a temp ID or use "new_event". 
+      // But uploadProductImage takes productId.
+      
+      final tempId = widget.event?.id ?? 'temp_event_${DateTime.now().millisecondsSinceEpoch}';
+      final url = await _storageService.uploadProductImage(image, tempId);
+      
+      if (url != null) {
+        setState(() => _imageUrl = url);
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error al subir imagen: $e')));
+      }
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
   }
 
   Future<void> _selectDate(BuildContext context) async {
@@ -97,28 +135,30 @@ class _PymeAddEventScreenState extends State<PymeAddEventScreen> {
   }
 
   void _saveEvent() {
-    if (_formKey.currentState!.validate() && _selectedDate != null && _selectedTime != null) {
+    if (_formKey.currentState!.validate() && _selectedDate != null && _selectedTime != null && _imageUrl != null) {
+      setState(() => _isLoading = true);
       final user = FirebaseAuth.instance.currentUser;
       // If pymeId is provided (Admin mode), use it. Otherwise use current user.
       final targetPymeId = widget.pymeId ?? user?.uid;
 
-      if (targetPymeId == null) return;
+      if (targetPymeId == null) {
+        setState(() => _isLoading = false);
+        return;
+      }
 
       final isEditing = widget.event != null;
 
       final eventData = Product(
-        id: isEditing ? widget.event!.id : '', // Keep ID if editing
+        id: isEditing ? widget.event!.id : '', // Keep ID if editing (service handles new ID if empty string but usually creates one)
         pymeId: targetPymeId,
         name: _titleController.text,
         description: _descriptionController.text,
-        price: 0, 
-        imageUrl: _imageUrlController.text.isNotEmpty 
-            ? _imageUrlController.text 
-            : 'https://images.unsplash.com/photo-1501281668745-f7f57925c3b4?auto=format&fit=crop&w=500&q=60',
+        price: double.tryParse(_priceController.text) ?? 0, 
+        imageUrl: _imageUrl!,
         code: isEditing ? widget.event!.code : 'EVT-${DateTime.now().millisecondsSinceEpoch}',
-        stock: 100, 
-        category: 'Educación y cultura',
-        isService: true,
+        stock: 100, // Unlimited or high stock for events unless ticketed?
+        category: 'Educación y cultura', // Default for now or make selectable?
+        isService: true, // Events are services technically in this model
         customAttributes: {
           'is_event': 'true',
           'event_date': '${_selectedDate!.day}/${_selectedDate!.month}/${_selectedDate!.year}',
@@ -139,10 +179,15 @@ class _PymeAddEventScreenState extends State<PymeAddEventScreen> {
         );
       }
       
+      setState(() => _isLoading = false);
       Navigator.pop(context);
     } else if (_selectedDate == null || _selectedTime == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Por favor selecciona fecha y hora')),
+      );
+    } else if (_imageUrl == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Por favor añade una imagen al evento')),
       );
     }
   }
@@ -183,11 +228,56 @@ class _PymeAddEventScreenState extends State<PymeAddEventScreen> {
                 icon: Icons.location_on,
               ),
               const SizedBox(height: 16),
+              // Price (Ticket?)
               _buildTextField(
-                controller: _imageUrlController,
-                label: 'URL de la Imagen (Opcional)',
-                icon: Icons.image,
+                controller: _priceController,
+                label: 'Precio Entrada (0 si es gratis)',
+                icon: Icons.attach_money,
+                isNumber: true,
               ),
+
+              const SizedBox(height: 24),
+              
+              // Image Picker
+              GestureDetector(
+                  onTap: _pickAndUploadImage,
+                  child: Container(
+                    height: 200,
+                    width: double.infinity,
+                    decoration: BoxDecoration(
+                      color: Colors.grey[300],
+                      borderRadius: BorderRadius.circular(12),
+                      image: _imageUrl != null
+                          ? DecorationImage(
+                              image: NetworkImage(_imageUrl!),
+                              fit: BoxFit.cover,
+                            )
+                          : null,
+                    ),
+                    child: _imageUrl == null
+                        ? Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              const Icon(Icons.add_a_photo, size: 50, color: Colors.grey),
+                              Text('Añadir Imagen del Evento', style: GoogleFonts.poppins(color: Colors.grey))
+                            ],
+                          )
+                        : Container(
+                            alignment: Alignment.bottomRight,
+                            padding: const EdgeInsets.all(8),
+                            child: const CircleAvatar(
+                              backgroundColor: Colors.white,
+                              child: Icon(Icons.edit, color: Colors.black),
+                            ),
+                          ),
+                  ),
+              ),
+              if (_isLoading)
+                  const Padding(
+                    padding: EdgeInsets.all(8.0),
+                    child: Center(child: CircularProgressIndicator()),
+                  ),
+
               const SizedBox(height: 24),
               
               Row(
@@ -294,10 +384,12 @@ class _PymeAddEventScreenState extends State<PymeAddEventScreen> {
     required String label,
     required IconData icon,
     int maxLines = 1,
+    bool isNumber = false,
   }) {
     return TextFormField(
       controller: controller,
       maxLines: maxLines,
+      keyboardType: isNumber ? TextInputType.number : TextInputType.text,
       validator: (value) => value?.isEmpty ?? true ? 'Campo requerido' : null,
       decoration: InputDecoration(
         labelText: label,

@@ -312,9 +312,41 @@ class _PymeProductsScreenState extends State<PymeProductsScreen> with SingleTick
                                         title: Text('Eliminar', style: GoogleFonts.poppins(color: const Color(0xFF2F3F2A))),
                                         onTap: () {
                                           Navigator.pop(context);
-                                          // TODO: Implement delete logic
-                                          ScaffoldMessenger.of(context).showSnackBar(
-                                            const SnackBar(content: Text('Producto eliminado')),
+                                          showDialog(
+                                            context: context,
+                                            builder: (ctx) => AlertDialog(
+                                              title: Text('¿Eliminar producto?', style: GoogleFonts.poppins(fontWeight: FontWeight.bold)),
+                                              content: Text(
+                                                'Esta acción no se puede deshacer.',
+                                                style: GoogleFonts.poppins(),
+                                              ),
+                                              actions: [
+                                                TextButton(
+                                                  onPressed: () => Navigator.pop(ctx),
+                                                  child: Text('Cancelar', style: GoogleFonts.poppins(color: Colors.grey)),
+                                                ),
+                                                TextButton(
+                                                  onPressed: () async {
+                                                    Navigator.pop(ctx);
+                                                    try {
+                                                      await _productService.deleteProduct(product.id);
+                                                      if (mounted) {
+                                                        ScaffoldMessenger.of(context).showSnackBar(
+                                                          const SnackBar(content: Text('Producto eliminado')),
+                                                        );
+                                                      }
+                                                    } catch (e) {
+                                                      if (mounted) {
+                                                        ScaffoldMessenger.of(context).showSnackBar(
+                                                          SnackBar(content: Text('Error al eliminar: $e')),
+                                                        );
+                                                      }
+                                                    }
+                                                  },
+                                                  child: Text('Eliminar', style: GoogleFonts.poppins(color: const Color(0xFF8B5A3C))),
+                                                ),
+                                              ],
+                                            ),
                                           );
                                         },
                                       ),

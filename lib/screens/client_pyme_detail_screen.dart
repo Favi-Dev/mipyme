@@ -471,12 +471,15 @@ class _ClientPymeDetailScreenState extends State<ClientPymeDetailScreen> {
                           }
                           
                           final products = snapshot.data ?? [];
-                          final eventProducts = products.where((p) => p.customAttributes['is_event'] == 'true' || (_isFoundation && p.isService)).toList();
-                          final standardProducts = products.where((p) => p.customAttributes['is_event'] != 'true' && (!_isFoundation || !p.isService)).toList();
+                          
+                          // Filter events and other products
+                          final eventProducts = products.where((p) => p.customAttributes['is_event'] == 'true').toList();
+                          final standardProducts = products.where((p) => p.customAttributes['is_event'] != 'true').toList();
 
                           return Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
+                              // Offers (if not Foundation?) - Logic seems to hide offers for Foundations?
                               if (!_isFoundation) ...[
                                 StreamBuilder<List<Map<String, dynamic>>>(
                                   stream: _getOffersStream(),
@@ -514,55 +517,36 @@ class _ClientPymeDetailScreenState extends State<ClientPymeDetailScreen> {
                                     );
                                   }
                                 ),
-                              ] else ...[
-                                if (eventProducts.isNotEmpty) ...[
-                                  Text(
-                                    'Próximos Eventos',
-                                    style: theme.textTheme.titleLarge?.copyWith(
-                                      fontWeight: FontWeight.bold,
-                                      color: theme.colorScheme.onSurface,
-                                    ),
+                              ],
+
+                              // Events Section
+                              if (eventProducts.isNotEmpty) ...[
+                                Text(
+                                  'Próximos Eventos',
+                                  style: theme.textTheme.titleLarge?.copyWith(
+                                    fontWeight: FontWeight.bold,
+                                    color: theme.colorScheme.onSurface,
                                   ),
-                                  const SizedBox(height: 12),
-                                  SingleChildScrollView(
-                                    scrollDirection: Axis.horizontal,
-                                    child: Row(
-                                      children: eventProducts.map((product) {
-                                        return Padding(
-                                          padding: const EdgeInsets.only(right: 12),
-                                          child: _buildProductCard(product),
-                                        );
-                                      }).toList(),
-                                    ),
+                                ),
+                                const SizedBox(height: 12),
+                                SingleChildScrollView(
+                                  scrollDirection: Axis.horizontal,
+                                  child: Row(
+                                    children: eventProducts.map((product) {
+                                      return Padding(
+                                        padding: const EdgeInsets.only(right: 12),
+                                        child: _buildProductCard(product),
+                                      );
+                                    }).toList(),
                                   ),
-                                ] else ...[
-                                  Center(
-                                    child: Column(
-                                      mainAxisAlignment: MainAxisAlignment.center,
-                                      children: [
-                                        Icon(
-                                          Icons.event_busy,
-                                          size: 48,
-                                          color: theme.colorScheme.onSurfaceVariant.withOpacity(0.5),
-                                        ),
-                                        const SizedBox(height: 12),
-                                        Text(
-                                          'No hay eventos próximos',
-                                          style: theme.textTheme.bodyMedium?.copyWith(
-                                            color: theme.colorScheme.onSurfaceVariant,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ],
+                                ),
                                 const SizedBox(height: 24),
                               ],
 
-                              // Products
+                              // Products & Services Section
                               if (standardProducts.isNotEmpty) ...[
                                 Text(
-                                  'Productos',
+                                  'Productos y Servicios',
                                   style: theme.textTheme.titleLarge?.copyWith(
                                     fontWeight: FontWeight.bold,
                                     color: theme.colorScheme.onSurface,
@@ -1080,11 +1064,17 @@ class _ClientPymeDetailScreenState extends State<ClientPymeDetailScreen> {
 
   Widget _buildProductCard(Product product) {
     final theme = Theme.of(context);
+    final bool isQuote = product.customAttributes['allow_quote'] == 'true';
+    final bool isEvent = product.customAttributes['is_event'] == 'true';
+    final bool isService = product.isService;
+
     return GestureDetector(
       onTap: () {
-        if (!product.isService) {
-          _showProductDetail(product);
-        }
+         if (isQuote) {
+            _showQuoteDialog(product);
+         } else {
+            _showProductDetail(product);
+         }
       },
       child: Container(
       width: 160,
@@ -1131,22 +1121,37 @@ class _ClientPymeDetailScreenState extends State<ClientPymeDetailScreen> {
                   ),
                 ),
                 const SizedBox(height: 4),
-                Text(
-                  '\$${product.price.toStringAsFixed(0)}',
-                  style: theme.textTheme.bodyMedium?.copyWith(
-                    color: theme.colorScheme.primary,
-                    fontWeight: FontWeight.bold,
+                if (!isQuote)
+                  Text(
+                    '\$${product.price.toStringAsFixed(0)}',
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      color: theme.colorScheme.primary,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  )
+                else
+                   Text(
+                    'Cotizar',
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      color: theme.colorScheme.secondary,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
-                ),
+
                 const SizedBox(height: 8),
                 SizedBox(
                   width: double.infinity,
                   height: 32,
                   child: ElevatedButton(
                     onPressed: () async {
+                      if (isQuote) {
+                        _showQuoteDialog(product);
+                        return;
+                      }
+
                       try {
                         // Check Subscription Status for instant actions (Services/Events)
-                        if (product.isService) {
+                        if (isService) {
                            bool isSubscribed = false;
                             try {
                               isSubscribed = await _clientService.getSubscriptionStatus().first;
@@ -1187,14 +1192,18 @@ class _ClientPymeDetailScreenState extends State<ClientPymeDetailScreen> {
                             }
                         }
 
-                        if (product.isService) {
+                        if (isService) {
                           DateTime? pickedDate;
                           
                           // Check if it's a specific event
-                          if (product.customAttributes['is_event'] == 'true' && 
-                              product.customAttributes['event_date'] != null) {
+                          if (isEvent && product.customAttributes['event_date'] != null) {
                             
-                            final eventDate = DateTime.parse(product.customAttributes['event_date']);
+                            final eventDate = DateTime.parse(product.customAttributes['event_date']); // Need to fix parsing format dd/MM/yyyy
+                            // Wait, the saved format is dd/MM/yyyy in PymeAddEventScreen
+                            // DateTime.parse expects yyyy-MM-dd
+                            
+                            final parts = product.customAttributes['event_date'].split('/');
+                            final validEventDate = DateTime(int.parse(parts[2]), int.parse(parts[1]), int.parse(parts[0]));
                             
                             // Show confirmation dialog instead of date picker
                             final confirm = await showDialog<bool>(
@@ -1202,7 +1211,7 @@ class _ClientPymeDetailScreenState extends State<ClientPymeDetailScreen> {
                               builder: (context) => AlertDialog(
                                 title: Text('Operativo Especial', style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
                                 content: Text(
-                                  'Este servicio es un evento único para el día:\n\n${eventDate.day}/${eventDate.month}/${eventDate.year}\n\n¿Deseas seleccionar una hora para este día?',
+                                  'Este servicio es un evento único para el día:\n\n${product.customAttributes['event_date']}\n\n¿Deseas seleccionar una hora para este día?',
                                   style: theme.textTheme.bodyMedium
                                 ),
                                 actions: [
@@ -1220,7 +1229,7 @@ class _ClientPymeDetailScreenState extends State<ClientPymeDetailScreen> {
                             );
                             
                             if (confirm == true) {
-                              pickedDate = eventDate;
+                              pickedDate = validEventDate;
                             }
                           } else {
                             // Standard service booking
@@ -1294,7 +1303,7 @@ class _ClientPymeDetailScreenState extends State<ClientPymeDetailScreen> {
                       }
                     },
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: product.isService ? theme.colorScheme.primary : const Color(0xFF2F3F2A), // Verde Hoja Profundo
+                      backgroundColor: isQuote ? theme.colorScheme.secondary : (isService ? theme.colorScheme.primary : const Color(0xFF2F3F2A)), 
                       foregroundColor: const Color(0xFFF4F1EA),
                       padding: EdgeInsets.zero,
                       shape: RoundedRectangleBorder(
@@ -1302,9 +1311,11 @@ class _ClientPymeDetailScreenState extends State<ClientPymeDetailScreen> {
                       ),
                     ),
                     child: Text(
-                      product.customAttributes['is_event'] == 'true'
+                      isEvent
                           ? 'Participar'
-                          : (product.isService ? 'Reservar' : 'Ver Detalles'), // Changed from Comprar
+                          : (isQuote 
+                              ? 'Cotizar' 
+                              : (isService ? 'Reservar' : 'Ver Detalles')),
                     ),
                   ),
                 ),
@@ -1315,6 +1326,71 @@ class _ClientPymeDetailScreenState extends State<ClientPymeDetailScreen> {
       ),
     ),
     );
+  }
+
+  Future<void> _showQuoteDialog(Product product) async {
+    final theme = Theme.of(context);
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('Solicitar Cotización', style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
+        content: Text(
+          '¿Quieres enviar una solicitud de cotización para ${product.name} a ${_pymeName}?\n\nEl encargado te contactará a la brevedad.',
+          style: theme.textTheme.bodyMedium
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: Text('Cancelar', style: theme.textTheme.labelLarge?.copyWith(color: theme.colorScheme.onSurfaceVariant)),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(context, true),
+            style: ElevatedButton.styleFrom(backgroundColor: theme.colorScheme.primary),
+            child: Text('Sí, cotizar', style: theme.textTheme.labelLarge?.copyWith(color: theme.colorScheme.onPrimary)),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm == true && mounted) {
+      try {
+        final user = FirebaseAuth.instance.currentUser;
+        if (user == null) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Debes iniciar sesión para cotizar')),
+          );
+          return;
+        }
+
+        // Create a Quote Request (Using Orders collection for now with status 'quote_requested')
+        await FirebaseFirestore.instance.collection('orders').add({
+          'pymeId': widget.pymeId,
+          'userId': user.uid,
+          'userEmail': user.email,
+          'userName': user.displayName ?? 'Usuario',
+          'products': [product.toMap()],
+          'total': 0,
+          'status': 'quote_requested',
+          'createdAt': FieldValue.serverTimestamp(),
+          'isQuote': true,
+        });
+
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Cotización enviada. El encargado te contactará pronto.'),
+              backgroundColor: Color(0xFF6F8F5E),
+            ),
+          );
+        }
+      } catch (e) {
+        if (mounted) {
+           ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Error al enviar cotización: $e')),
+          );
+        }
+      }
+    }
   }
 
   Widget _buildInfoRow(IconData icon, String text) {

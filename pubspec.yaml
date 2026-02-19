@@ -54,6 +54,7 @@ dependencies:
   http: ^1.6.0
 
   intl: any
+  file_picker: ^10.3.10
 dev_dependencies:
   flutter_test:
     sdk: flutter
