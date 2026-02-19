@@ -97,6 +97,7 @@ class _PymeAddProductScreenState extends State<PymeAddProductScreen> {
             }
           } else {
              _dynamicControllers['tipo_servicio'] = TextEditingController(); 
+             _dynamicControllers['tiempo_estimado'] = TextEditingController();
           }
         break;
       case 'Alimentos y gastronomía':
@@ -104,10 +105,21 @@ class _PymeAddProductScreenState extends State<PymeAddProductScreen> {
           _dynamicControllers['ingredientes'] = TextEditingController();
           _dynamicControllers['porcion'] = TextEditingController();
           _dynamicControllers['dietetico'] = TextEditingController();
+        } else {
+          _dynamicControllers['tipo_menu'] = TextEditingController();
+          _dynamicControllers['incluye_bebida'] = TextEditingController();
         }
         break;
       case 'Servicios profesionales':
-         _dynamicControllers['modalidad'] = TextEditingController(); 
+         if (_isService) {
+           _dynamicControllers['modalidad'] = TextEditingController();
+           _dynamicControllers['duracion'] = TextEditingController();
+           _dynamicControllers['profesional_cargo'] = TextEditingController();
+         } else {
+           // Product: e.g. Contract templates, eBooks
+           _dynamicControllers['formato_entregable'] = TextEditingController(); // Digital, Físico
+           _dynamicControllers['paginas'] = TextEditingController();
+         }
         break;
       case 'Salud, belleza y bienestar':
           if (!_isService) {
@@ -116,6 +128,9 @@ class _PymeAddProductScreenState extends State<PymeAddProductScreen> {
           } else {
              _dynamicControllers['duracion_sesion'] = TextEditingController();
              _dynamicControllers['profesional'] = TextEditingController();
+             // Event flags
+             _dynamicControllers['is_event'] = TextEditingController(text: 'false');
+             _dynamicControllers['event_date'] = TextEditingController();
           }
         break;
       case 'Oficios y manufactura':
@@ -123,6 +138,11 @@ class _PymeAddProductScreenState extends State<PymeAddProductScreen> {
           _dynamicControllers['materiales'] = TextEditingController();
           _dynamicControllers['tiempo_entrega'] = TextEditingController();
           _dynamicControllers['personalizado'] = TextEditingController(text: 'No');
+        } else {
+          // Service: Repairs, Custom Jobs
+          _dynamicControllers['tipo_trabajo'] = TextEditingController();
+          _dynamicControllers['visita_domicilio'] = TextEditingController(text: 'No');
+          _dynamicControllers['garantia'] = TextEditingController();
         }
         break;
       case 'Educación y cultura':
@@ -137,9 +157,14 @@ class _PymeAddProductScreenState extends State<PymeAddProductScreen> {
          }
         break;
       case 'Transporte y logística':
-        _dynamicControllers['tipo_vehiculo'] = TextEditingController();
-        _dynamicControllers['capacidad'] = TextEditingController();
-        _dynamicControllers['cobertura'] = TextEditingController();
+        if (_isService) {
+          _dynamicControllers['tipo_vehiculo'] = TextEditingController();
+          _dynamicControllers['capacidad'] = TextEditingController();
+          _dynamicControllers['cobertura'] = TextEditingController();
+        } else {
+          _dynamicControllers['dimensiones'] = TextEditingController();
+          _dynamicControllers['peso_maximo'] = TextEditingController();
+        }
         break;
     }
   }
@@ -489,20 +514,38 @@ class _PymeAddProductScreenState extends State<PymeAddProductScreen> {
         }
         break;
       case 'Alimentos y gastronomía':
-        fields = [
-          _buildTextField(_dynamicControllers['ingredientes']!, 'Ingredientes Principales', Icons.restaurant_menu),
-          const SizedBox(height: 16),
-          _buildTextField(_dynamicControllers['porcion']!, 'Tamaño de Porción', Icons.pie_chart),
-          const SizedBox(height: 16),
-          _buildTextField(_dynamicControllers['dietetico']!, 'Info Dietética (Vegano, Sin Gluten...)', Icons.eco_outlined),
-        ];
+        if (_isService) {
+          fields = [
+            _buildTextField(_dynamicControllers['tipo_menu']!, 'Tipo de Menú/Servicio', Icons.restaurant),
+            const SizedBox(height: 16),
+            _buildTextField(_dynamicControllers['incluye_bebida']!, '¿Incluye Bebida?', Icons.local_drink, isRequired: false),
+          ];
+        } else {
+          fields = [
+            _buildTextField(_dynamicControllers['ingredientes']!, 'Ingredientes Principales', Icons.restaurant_menu),
+            const SizedBox(height: 16),
+            _buildTextField(_dynamicControllers['porcion']!, 'Tamaño de Porción', Icons.pie_chart),
+            const SizedBox(height: 16),
+            _buildTextField(_dynamicControllers['dietetico']!, 'Info Dietética (Vegano, Sin Gluten...)', Icons.eco_outlined),
+          ];
+        }
         break;
       case 'Servicios profesionales':
-        fields = [
-          _buildTextField(_dynamicControllers['modalidad']!, 'Modalidad (Online/Presencial)', Icons.laptop_mac),
-          const SizedBox(height: 16),
-          _buildTextField(_dynamicControllers['duracion']!, 'Duración Estimada', Icons.timer_outlined),
-        ];
+        if (_isService) {
+           fields = [
+            _buildTextField(_dynamicControllers['modalidad']!, 'Modalidad (Online/Presencial)', Icons.laptop_mac),
+            const SizedBox(height: 16),
+            _buildTextField(_dynamicControllers['duracion']!, 'Duración Estimada (Min / Hs)', Icons.timer_outlined),
+            const SizedBox(height: 16),
+            _buildTextField(_dynamicControllers['profesional_cargo']!, 'Profesional a Cargo', Icons.person_outline),
+           ];
+        } else {
+           fields = [
+            _buildTextField(_dynamicControllers['formato_entregable']!, 'Formato del Entregable (PDF, Plantilla...)', Icons.file_present),
+            const SizedBox(height: 16),
+            _buildTextField(_dynamicControllers['paginas']!, 'Número de Páginas Estimado', Icons.file_copy_outlined, isRequired: false),
+           ];
+        }
         break;
       case 'Salud, belleza y bienestar':
         if (_isService) {
@@ -563,51 +606,84 @@ class _PymeAddProductScreenState extends State<PymeAddProductScreen> {
         }
         break;
       case 'Oficios y manufactura':
-        fields = [
-          _buildTextField(_dynamicControllers['materiales']!, 'Materiales', Icons.build_circle_outlined),
-          const SizedBox(height: 16),
-          _buildTextField(_dynamicControllers['tiempo_entrega']!, 'Tiempo de Elaboración/Entrega', Icons.schedule_send),
-          const SizedBox(height: 16),
-          SwitchListTile(
-            title: Text('¿Es Personalizado?', style: GoogleFonts.poppins()),
-            value: _dynamicControllers['personalizado']?.text == 'Sí',
-            activeThumbColor: const Color(0xFF6F8F5E),
-            onChanged: (val) {
-              setState(() {
-                _dynamicControllers['personalizado']?.text = val ? 'Sí' : 'No';
-              });
-            },
-          ),
-        ];
+        if (!_isService) {
+          fields = [
+            _buildTextField(_dynamicControllers['materiales']!, 'Materiales', Icons.build_circle_outlined),
+            const SizedBox(height: 16),
+            _buildTextField(_dynamicControllers['tiempo_entrega']!, 'Tiempo de Elaboración/Entrega', Icons.schedule_send),
+            const SizedBox(height: 16),
+            SwitchListTile(
+              title: Text('¿Es Personalizado?', style: GoogleFonts.poppins()),
+              value: _dynamicControllers['personalizado']?.text == 'Sí',
+              activeThumbColor: const Color(0xFF6F8F5E),
+              onChanged: (val) {
+                setState(() {
+                  _dynamicControllers['personalizado']?.text = val ? 'Sí' : 'No';
+                });
+              },
+            ),
+          ];
+        } else {
+           fields = [
+            _buildTextField(_dynamicControllers['tipo_trabajo']!, 'Tipo de Trabajo (Reparación, Mantención)', Icons.build),
+            const SizedBox(height: 16),
+            _buildTextField(_dynamicControllers['garantia']!, 'Garantía del Servicio (Ej: 3 meses)', Icons.verified_user_outlined),
+            const SizedBox(height: 16),
+            SwitchListTile(
+              title: Text('¿Requiere Visita a Domicilio?', style: GoogleFonts.poppins()),
+              value: _dynamicControllers['visita_domicilio']?.text == 'Sí',
+              activeColor: const Color(0xFF6F8F5E),
+              onChanged: (val) {
+                setState(() {
+                  _dynamicControllers['visita_domicilio']?.text = val ? 'Sí' : 'No';
+                });
+              },
+            ),
+           ];
+        }
         break;
       case 'Educación y cultura':
-        fields = [
-          _buildTextField(_dynamicControllers['nivel']!, 'Nivel (e.g., Básico, Avanzado)', Icons.school_outlined),
-          const SizedBox(height: 16),
-          _buildTextField(_dynamicControllers['modalidad']!, 'Modalidad (Online / Presencial)', Icons.laptop_mac),
-          const SizedBox(height: 16),
-          _buildTextField(_dynamicControllers['duracion']!, 'Duración', Icons.timer_outlined),
-          const SizedBox(height: 16),
-          SwitchListTile(
-            title: Text('¿Incluye Certificado?', style: GoogleFonts.poppins()),
-            value: _dynamicControllers['certificado']?.text == 'Sí',
-            activeThumbColor: const Color(0xFF6F8F5E),
-            onChanged: (val) {
-              setState(() {
-                _dynamicControllers['certificado']?.text = val ? 'Sí' : 'No';
-              });
-            },
-          ),
-        ];
+        if (_isService) {
+           fields = [
+            _buildTextField(_dynamicControllers['modalidad']!, 'Modalidad', Icons.laptop_mac),
+             const SizedBox(height: 16),
+            _buildTextField(_dynamicControllers['duracion']!, 'Duración', Icons.timer_outlined),
+             const SizedBox(height: 16),
+             SwitchListTile(
+              title: Text('¿Entrega Certificado?', style: GoogleFonts.poppins()),
+              value: _dynamicControllers['certificado']?.text == 'Sí',
+              activeColor: const Color(0xFF6F8F5E),
+              onChanged: (val) {
+                setState(() {
+                  _dynamicControllers['certificado']?.text = val ? 'Sí' : 'No';
+                });
+              },
+            ),
+           ];
+        } else {
+           fields = [
+             _buildTextField(_dynamicControllers['nivel']!, 'Nivel (e.g., Básico, Avanzado)', Icons.school_outlined),
+             const SizedBox(height: 16),
+             _buildTextField(_dynamicControllers['material_incluido']!, 'Material Incluido', Icons.shopping_bag_outlined),
+           ];
+        }
         break;
       case 'Transporte y logística':
-        fields = [
-          _buildTextField(_dynamicControllers['tipo_vehiculo']!, 'Tipo de Vehículo', Icons.directions_car),
-          const SizedBox(height: 16),
-          _buildTextField(_dynamicControllers['capacidad']!, 'Capacidad de Carga / Pasajeros', Icons.local_shipping_outlined),
-          const SizedBox(height: 16),
-          _buildTextField(_dynamicControllers['cobertura']!, 'Zona de Cobertura', Icons.map_outlined),
-        ];
+        if (_isService) {
+           fields = [
+            _buildTextField(_dynamicControllers['tipo_vehiculo']!, 'Tipo de Vehículo', Icons.directions_car),
+            const SizedBox(height: 16),
+            _buildTextField(_dynamicControllers['capacidad']!, 'Capacidad de Carga / Pasajeros', Icons.local_shipping_outlined),
+            const SizedBox(height: 16),
+            _buildTextField(_dynamicControllers['cobertura']!, 'Zona de Cobertura', Icons.map_outlined),
+           ];
+        } else {
+           fields = [
+             _buildTextField(_dynamicControllers['dimensiones']!, 'Dimensiones', Icons.aspect_ratio),
+             const SizedBox(height: 16),
+             _buildTextField(_dynamicControllers['peso_maximo']!, 'Peso Máximo Permitido', Icons.scale_outlined),
+           ];
+        }
         break;
       default:
         fields = [Text('Categoría no configurada', style: GoogleFonts.poppins())];
