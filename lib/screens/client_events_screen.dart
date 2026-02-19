@@ -94,9 +94,10 @@ class ClientEventsScreen extends StatelessWidget {
                         Text(DateFormat('dd/MM/yyyy HH:mm').format(date), style: TextStyle(color: Colors.grey[600], fontSize: 12)),
                     ],
                   ),
-                  trailing: const Chip(
-                    label: Text('Inscrito', style: TextStyle(color: Colors.white, fontSize: 10)),
-                    backgroundColor: Color(0xFF6F8F5E),
+                  trailing: IconButton(
+                    icon: const Icon(Icons.cancel_outlined, color: Colors.grey),
+                    tooltip: 'Cancelar inscripción',
+                    onPressed: () => _confirmCancellation(context, snapshot.data!.docs[index].id, data),
                   ),
                 ),
               );
@@ -105,5 +106,66 @@ class ClientEventsScreen extends StatelessWidget {
         },
       ),
     );
+  }
+
+  Future<void> _confirmCancellation(BuildContext context, String participationDocId, Map<String, dynamic> data) async {
+    final bool? confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Cancelar inscripción'),
+        content: Text('¿Seguro que deseas cancelar tu asistencia a "${data['eventName']}"?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Volver'),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFE63946), foregroundColor: Colors.white),
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Cancelar Inscripción'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true && context.mounted) {
+      final user = FirebaseAuth.instance.currentUser;
+      if (user == null) return;
+      
+      // The docID in 'users/.../participations' is the eventId itself according to ClientPymeDetailScreen logic
+      final eventId = participationDocId; 
+
+      try {
+        // 1. Delete from user's participations
+        await FirebaseFirestore.instance
+            .collection('users')
+            .doc(user.uid)
+            .collection('participations')
+            .doc(participationDocId)
+            .delete();
+
+        // 2. Delete from product's participants
+        // We must know which product/event it is. The docId is the eventId.
+        await FirebaseFirestore.instance
+            .collection('products')
+            .doc(eventId)
+            .collection('participants')
+            .doc(user.uid)
+            .delete();
+        
+
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Inscripción cancelada correctamente.')),
+          );
+        }
+      } catch (e) {
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Error al cancelar: $e')),
+          );
+        }
+      }
+    }
   }
 }

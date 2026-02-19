@@ -21,6 +21,13 @@ class PymeEventParticipantsScreen extends StatelessWidget {
         backgroundColor: const Color(0xFFF4F1EA),
         elevation: 0,
         iconTheme: const IconThemeData(color: Color(0xFF2F3F2A)),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.notifications_active_outlined),
+            tooltip: 'Enviar recordatorio a todos',
+            onPressed: () => _showNotificationDialog(context),
+          ),
+        ],
       ),
       body: StreamBuilder<QuerySnapshot>(
         stream: FirebaseFirestore.instance
@@ -81,6 +88,7 @@ class PymeEventParticipantsScreen extends StatelessWidget {
                   separatorBuilder: (c, i) => const Divider(),
                   itemBuilder: (context, index) {
                     final data = participants[index].data() as Map<String, dynamic>;
+                    final participantId = participants[index].id;
                     final email = data['email'] ?? 'Sin correo';
                     final registeredAt = (data['registeredAt'] as Timestamp?)?.toDate();
 
@@ -95,10 +103,9 @@ class PymeEventParticipantsScreen extends StatelessWidget {
                           ? Text('Inscrito el: ${DateFormat('dd/MM/yyyy HH:mm').format(registeredAt)}')
                           : null,
                       trailing: IconButton(
-                        icon: const Icon(Icons.email_outlined, color: Color(0xFF6F8F5E)),
-                        onPressed: () {
-                          // Could launch email app
-                        },
+                        icon: const Icon(Icons.remove_circle_outline, color: Color(0xFFE63946)),
+                        tooltip: 'Eliminar participante',
+                        onPressed: () => _confirmRemoval(context, participantId, email),
                       ),
                     );
                   },
@@ -109,5 +116,153 @@ class PymeEventParticipantsScreen extends StatelessWidget {
         },
       ),
     );
+  }
+
+  void _showNotificationDialog(BuildContext context) {
+    final TextEditingController messageController = TextEditingController();
+    
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Enviar Notificación'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text('Escribe un mensaje para enviar a TODOS los participantes inscritos.'),
+            const SizedBox(height: 16),
+            TextField(
+              controller: messageController,
+              decoration: const InputDecoration(
+                labelText: 'Mensaje',
+                hintText: 'Ej: Recuerden traer ropa cómoda...',
+                border: OutlineInputBorder(),
+              ),
+              maxLines: 3,
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancelar'),
+          ),
+          ElevatedButton.icon(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF2F3F2A),
+              foregroundColor: Colors.white,
+            ),
+            icon: const Icon(Icons.send, size: 16),
+            label: const Text('Enviar'),
+            onPressed: () async {
+              if (messageController.text.trim().isEmpty) return;
+              Navigator.pop(context);
+              await _sendNotificationToAll(context, messageController.text.trim());
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _sendNotificationToAll(BuildContext context, String message) async {
+    // Show loading
+    if (context.mounted) {
+       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Enviando notificaciones...')));
+    }
+
+    try {
+      final snapshot = await FirebaseFirestore.instance
+          .collection('products')
+          .doc(eventId)
+          .collection('participants')
+          .get();
+
+      final batch = FirebaseFirestore.instance.batch();
+
+      for (var doc in snapshot.docs) {
+        final userId = doc.id; // The doc ID in participants is the userId
+        final notifRef = FirebaseFirestore.instance
+            .collection('users')
+            .doc(userId)
+            .collection('notifications')
+            .doc();
+        
+        batch.set(notifRef, {
+          'title': 'Recordatorio: $eventName',
+          'message': message,
+          'createdAt': FieldValue.serverTimestamp(),
+          'read': false,
+          'type': 'event_reminder',
+          'eventId': eventId,
+        });
+      }
+
+      await batch.commit();
+
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Notificación enviada a ${snapshot.docs.length} participantes.')),
+        );
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error enviando notificaciones: $e')),
+        );
+      }
+    }
+  }
+
+  Future<void> _confirmRemoval(BuildContext context, String participantId, String email) async {
+    final bool? confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Eliminar Participante'),
+        content: Text('¿Seguro que deseas eliminar a "$email" de este evento?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancelar'),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFE63946), foregroundColor: Colors.white),
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Eliminar'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true && context.mounted) {
+       try {
+         // 1. Remove from event's participants
+         await FirebaseFirestore.instance
+             .collection('products')
+             .doc(eventId)
+             .collection('participants')
+             .doc(participantId)
+             .delete();
+
+         // 2. Remove from user's participations
+         await FirebaseFirestore.instance
+             .collection('users')
+             .doc(participantId)
+             .collection('participations')
+             .doc(eventId)
+             .delete();
+
+         if (context.mounted) {
+           ScaffoldMessenger.of(context).showSnackBar(
+             const SnackBar(content: Text('Participante eliminado.')),
+           );
+         }
+       } catch (e) {
+         if (context.mounted) {
+           ScaffoldMessenger.of(context).showSnackBar(
+             SnackBar(content: Text('Error al eliminar: $e')),
+           );
+         }
+       }
+    }
   }
 }
