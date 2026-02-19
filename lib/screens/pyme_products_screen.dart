@@ -101,7 +101,8 @@ class _PymeProductsScreenState extends State<PymeProductsScreen> with SingleTick
             return const Center(child: CircularProgressIndicator());
           }
 
-          final products = snapshot.data ?? [];
+          final allProducts = snapshot.data ?? [];
+          final products = allProducts.where((p) => p.customAttributes['is_event'] != 'true').toList();
 
           if (products.isEmpty) {
             return Center(
