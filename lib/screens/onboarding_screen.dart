@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
-import 'login_screen.dart';
-import 'register_screen.dart';
+import 'package:go_router/go_router.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class OnboardingScreen extends StatefulWidget {
   const OnboardingScreen({super.key});
@@ -17,159 +18,263 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     OnboardingContent(
       title: 'Tu ayuda echa raíces aquí',
       description:
-          'Conecta con fundaciones locales. Cada aporte se transforma en talleres y bienestar para quienes más lo necesitan.',
+          'Conecta con fundaciones locales. Cada aporte se transforma en progreso real para quienes más lo necesitan.',
       imageAsset: 'assets/images/onboarding_1.png',
-      icon: Icons.volunteer_activism,
+      color: const Color(0xFF6F8F5E),
     ),
     OnboardingContent(
       title: 'Un ciclo donde todos ganan',
       description:
-          'Al donar, desbloqueas beneficios exclusivos. Es nuestra forma de agradecerte por impulsar el cambio social.',
+          'Al donar, mejoras tu entorno y desbloqueas beneficios exclusivos. Es nuestra forma de darte las gracias.',
       imageAsset: 'assets/images/onboarding_2.png',
-      icon: Icons.sync_rounded, // Changed icon to represent cycle
+      color: const Color(0xFF8B5A3C),
     ),
     OnboardingContent(
       title: 'Descubre tesoros en tu barrio',
       description:
-          'Usa tus beneficios en Pymes locales. Desde artesanías hasta cafeterías, apoya el talento de tu comunidad.',
+          'Usa tus beneficios en Pymes locales. Desde cafeterías hasta talleres, apoya el talento de tu comunidad.',
       imageAsset: 'assets/images/onboarding_3.png',
-      icon: Icons.storefront, // Changed icon to represent local shop
+      color: const Color(0xFF2F3F2A),
     ),
     OnboardingContent(
       title: 'Sigue el impacto real',
       description:
-          'Visualiza las metas de recaudación y celebra cada vez que completamos una misión juntos. Transparencia total.',
+          'Visualiza metas de recaudación y celebra cada vez que completamos una misión juntos. Transparencia total.',
       imageAsset: 'assets/images/onboarding_4.png',
-      icon: Icons.trending_up, // Changed icon to represent metrics/goals
+      color: const Color(0xFF6F8F5E),
     ),
   ];
 
-  void _goToLogin() {
-    Navigator.of(context).pushReplacement(
-      MaterialPageRoute(builder: (_) => const LoginScreen()),
-    );
-  }
-
-  void _goToRegister() {
-    Navigator.of(context).pushReplacement(
-      MaterialPageRoute(builder: (_) => const RegisterScreen()),
-    );
+  Future<void> _goToLogin() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('hasSeenOnboarding', true);
+    if (mounted) context.go('/login');
   }
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
-
     return Scaffold(
-      // Fondo superior (crema #fcf1d9)
-      backgroundColor: const Color(0xFFFCF1D9),
+      backgroundColor: const Color(0xFFF4F1EA), // Cream background
       body: Stack(
         children: [
-          // Contenido Principal (PageView)
-          PageView.builder(
-            controller: _pageController,
-            itemCount: _contents.length,
-            onPageChanged: (index) {
-              setState(() {
-                _currentPage = index;
-              });
-            },
-            itemBuilder: (context, index) {
-              return _OnboardingPage(
-                content: _contents[index],
-                colorScheme: colorScheme,
-              );
-            },
-          ),
-
-          // Indicadores (Puntos) - Arriba al centro
-          Positioned(
-            top: MediaQuery.of(context).padding.top + 20,
-            left: 0,
-            right: 0,
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: List.generate(
-                _contents.length,
-                (index) => AnimatedContainer(
-                  duration: const Duration(milliseconds: 300),
-                  margin: const EdgeInsets.symmetric(horizontal: 6),
-                  height: 10,
-                  width: 10,
-                  decoration: BoxDecoration(
-                    color: _currentPage == index
-                        ? const Color(0xFF2F3F2A)
-                        : const Color(0xFF2F3F2A).withOpacity(0.4),
-                    shape: BoxShape.circle,
-                  ),
-                ),
+          // Dynamic Animated Background Decorator
+          AnimatedPositioned(
+            duration: const Duration(milliseconds: 700),
+            curve: Curves.easeInOut,
+            top: _currentPage.isEven ? -50 : -100,
+            right: _currentPage.isEven ? -50 : null,
+            left: !_currentPage.isEven ? -50 : null,
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 700),
+              width: 300,
+              height: 300,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: _contents[_currentPage].color.withOpacity(0.15),
               ),
             ),
           ),
-
-          // Botón Saltar - Arriba a la derecha
-          Positioned(
-            top: MediaQuery.of(context).padding.top + 10,
-            right: 20,
-            child: TextButton(
-              onPressed: _goToLogin,
-              child: Text(
-                'Saltar',
-                style: TextStyle(
-                  color: const Color(0xFF2F3F2A).withOpacity(0.9),
-                  fontWeight: FontWeight.w600,
-                  fontSize: 16,
-                ),
-              ),
-            ),
-          ),
-
-          // Botón de Acción (Flecha o "Únete al cambio") - Abajo
-          Positioned(
-            bottom: 30,
-            left: 30,
-            right: 30,
-            child: _currentPage == _contents.length - 1
-                ? SizedBox(
-                    width: double.infinity,
-                    height: 56,
-                    child: ElevatedButton(
-                      onPressed: _goToRegister,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.white,
-                        foregroundColor: colorScheme.primary,
-                        elevation: 4,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(30),
+          
+          SafeArea(
+            child: Column(
+              children: [
+                // Skip Button
+                Align(
+                  alignment: Alignment.topRight,
+                  child: Padding(
+                    padding: const EdgeInsets.only(right: 20, top: 10),
+                    child: TextButton(
+                      onPressed: _goToLogin,
+                      child: Text(
+                        'Saltar',
+                        style: GoogleFonts.poppins(
+                          color: const Color(0xFF2F3F2A).withOpacity(0.6),
+                          fontWeight: FontWeight.w600,
+                          fontSize: 16,
                         ),
                       ),
-                      child: const Text(
-                        'Únete al cambio',
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
-                  )
-                : Align(
-                    alignment: Alignment.bottomRight,
-                    child: FloatingActionButton(
-                      onPressed: () {
-                        _pageController.nextPage(
-                          duration: const Duration(milliseconds: 500),
-                          curve: Curves.easeInOut,
-                        );
-                      },
-                      backgroundColor: Colors.white,
-                      foregroundColor: colorScheme.primary,
-                      elevation: 4,
-                      child: const Icon(Icons.arrow_forward),
                     ),
                   ),
+                ),
+                
+                // Page View
+                Expanded(
+                  child: PageView.builder(
+                    controller: _pageController,
+                    itemCount: _contents.length,
+                    onPageChanged: (index) {
+                      setState(() {
+                        _currentPage = index;
+                      });
+                    },
+                    itemBuilder: (context, index) {
+                      return _buildPageContent(_contents[index], index);
+                    },
+                  ),
+                ),
+                
+                // Bottom Control Bar
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
+                  decoration: const BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.only(
+                      topLeft: Radius.circular(40),
+                      topRight: Radius.circular(40),
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black12,
+                        blurRadius: 20,
+                        offset: Offset(0, -5),
+                      ),
+                    ],
+                  ),
+                  child: Column(
+                    children: [
+                      // Indicators
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: List.generate(
+                          _contents.length,
+                          (index) => _buildDot(index),
+                        ),
+                      ),
+                      const SizedBox(height: 32),
+                      
+                      // Action Button
+                      SizedBox(
+                        width: double.infinity,
+                        height: 56,
+                        child: ElevatedButton(
+                          onPressed: () {
+                            if (_currentPage == _contents.length - 1) {
+                              _goToLogin();
+                            } else {
+                              _pageController.nextPage(
+                                duration: const Duration(milliseconds: 500),
+                                curve: Curves.easeInOut,
+                              );
+                            }
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: _contents[_currentPage].color,
+                            foregroundColor: Colors.white,
+                            elevation: 0,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(16),
+                            ),
+                          ),
+                          child: Text(
+                            _currentPage == _contents.length - 1
+                                ? 'Comenzar Ahora'
+                                : 'Siguiente',
+                            style: GoogleFonts.poppins(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildPageContent(OnboardingContent content, int index) {
+    return Padding(
+      padding: const EdgeInsets.all(32.0),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Expanded(
+            child: AnimatedScale(
+              scale: _currentPage == index ? 1.0 : 0.8,
+              duration: const Duration(milliseconds: 500),
+              curve: Curves.easeOutBack,
+              child: AnimatedOpacity(
+                opacity: _currentPage == index ? 1.0 : 0.5,
+                duration: const Duration(milliseconds: 500),
+                child: AspectRatio(
+                  aspectRatio: 1,
+                  child: Container(
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.1),
+                          blurRadius: 15,
+                          offset: const Offset(0, 10),
+                        ),
+                      ],
+                    ),
+                    clipBehavior: Clip.antiAlias,
+                    child: Image.asset(
+                      content.imageAsset,
+                      fit: BoxFit.cover,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(height: 48),
+          AnimatedSlide(
+            offset: _currentPage == index ? Offset.zero : const Offset(0, 0.5),
+            duration: const Duration(milliseconds: 600),
+            curve: Curves.easeOutQuint,
+            child: AnimatedOpacity(
+              opacity: _currentPage == index ? 1.0 : 0.0,
+              duration: const Duration(milliseconds: 600),
+              child: Column(
+                children: [
+                  Text(
+                    content.title,
+                    textAlign: TextAlign.center,
+                    style: GoogleFonts.poppins(
+                      fontSize: 28,
+                      fontWeight: FontWeight.bold,
+                      color: const Color(0xFF2F3F2A),
+                      height: 1.2,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    content.description,
+                    textAlign: TextAlign.center,
+                    style: GoogleFonts.poppins(
+                      fontSize: 15,
+                      color: const Color(0xFF2F3F2A).withOpacity(0.7),
+                      height: 1.6,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 16),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDot(int index) {
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 300),
+      margin: const EdgeInsets.symmetric(horizontal: 4),
+      height: 8,
+      width: _currentPage == index ? 24 : 8,
+      decoration: BoxDecoration(
+        color: _currentPage == index
+            ? _contents[_currentPage].color
+            : _contents[_currentPage].color.withOpacity(0.2),
+        borderRadius: BorderRadius.circular(4),
       ),
     );
   }
@@ -179,141 +284,12 @@ class OnboardingContent {
   final String title;
   final String description;
   final String imageAsset;
-  final IconData icon;
+  final Color color;
 
   OnboardingContent({
     required this.title,
     required this.description,
     required this.imageAsset,
-    required this.icon,
+    required this.color,
   });
-}
-
-class _OnboardingPage extends StatelessWidget {
-  final OnboardingContent content;
-  final ColorScheme colorScheme;
-
-  const _OnboardingPage({
-    required this.content,
-    required this.colorScheme,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final size = MediaQuery.of(context).size;
-    // Altura de la ola (parte inferior)
-    final bottomHeight = size.height * 0.45;
-
-    return Stack(
-      children: [
-        // 1. Imagen / Ilustración (Parte Superior)
-        Positioned(
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: bottomHeight - 50, // Dejar que se solape un poco con la ola
-          child: Container(
-            padding: const EdgeInsets.all(40),
-            alignment: Alignment.center,
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Expanded(
-                  child: Padding(
-                    padding: const EdgeInsets.all(20.0),
-                    child: Image.asset(
-                      content.imageAsset,
-                      fit: BoxFit.contain,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-
-        // 2. Fondo con Ola (Parte Inferior)
-        Positioned(
-          bottom: 0,
-          left: 0,
-          right: 0,
-          height: bottomHeight,
-          child: ClipPath(
-            clipper: WaveClipper(),
-            child: Container(
-              color: colorScheme.primary, // Verde Oscuro (Deep Leaf Green)
-              padding: const EdgeInsets.fromLTRB(32, 80, 32, 32),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  Text(
-                    content.title,
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontSize: 26,
-                      fontWeight: FontWeight.bold,
-                      color: colorScheme.onPrimary, // Blanco Cálido
-                      height: 1.2,
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  Text(
-                    content.description,
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontSize: 16,
-                      color: colorScheme.onPrimary.withOpacity(0.85),
-                      height: 1.5,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-// Clipper para la forma de ola
-class WaveClipper extends CustomClipper<Path> {
-  @override
-  Path getClip(Size size) {
-    var path = Path();
-    // Empezamos un poco más abajo del borde superior izquierdo
-    path.lineTo(0, 40);
-
-    // Primer punto de control y punto final para la primera curva (bajada)
-    var firstControlPoint = Offset(size.width / 4, 80);
-    var firstEndPoint = Offset(size.width / 2, 40);
-
-    // Segundo punto de control y punto final para la segunda curva (subida)
-    var secondControlPoint = Offset(size.width * 3 / 4, 0);
-    var secondEndPoint = Offset(size.width, 40);
-
-    path.quadraticBezierTo(
-      firstControlPoint.dx,
-      firstControlPoint.dy,
-      firstEndPoint.dx,
-      firstEndPoint.dy,
-    );
-
-    path.quadraticBezierTo(
-      secondControlPoint.dx,
-      secondControlPoint.dy,
-      secondEndPoint.dx,
-      secondEndPoint.dy,
-    );
-
-    // Cerramos el path hacia abajo
-    path.lineTo(size.width, size.height);
-    path.lineTo(0, size.height);
-    path.close();
-
-    return path;
-  }
-
-  @override
-  bool shouldReclip(CustomClipper<Path> oldClipper) => false;
 }

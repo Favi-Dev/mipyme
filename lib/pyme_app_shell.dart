@@ -1,3 +1,4 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'models/vitrina_data.dart';
 import 'screens/pyme_metrics_screen.dart';
@@ -51,11 +52,21 @@ class _PymeAppShellState extends State<PymeAppShell> {
   Widget build(BuildContext context) {
     return Scaffold(
       body: _screens[_selectedIndex],
-      bottomNavigationBar: BottomNavigationBar(
-        type: BottomNavigationBarType.fixed,
-        backgroundColor: const Color(0xFFF4F1EA),
-        selectedItemColor: const Color(0xFF6F8F5E),
-        unselectedItemColor: const Color(0xFF2F3F2A).withOpacity(0.5),
+      bottomNavigationBar: ClipRRect(
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
+          child: Container(
+            decoration: BoxDecoration(
+              color: const Color(0xFFF4F1EA).withOpacity(0.85),
+              border: Border(top: BorderSide(color: Colors.white.withOpacity(0.2))),
+            ),
+            child: BottomNavigationBar(
+              type: BottomNavigationBarType.fixed,
+              backgroundColor: Colors.transparent,
+              elevation: 0,
+              selectedItemColor: const Color(0xFF6F8F5E),
+              unselectedItemColor: const Color(0xFF2F3F2A).withOpacity(0.5),
         items: VitrinaData.isFoundation
             ? const <BottomNavigationBarItem>[
                 BottomNavigationBarItem(
@@ -116,6 +127,9 @@ class _PymeAppShellState extends State<PymeAppShell> {
         currentIndex: _selectedIndex,
         onTap: _onItemTapped,
       ),
+    ),
+  ),
+),
     );
   }
 }

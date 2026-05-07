@@ -1,6 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
-enum UserRole { client, pyme, foundation, admin }
+enum UserRole { client, pyme, foundation, admin, empresa, storeManager }
 
 class UserProfile {
   final String id;
@@ -13,6 +13,8 @@ class UserProfile {
   final bool isSubscribed;
   final DateTime? subscriptionDate;
   final bool monthlyCouponRedeemed;
+  final int points;
+  final List<String> badges;
 
   // Pyme/Foundation specific
   final String? category;
@@ -43,6 +45,16 @@ class UserProfile {
 
   // Metrics
   final int supporterCount;
+  final double? averageRating;
+  final int? reviewCount;
+  
+  // Financial
+  final double? commissionRate; // % de comisión (ej: 0.05 para 5%) 
+
+  // Empresa / StoreManager hierarchy
+  final String? parentEmpresaId;   // ID de la empresa padre (para tiendas y storeManagers)
+  final String? assignedStoreId;   // ID de la tienda asignada (solo storeManager)
+  final String? assignedStoreName; // Nombre legible de la tienda asignada
 
   UserProfile({
     required this.id,
@@ -53,6 +65,8 @@ class UserProfile {
     this.isSubscribed = false,
     this.subscriptionDate,
     this.monthlyCouponRedeemed = false,
+    this.points = 0,
+    this.badges = const [],
     this.category,
     this.description,
     this.coverImageUrl,
@@ -75,6 +89,12 @@ class UserProfile {
     this.bankAccountNumber,
     this.bankAccountHolderRut,
     this.supporterCount = 0,
+    this.averageRating,
+    this.reviewCount,
+    this.commissionRate,
+    this.parentEmpresaId,
+    this.assignedStoreId,
+    this.assignedStoreName,
   });
 
   factory UserProfile.fromMap(Map<String, dynamic> map, String id) {
@@ -87,6 +107,8 @@ class UserProfile {
       isSubscribed: map['isSubscribed'] ?? false,
       subscriptionDate: (map['subscriptionDate'] as Timestamp?)?.toDate(),
       monthlyCouponRedeemed: map['monthlyCouponRedeemed'] ?? false,
+      points: map['points'] ?? 0,
+      badges: (map['badges'] as List<dynamic>?)?.map((e) => e.toString()).toList() ?? [],
       category: map['category'],
       description: map['description'],
       coverImageUrl: map['coverImageUrl'],
@@ -111,6 +133,12 @@ class UserProfile {
       bankAccountNumber: map['bankAccountNumber'],
       bankAccountHolderRut: map['bankAccountHolderRut'],
       supporterCount: map['supporterCount'] ?? 0,
+      averageRating: (map['averageRating'] as num?)?.toDouble(),
+      reviewCount: map['reviewCount'] as int?,
+      commissionRate: (map['commissionRate'] as num?)?.toDouble() ?? 0.10, // 10% por defecto si no tiene
+      parentEmpresaId: map['parentEmpresaId'],
+      assignedStoreId: map['assignedStoreId'],
+      assignedStoreName: map['assignedStoreName'],
     );
   }
 
@@ -123,6 +151,8 @@ class UserProfile {
       'isSubscribed': isSubscribed,
       'subscriptionDate': subscriptionDate != null ? Timestamp.fromDate(subscriptionDate!) : null,
       'monthlyCouponRedeemed': monthlyCouponRedeemed,
+      'points': points,
+      'badges': badges,
       'category': category,
       'description': description,
       'coverImageUrl': coverImageUrl,
@@ -144,6 +174,10 @@ class UserProfile {
       'bankAccountType': bankAccountType,
       'bankAccountNumber': bankAccountNumber,
       'bankAccountHolderRut': bankAccountHolderRut,
+      'commissionRate': commissionRate,
+      if (parentEmpresaId != null) 'parentEmpresaId': parentEmpresaId,
+      if (assignedStoreId != null) 'assignedStoreId': assignedStoreId,
+      if (assignedStoreName != null) 'assignedStoreName': assignedStoreName,
     };
   }
 

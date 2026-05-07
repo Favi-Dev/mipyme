@@ -182,7 +182,7 @@ class PymeEventParticipantsScreen extends StatelessWidget {
       for (var doc in snapshot.docs) {
         final userId = doc.id; // The doc ID in participants is the userId
         final notifRef = FirebaseFirestore.instance
-            .collection('users')
+            .collection('clients')
             .doc(userId)
             .collection('notifications')
             .doc();
@@ -235,21 +235,24 @@ class PymeEventParticipantsScreen extends StatelessWidget {
 
     if (confirmed == true && context.mounted) {
        try {
-         // 1. Remove from event's participants
-         await FirebaseFirestore.instance
-             .collection('products')
-             .doc(eventId)
-             .collection('participants')
-             .doc(participantId)
-             .delete();
+         final eventRef = FirebaseFirestore.instance.collection('products').doc(eventId);
+         await FirebaseFirestore.instance.runTransaction((transaction) async {
+           final eventSnapshot = await transaction.get(eventRef);
+           transaction.delete(eventRef.collection('participants').doc(participantId));
+           transaction.delete(FirebaseFirestore.instance
+               .collection('clients')
+               .doc(participantId)
+               .collection('participations')
+               .doc(eventId));
 
-         // 2. Remove from user's participations
-         await FirebaseFirestore.instance
-             .collection('users')
-             .doc(participantId)
-             .collection('participations')
-             .doc(eventId)
-             .delete();
+           final data = eventSnapshot.data();
+           final registeredCount = (data?['registeredCount'] as num?)?.toInt() ?? 0;
+           if (registeredCount > 0) {
+             transaction.update(eventRef, {
+               'registeredCount': FieldValue.increment(-1),
+             });
+           }
+         });
 
          if (context.mounted) {
            ScaffoldMessenger.of(context).showSnackBar(

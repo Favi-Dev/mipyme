@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:go_router/go_router.dart';
+import 'package:provider/provider.dart';
 import '../services/pyme_service.dart';
 import '../models/user_profile.dart';
+import '../providers/theme_provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'pyme_vitrina_settings_screen.dart';
 import 'pyme_support_screen.dart';
-import 'login_screen.dart';
 
 class PymeProfileScreen extends StatefulWidget {
   const PymeProfileScreen({super.key});
@@ -18,6 +21,28 @@ class _PymeProfileScreenState extends State<PymeProfileScreen> {
   final PymeService _pymeService = PymeService();
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final User? _currentUser = FirebaseAuth.instance.currentUser;
+  bool _notificationsEnabled = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadPreferences();
+  }
+
+  Future<void> _loadPreferences() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      _notificationsEnabled = prefs.getBool('notifications_enabled') ?? true;
+    });
+  }
+
+  Future<void> _toggleNotifications(bool value) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('notifications_enabled', value);
+    setState(() {
+      _notificationsEnabled = value;
+    });
+  }
 
   void _changePassword(BuildContext context) {
     showDialog(
@@ -94,20 +119,21 @@ class _PymeProfileScreenState extends State<PymeProfileScreen> {
   @override
   Widget build(BuildContext context) {
     if (_currentUser == null) return const SizedBox();
+    final theme = Theme.of(context);
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF4F1EA),
+      backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
         title: Text(
           'Mi Perfil',
           style: GoogleFonts.poppins(
             fontWeight: FontWeight.bold,
-            color: const Color(0xFF2F3F2A),
+            color: theme.colorScheme.onSurface,
           ),
         ),
         elevation: 0,
-        backgroundColor: const Color(0xFFF4F1EA),
-        foregroundColor: const Color(0xFF2F3F2A),
+        backgroundColor: theme.colorScheme.surface,
+        foregroundColor: theme.colorScheme.onSurface,
       ),
       body: FutureBuilder<UserProfile?>(
         future: _pymeService.getPymeById(_currentUser.uid),
@@ -200,20 +226,48 @@ class _PymeProfileScreenState extends State<PymeProfileScreen> {
                     style: GoogleFonts.poppins(
                       fontWeight: FontWeight.w500,
                       fontSize: 14,
-                      color: const Color(0xFF2F3F2A),
+                      color: theme.colorScheme.onSurface,
                     ),
                   ),
-                  value: true, 
-                  activeThumbColor: const Color(0xFF6F8F5E),
-                  onChanged: (val) {},
+                  value: _notificationsEnabled, 
+                  activeThumbColor: theme.colorScheme.primary,
+                  onChanged: _toggleNotifications,
                   secondary: Container(
                     padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
-                      color: const Color(0xFF6F8F5E).withOpacity(0.1),
+                      color: theme.colorScheme.primary.withOpacity(0.1),
                       borderRadius: BorderRadius.circular(8),
                     ),
-                    child: const Icon(Icons.notifications_outlined, color: Color(0xFF6F8F5E), size: 20),
+                    child: Icon(Icons.notifications_outlined, color: theme.colorScheme.primary, size: 20),
                   ),
+              ),
+              // Dark mode toggle
+              Consumer<ThemeProvider>(
+                builder: (context, themeProvider, _) => SwitchListTile(
+                  title: Text(
+                    'Modo Oscuro',
+                    style: GoogleFonts.poppins(
+                      fontWeight: FontWeight.w500,
+                      fontSize: 14,
+                      color: theme.colorScheme.onSurface,
+                    ),
+                  ),
+                  value: themeProvider.isDarkMode,
+                  activeThumbColor: theme.colorScheme.primary,
+                  onChanged: (_) => themeProvider.toggleTheme(),
+                  secondary: Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: theme.colorScheme.primary.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Icon(
+                      themeProvider.isDarkMode ? Icons.dark_mode : Icons.light_mode,
+                      color: theme.colorScheme.primary,
+                      size: 20,
+                    ),
+                  ),
+                ),
               ),
               const SizedBox(height: 24),
               _buildSectionTitle('Soporte'),
@@ -243,13 +297,33 @@ class _PymeProfileScreenState extends State<PymeProfileScreen> {
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                 ),
                 onPressed: () async {
-                  await FirebaseAuth.instance.signOut();
-                  if (context.mounted) {
-                    Navigator.pushAndRemoveUntil(
-                      context,
-                      MaterialPageRoute(builder: (context) => const LoginScreen()),
-                      (route) => false,
-                    );
+                  final confirm = await showDialog<bool>(
+                    context: context,
+                    builder: (context) => AlertDialog(
+                      title: const Text('¿Cerrar Sesión?'),
+                      content: const Text('¿Estás seguro de que deseas cerrar tu sesión en la aplicación?'),
+                      actions: [
+                        TextButton(
+                          onPressed: () => Navigator.pop(context, false),
+                          child: const Text('Cancelar'),
+                        ),
+                        ElevatedButton(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFF8B5A3C),
+                            foregroundColor: Colors.white,
+                          ),
+                          onPressed: () => Navigator.pop(context, true),
+                          child: const Text('Sí, salir'),
+                        ),
+                      ],
+                    ),
+                  );
+
+                  if (confirm == true) {
+                    await FirebaseAuth.instance.signOut();
+                    if (context.mounted) {
+                      context.go('/login');
+                    }
                   }
                 },
                 child: Text(
@@ -265,14 +339,15 @@ class _PymeProfileScreenState extends State<PymeProfileScreen> {
   }
 
   Widget _buildProfileHeader(String name, String email, String? logoUrl) {
+    final theme = Theme.of(context);
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: const Color(0xFFFFFFFF),
+        color: theme.colorScheme.surface,
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF2F3F2A).withOpacity(0.1),
+            color: theme.colorScheme.shadow.withOpacity(0.1),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -280,15 +355,22 @@ class _PymeProfileScreenState extends State<PymeProfileScreen> {
       ),
       child: Row(
         children: [
-          CircleAvatar(
-            radius: 30,
-            backgroundColor: const Color(0xFF6F8F5E).withOpacity(0.2),
-            backgroundImage: logoUrl != null && logoUrl.isNotEmpty
-                ? NetworkImage(logoUrl)
-                : null,
-            child: logoUrl == null || logoUrl.isEmpty
-                ? const Icon(Icons.store, size: 30, color: Color(0xFF6F8F5E))
-                : null,
+          Container(
+            width: 60,
+            height: 60,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: theme.colorScheme.primary.withOpacity(0.2),
+            ),
+            child: ClipOval(
+              child: logoUrl != null && logoUrl.isNotEmpty
+                  ? Image.network(
+                      logoUrl,
+                      fit: BoxFit.cover,
+                      errorBuilder: (_, __, ___) => Icon(Icons.store, size: 30, color: theme.colorScheme.primary),
+                    )
+                  : Icon(Icons.store, size: 30, color: theme.colorScheme.primary),
+            ),
           ),
           const SizedBox(width: 16),
           Expanded(
@@ -300,13 +382,13 @@ class _PymeProfileScreenState extends State<PymeProfileScreen> {
                   style: GoogleFonts.poppins(
                     fontWeight: FontWeight.bold,
                     fontSize: 18,
-                    color: const Color(0xFF2F3F2A),
+                    color: theme.colorScheme.onSurface,
                   ),
                 ),
                 Text(
                   email,
                   style: GoogleFonts.poppins(
-                    color: const Color(0xFF2F3F2A).withOpacity(0.7),
+                    color: theme.colorScheme.onSurface.withOpacity(0.7),
                     fontSize: 14,
                   ),
                 ),
@@ -319,24 +401,26 @@ class _PymeProfileScreenState extends State<PymeProfileScreen> {
   }
 
   Widget _buildSectionTitle(String title) {
+    final theme = Theme.of(context);
     return Padding(
       padding: const EdgeInsets.only(bottom: 8, left: 4),
       child: Text(
         title,
         style: GoogleFonts.poppins(
           fontWeight: FontWeight.w600,
-          color: const Color(0xFF2F3F2A),
+          color: theme.colorScheme.onSurface,
           fontSize: 16,
         ),
       ),
     );
   }
   Widget _buildBankDetail(String label, String? value) {
+    final theme = Theme.of(context);
     return Padding(
       padding: const EdgeInsets.only(bottom: 8.0),
       child: RichText(
         text: TextSpan(
-          style: GoogleFonts.poppins(color: Colors.black87),
+          style: GoogleFonts.poppins(color: theme.colorScheme.onSurface),
           children: [
             TextSpan(text: '$label ', style: const TextStyle(fontWeight: FontWeight.bold)),
             TextSpan(text: value ?? 'No registrado'),
@@ -351,14 +435,15 @@ class _PymeProfileScreenState extends State<PymeProfileScreen> {
     String? subtitle,
     required VoidCallback onTap,
   }) {
+    final theme = Theme.of(context);
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
       decoration: BoxDecoration(
-        color: const Color(0xFFFFFFFF),
+        color: theme.colorScheme.surface,
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF2F3F2A).withOpacity(0.05),
+            color: theme.colorScheme.shadow.withOpacity(0.05),
             blurRadius: 4,
             offset: const Offset(0, 2),
           ),
@@ -368,26 +453,26 @@ class _PymeProfileScreenState extends State<PymeProfileScreen> {
         leading: Container(
           padding: const EdgeInsets.all(8),
           decoration: BoxDecoration(
-            color: const Color(0xFF6F8F5E).withOpacity(0.1),
+            color: theme.colorScheme.primary.withOpacity(0.1),
             borderRadius: BorderRadius.circular(8),
           ),
-          child: Icon(icon, color: const Color(0xFF6F8F5E), size: 20),
+          child: Icon(icon, color: theme.colorScheme.primary, size: 20),
         ),
         title: Text(
           title,
           style: GoogleFonts.poppins(
             fontWeight: FontWeight.w500,
             fontSize: 14,
-            color: const Color(0xFF2F3F2A),
+            color: theme.colorScheme.onSurface,
           ),
         ),
         subtitle: subtitle != null
             ? Text(
                 subtitle,
-                style: GoogleFonts.poppins(fontSize: 12, color: const Color(0xFF2F3F2A).withOpacity(0.5)),
+                style: GoogleFonts.poppins(fontSize: 12, color: theme.colorScheme.onSurface.withOpacity(0.5)),
               )
             : null,
-        trailing: Icon(Icons.chevron_right, color: const Color(0xFF2F3F2A).withOpacity(0.5)),
+        trailing: Icon(Icons.chevron_right, color: theme.colorScheme.onSurface.withOpacity(0.5)),
         onTap: onTap,
       ),
     );

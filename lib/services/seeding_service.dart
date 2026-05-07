@@ -1,12 +1,33 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/foundation.dart';
 import '../models/user_profile.dart';
 
 class SeedingService {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
+  String _collectionForRole(UserRole role) {
+    switch (role) {
+      case UserRole.client:
+        return 'clients';
+      case UserRole.pyme:
+        return 'pymes';
+      case UserRole.foundation:
+        return 'foundations';
+      case UserRole.admin:
+        return 'admins';
+      case UserRole.empresa:
+        return 'empresas';
+      case UserRole.storeManager:
+        return 'store_managers';
+    }
+  }
+
   Future<void> seedUsers() async {
+    // SAFETY GUARD: seeding is only allowed in debug/dev builds
+    assert(kDebugMode, 'SeedingService cannot be used in production builds.');
+    if (!kDebugMode) return;
     // 1. Create Admin
     await _createUser(
       email: 'admin@soyplus.cl',
@@ -96,10 +117,10 @@ class SeedingService {
       UserCredential cred;
       try {
         cred = await _auth.createUserWithEmailAndPassword(email: email, password: password);
-        print('Created user: $email');
+        debugPrint('Created user: $email');
       } on FirebaseAuthException catch (e) {
         if (e.code == 'email-already-in-use') {
-          print('User $email already exists, signing in to update profile...');
+          debugPrint('User $email already exists, signing in to update profile...');
           cred = await _auth.signInWithEmailAndPassword(email: email, password: password);
         } else {
           rethrow;
@@ -143,11 +164,11 @@ class SeedingService {
         );
 
         // 3. Save to Firestore
-        await _firestore.collection('users').doc(uid).set(userProfile.toMap());
-        print('Profile updated for $email');
+        await _firestore.collection(_collectionForRole(role)).doc(uid).set(userProfile.toMap());
+      debugPrint('Profile updated for $email');
       }
     } catch (e) {
-      print('Error seeding user $email: $e');
+      debugPrint('Error seeding user $email: $e');
     }
   }
 }

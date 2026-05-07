@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import '../services/pyme_service.dart';
+
 
 class FoundationDonationsGoalScreen extends StatefulWidget {
   const FoundationDonationsGoalScreen({super.key});
@@ -37,7 +37,7 @@ class _FoundationDonationsGoalScreenState extends State<FoundationDonationsGoalS
 
   void _loadData() async {
     // Load Goal and Current Donations from Firestore
-    final userDoc = await FirebaseFirestore.instance.collection('users').doc(_currentPymeId).get();
+    final userDoc = await FirebaseFirestore.instance.collection('foundations').doc(_currentPymeId).get();
     
     if (userDoc.exists && mounted) {
       setState(() {
@@ -54,7 +54,7 @@ class _FoundationDonationsGoalScreenState extends State<FoundationDonationsGoalS
     final newGoal = double.tryParse(_goalController.text) ?? 0.0;
     final newDescription = _descriptionController.text;
     
-    await FirebaseFirestore.instance.collection('users').doc(_currentPymeId).set({
+    await FirebaseFirestore.instance.collection('foundations').doc(_currentPymeId).set({
       'donationGoal': newGoal,
       'donationGoalDescription': newDescription,
     }, SetOptions(merge: true));

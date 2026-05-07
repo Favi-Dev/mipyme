@@ -10,6 +10,7 @@ import '../models/product.dart';
 import 'pyme_products_screen.dart';
 import 'pyme_events_screen.dart';
 import '../widgets/supporter_counter.dart';
+import '../models/vitrina_data.dart';
 
 class PymeProfileVitrinaScreen extends StatefulWidget {
   const PymeProfileVitrinaScreen({super.key});
@@ -32,7 +33,8 @@ class _PymeProfileVitrinaScreenState extends State<PymeProfileVitrinaScreen> {
     final user = FirebaseAuth.instance.currentUser;
     if (user != null) {
       _productsStream = _productService.getProductsByPyme(user.uid);
-      _userStream = FirebaseFirestore.instance.collection('users').doc(user.uid).snapshots();
+      final collection = VitrinaData.isFoundation ? 'foundations' : 'pymes';
+      _userStream = FirebaseFirestore.instance.collection(collection).doc(user.uid).snapshots();
     }
   }
 
@@ -59,10 +61,7 @@ class _PymeProfileVitrinaScreenState extends State<PymeProfileVitrinaScreen> {
 
         final data = snapshot.data!.data() as Map<String, dynamic>?;
         if (data == null) {
-          return const Scaffold(
-            backgroundColor: Color(0xFFF4F1EA),
-            body: Center(child: Text('No se encontró información del perfil')),
-          );
+          return _buildEmptySkeleton(context);
         }
 
         final profile = UserProfile.fromMap(data, snapshot.data!.id);
@@ -134,6 +133,7 @@ class _PymeProfileVitrinaScreenState extends State<PymeProfileVitrinaScreen> {
                                   ? Image.network(
                                       profile.coverImageUrl!,
                                       fit: BoxFit.cover,
+                                      errorBuilder: (_, __, ___) => Container(color: Colors.grey[800]),
                                     )
                                   : Image.asset(
                                       profile.coverImageUrl!,
@@ -255,15 +255,23 @@ class _PymeProfileVitrinaScreenState extends State<PymeProfileVitrinaScreen> {
                           
                           final allProducts = snapshot.data ?? [];
                           
-                          // Filter events
-                          final events = allProducts.where((p) => 
-                            p.customAttributes['is_event'].toString().toLowerCase() == 'true'
-                          ).toList();
-                          
-                          // Filter regular products
-                          final regularProducts = allProducts.where((p) => 
-                            p.customAttributes['is_event'].toString().toLowerCase() != 'true'
-                          ).toList();
+                          final now = DateTime.now();
+                          final events = allProducts
+                              .where((p) => _isEventProduct(p))
+                              .where((p) {
+                                final eventDate = _eventDateTime(p);
+                                return eventDate == null || !eventDate.isBefore(now);
+                              })
+                              .toList()
+                            ..sort((a, b) {
+                              final aDate = _eventDateTime(a) ?? DateTime(2100);
+                              final bDate = _eventDateTime(b) ?? DateTime(2100);
+                              return aDate.compareTo(bDate);
+                            });
+
+                          final inventoryItems = allProducts.where((p) => !_isEventProduct(p)).toList();
+                          final physicalProducts = inventoryItems.where((p) => !p.isService).toList();
+                          final serviceProducts = inventoryItems.where((p) => p.isService).toList();
 
                           return Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
@@ -321,13 +329,47 @@ class _PymeProfileVitrinaScreenState extends State<PymeProfileVitrinaScreen> {
                                 ],
                               ),
                               const SizedBox(height: 12),
-                              if (regularProducts.isEmpty)
+                              if (physicalProducts.isEmpty)
                                 Text('No hay productos registrados', style: TextStyle(color: const Color(0xFF2F3F2A).withValues(alpha: 0.5)))
                               else
                                 SingleChildScrollView(
                                   scrollDirection: Axis.horizontal,
                                   child: Row(
-                                    children: regularProducts.map((product) {
+                                    children: physicalProducts.map((product) {
+                                      return Padding(
+                                        padding: const EdgeInsets.only(right: 12),
+                                        child: _buildProductCard(product),
+                                      );
+                                    }).toList(),
+                                  ),
+                                ),
+                              const SizedBox(height: 24),
+
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: [
+                                  _buildSectionTitle('Servicios', const Color(0xFF2F3F2A)),
+                                  IconButton(
+                                    icon: const Icon(Icons.edit, color: Color(0xFF6F8F5E)),
+                                    onPressed: () async {
+                                      await Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (context) => const PymeProductsScreen(),
+                                        ),
+                                      );
+                                    },
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 12),
+                              if (serviceProducts.isEmpty)
+                                Text('No hay servicios registrados', style: TextStyle(color: const Color(0xFF2F3F2A).withValues(alpha: 0.5)))
+                              else
+                                SingleChildScrollView(
+                                  scrollDirection: Axis.horizontal,
+                                  child: Row(
+                                    children: serviceProducts.map((product) {
                                       return Padding(
                                         padding: const EdgeInsets.only(right: 12),
                                         child: _buildProductCard(product),
@@ -350,8 +392,10 @@ class _PymeProfileVitrinaScreenState extends State<PymeProfileVitrinaScreen> {
                       // Contact Section
                       _buildSectionTitle('Contacto', const Color(0xFF2F3F2A)),
                       const SizedBox(height: 12),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceAround,
+                      Wrap(
+                        alignment: WrapAlignment.spaceAround,
+                        spacing: 16,
+                        runSpacing: 16,
                         children: [
                           if (profile.webUrl != null && profile.webUrl!.isNotEmpty)
                             _buildSocialButton(Icons.language, 'Web', () {
@@ -430,14 +474,33 @@ class _PymeProfileVitrinaScreenState extends State<PymeProfileVitrinaScreen> {
                   )
                 ]
               ),
-              child: CircleAvatar(
-                radius: 40,
-                backgroundColor: const Color(0xFFFFFFFF),
-                backgroundImage: (profile.logoUrl != null && profile.logoUrl!.isNotEmpty)
+              child: ClipOval(
+                child: (profile.logoUrl != null && profile.logoUrl!.isNotEmpty)
                     ? (profile.logoUrl!.startsWith('http')
-                        ? NetworkImage(profile.logoUrl!)
-                        : AssetImage(profile.logoUrl!) as ImageProvider)
-                    : const AssetImage('assets/images/placeholder_logo.png') as ImageProvider, // Fallback
+                        ? Image.network(
+                            profile.logoUrl!,
+                            fit: BoxFit.cover,
+                            width: 80,
+                            height: 80,
+                            errorBuilder: (_, __, ___) => Image.asset(
+                              'assets/images/LOGOSOYPLUS.png',
+                              fit: BoxFit.cover,
+                              width: 80,
+                              height: 80,
+                            ),
+                          )
+                        : Image.asset(
+                            profile.logoUrl!,
+                            fit: BoxFit.cover,
+                            width: 80,
+                            height: 80,
+                          ))
+                    : Image.asset(
+                        'assets/images/LOGOSOYPLUS.png',
+                        fit: BoxFit.cover,
+                        width: 80,
+                        height: 80,
+                      ),
               ),
             ),
           ),
@@ -498,6 +561,7 @@ class _PymeProfileVitrinaScreenState extends State<PymeProfileVitrinaScreen> {
   }
 
   Widget _buildProductCard(Product product) {
+    final isQuote = product.customAttributes['allow_quote'] == 'true';
     return Container(
       width: 160,
       decoration: BoxDecoration(
@@ -544,13 +608,20 @@ class _PymeProfileVitrinaScreenState extends State<PymeProfileVitrinaScreen> {
                   ),
                 ),
                 const SizedBox(height: 4),
-                Text(
-                  '\$${product.price.toStringAsFixed(0)}',
-                  style: const TextStyle(
-                    color: Color(0xFF6F8F5E),
-                    fontWeight: FontWeight.bold,
-                    fontSize: 14,
-                  ),
+                Wrap(
+                  spacing: 6,
+                  runSpacing: 6,
+                  children: [
+                    _buildInventoryBadge(
+                      isQuote ? 'Cotizar' : '\$${product.price.toStringAsFixed(0)}',
+                      const Color(0xFF6F8F5E),
+                    ),
+                    if (product.isService)
+                      _buildInventoryBadge('Servicio', const Color(0xFF2F3F2A)),
+                    if (product.hasVariants)
+                      _buildInventoryBadge('${product.variants.length} variantes', const Color(0xFF8B5A3C)),
+                    _buildInventoryBadge('Stock ${product.totalStock}', const Color(0xFF6F8F5E)),
+                  ],
                 ),
               ],
             ),
@@ -561,14 +632,8 @@ class _PymeProfileVitrinaScreenState extends State<PymeProfileVitrinaScreen> {
   }
 
   Widget _buildEventCard(Product event) {
-    DateTime? eventDate;
-    if (event.customAttributes.containsKey('event_date')) {
-      try {
-        eventDate = DateTime.parse(event.customAttributes['event_date']);
-      } catch (e) {
-        // quiet fail
-      }
-    }
+    final eventDate = _eventDateTime(event);
+    final remainingSeats = event.stock - event.registeredCount;
 
     return Container(
       width: 200,
@@ -649,12 +714,60 @@ class _PymeProfileVitrinaScreenState extends State<PymeProfileVitrinaScreen> {
                       ),
                     ),
                   ),
+                const SizedBox(height: 4),
+                Text(
+                  remainingSeats > 0 ? '$remainingSeats cupos' : 'Sin cupos',
+                  style: TextStyle(
+                    color: remainingSeats > 0 ? const Color(0xFF6F8F5E) : Colors.red.shade700,
+                    fontWeight: FontWeight.w600,
+                    fontSize: 12,
+                  ),
+                ),
               ],
             ),
           ),
         ],
       ),
     );
+  }
+
+  Widget _buildInventoryBadge(String text, Color color) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(6),
+      ),
+      child: Text(
+        text,
+        style: TextStyle(color: color, fontWeight: FontWeight.w600, fontSize: 11),
+      ),
+    );
+  }
+
+  bool _isEventProduct(Product product) {
+    return product.customAttributes['is_event'].toString().toLowerCase() == 'true';
+  }
+
+  DateTime? _eventDateTime(Product event) {
+    final dateStr = event.customAttributes['event_date'];
+    if (dateStr == null) return null;
+    try {
+      final parts = dateStr.toString().split('/');
+      if (parts.length == 3) {
+        final timeParts = event.customAttributes['event_time']?.toString().split(':');
+        return DateTime(
+          int.parse(parts[2]),
+          int.parse(parts[1]),
+          int.parse(parts[0]),
+          timeParts != null && timeParts.isNotEmpty ? int.tryParse(timeParts[0]) ?? 0 : 0,
+          timeParts != null && timeParts.length > 1 ? int.tryParse(timeParts[1]) ?? 0 : 0,
+        );
+      }
+      return DateTime.parse(dateStr.toString());
+    } catch (_) {
+      return null;
+    }
   }
 
   Widget _buildSectionTitle(String title, Color color) {
@@ -704,6 +817,113 @@ class _PymeProfileVitrinaScreenState extends State<PymeProfileVitrinaScreen> {
             style: TextStyle(color: const Color(0xFF2F3F2A).withOpacity(0.7), fontSize: 12),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildEmptySkeleton(BuildContext context) {
+    return Scaffold(
+      backgroundColor: const Color(0xFFF4F1EA),
+      body: SafeArea(
+        child: SingleChildScrollView(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                height: 200,
+                width: double.infinity,
+                color: Colors.grey[300],
+                child: const Center(
+                  child: Icon(Icons.image_outlined, size: 60, color: Colors.grey),
+                ),
+              ),
+              const SizedBox(height: 16),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        CircleAvatar(
+                          radius: 40,
+                          backgroundColor: Colors.grey[300],
+                          child: const Icon(Icons.store, size: 40, color: Colors.grey),
+                        ),
+                        const SizedBox(width: 16),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Container(height: 20, width: 160, color: Colors.grey[300]),
+                              const SizedBox(height: 8),
+                              Container(height: 14, width: 100, color: Colors.grey[200]),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 24),
+                    Container(
+                      padding: const EdgeInsets.all(20),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(color: const Color(0xFF6F8F5E).withOpacity(0.3)),
+                      ),
+                      child: Column(
+                        children: [
+                          const Icon(Icons.store_outlined, size: 48, color: Color(0xFF6F8F5E)),
+                          const SizedBox(height: 12),
+                          const Text(
+                            '¡Completa tu Vitrina!',
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                              color: Color(0xFF2F3F2A),
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            'Tu perfil de vitrina aún no tiene información. Ve a Configuración para agregar tu nombre, descripción, horarios y más.',
+                            style: TextStyle(color: Colors.grey[600], fontSize: 14),
+                            textAlign: TextAlign.center,
+                          ),
+                          const SizedBox(height: 20),
+                          SizedBox(
+                            width: double.infinity,
+                            child: ElevatedButton.icon(
+                              onPressed: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (_) => const PymeVitrinaSettingsScreen(),
+                                  ),
+                                ).then((_) => setState(() {}));
+                              },
+                              icon: const Icon(Icons.edit),
+                              label: const Text('Completar mi Vitrina'),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: const Color(0xFF6F8F5E),
+                                foregroundColor: Colors.white,
+                                padding: const EdgeInsets.symmetric(vertical: 14),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 80),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }

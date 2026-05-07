@@ -6,10 +6,11 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import '../services/pyme_service.dart';
-import '../services/auth_service.dart';
+
 import '../services/product_service.dart';
+import '../widgets/address_autocomplete_field.dart';
 import 'terms_of_use_screen.dart';
-import 'login_screen.dart';
+import 'package:go_router/go_router.dart';
 
 class PymeVitrinaSettingsScreen extends StatefulWidget {
   final String? pymeId;
@@ -37,6 +38,9 @@ class _PymeVitrinaSettingsScreenState extends State<PymeVitrinaSettingsScreen> {
   String? _targetPymeId;
   String? _profileImageUrl;
   String? _coverImageUrl;
+
+  double? _latitude;
+  double? _longitude;
 
   // Schedule State
   final List<String> _daysOfWeek = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'];
@@ -89,6 +93,8 @@ class _PymeVitrinaSettingsScreenState extends State<PymeVitrinaSettingsScreen> {
             
             // Handle Address
             _addressController.text = userProfile.location ?? '';
+            _latitude = userProfile.latitude;
+            _longitude = userProfile.longitude;
             
             // Handle Schedule
             if (userProfile.hours != null && userProfile.hours!.isNotEmpty) {
@@ -298,6 +304,8 @@ class _PymeVitrinaSettingsScreenState extends State<PymeVitrinaSettingsScreen> {
         'description': _descriptionController.text,
         'hours': formattedSchedule.trim(), // Save the formatted string
         'location': _addressController.text, // Save the manual address
+        'latitude': _latitude,
+        'longitude': _longitude,
         'webUrl': _webController.text,
         'instagramHandle': _instagramController.text,
         'whatsappNumber': _whatsappController.text,
@@ -467,16 +475,16 @@ class _PymeVitrinaSettingsScreenState extends State<PymeVitrinaSettingsScreen> {
             _buildSectionHeader('Detalles Operativos'),
             
             // Address Field
-            TextField(
+            AddressAutocompleteField(
               controller: _addressController,
-              decoration: InputDecoration(
-                labelText: 'Dirección del Local',
-                hintText: 'Ej: Av. Providencia 1234, Local 5',
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                prefixIcon: const Icon(Icons.location_on, color: Color(0xFF6F8F5E)),
-                filled: true,
-                fillColor: const Color(0xFFFFFFFF),
-              ),
+              labelText: 'Dirección del Local (Autocompletado)',
+              onPlaceSelected: (address, lat, lng) {
+                debugPrint('Lugar seleccionado: $address ($lat, $lng)');
+                setState(() {
+                  _latitude = lat;
+                  _longitude = lng;
+                });
+              },
             ),
             const SizedBox(height: 24),
             
@@ -626,11 +634,35 @@ class _PymeVitrinaSettingsScreenState extends State<PymeVitrinaSettingsScreen> {
                 width: double.infinity,
                 height: 50,
                 child: OutlinedButton.icon(
-                  onPressed: () {
-                    Navigator.of(context).pushAndRemoveUntil(
-                      MaterialPageRoute(builder: (context) => const LoginScreen()),
-                      (route) => false,
+                  onPressed: () async {
+                    final confirm = await showDialog<bool>(
+                      context: context,
+                      builder: (context) => AlertDialog(
+                        title: const Text('¿Cerrar Sesión?'),
+                        content: const Text('¿Estás seguro de que deseas cerrar tu sesión en la aplicación?'),
+                        actions: [
+                          TextButton(
+                            onPressed: () => Navigator.pop(context, false),
+                            child: const Text('Cancelar'),
+                          ),
+                          ElevatedButton(
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: const Color(0xFF8B5A3C),
+                              foregroundColor: Colors.white,
+                            ),
+                            onPressed: () => Navigator.pop(context, true),
+                            child: const Text('Sí, salir'),
+                          ),
+                        ],
+                      ),
                     );
+
+                    if (confirm == true) {
+                      await FirebaseAuth.instance.signOut();
+                      if (context.mounted) {
+                        context.go('/login');
+                      }
+                    }
                   },
                   icon: const Icon(Icons.logout, color: Color(0xFF8B5A3C)),
                   label: const Text(

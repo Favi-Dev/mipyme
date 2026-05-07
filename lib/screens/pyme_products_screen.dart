@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:shimmer/shimmer.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../services/product_service.dart';
@@ -98,7 +99,7 @@ class _PymeProductsScreenState extends State<PymeProductsScreen> with SingleTick
             return Center(child: Text('Error: ${snapshot.error}'));
           }
           if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
+            return _buildSkeletonList();
           }
 
           final allProducts = snapshot.data ?? [];
@@ -109,8 +110,11 @@ class _PymeProductsScreenState extends State<PymeProductsScreen> with SingleTick
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(Icons.inventory_2_outlined,
-                      size: 64, color: const Color(0xFF2F3F2A).withOpacity(0.5)),
+                  Icon(
+                    Icons.inventory_2_outlined,
+                    size: 150,
+                    color: const Color(0xFF2F3F2A).withValues(alpha: 0.3),
+                  ),
                   const SizedBox(height: 16),
                   Text(
                     'No tienes productos registrados.',
@@ -125,7 +129,12 @@ class _PymeProductsScreenState extends State<PymeProductsScreen> with SingleTick
           }
 
           return ListView.builder(
-            padding: const EdgeInsets.all(16),
+            padding: EdgeInsets.only(
+              left: 16,
+              right: 16,
+              top: 16,
+              bottom: MediaQuery.of(context).padding.bottom + 90,
+            ),
             itemCount: products.length,
             itemBuilder: (context, index) {
               final product = products[index];
@@ -300,7 +309,7 @@ class _PymeProductsScreenState extends State<PymeProductsScreen> with SingleTick
                                             context,
                                             MaterialPageRoute(
                                               builder: (context) => PymeAddProductScreen(
-                                                isService: product.category == 'Servicio',
+                                                isService: product.isService,
                                                 product: product,
                                                 pymeId: _targetPymeId,
                                               ),
@@ -387,7 +396,7 @@ class _PymeProductsScreenState extends State<PymeProductsScreen> with SingleTick
                               borderRadius: BorderRadius.circular(6),
                             ),
                             child: Text(
-                              'Stock: ${product.stock}',
+                              'Stock: ${product.totalStock}',
                               style: GoogleFonts.poppins(
                                 color: const Color(0xFF6F8F5E),
                                 fontSize: 12,
@@ -395,6 +404,25 @@ class _PymeProductsScreenState extends State<PymeProductsScreen> with SingleTick
                               ),
                             ),
                           ),
+                          if (product.hasVariants) ...[
+                            const SizedBox(width: 8),
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 8, vertical: 4),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFF2F3F2A).withOpacity(0.08),
+                                borderRadius: BorderRadius.circular(6),
+                              ),
+                              child: Text(
+                                '${product.variants.length} variantes',
+                                style: GoogleFonts.poppins(
+                                  color: const Color(0xFF2F3F2A),
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                            ),
+                          ],
                           const Spacer(),
                           Text(
                             '\$${product.price.toStringAsFixed(0)}',
@@ -414,6 +442,26 @@ class _PymeProductsScreenState extends State<PymeProductsScreen> with SingleTick
           ),
         ),
       ),
+    );
+  }
+  Widget _buildSkeletonList() {
+    return ListView.builder(
+      padding: const EdgeInsets.all(16),
+      itemCount: 4,
+      itemBuilder: (context, index) {
+        return Shimmer.fromColors(
+          baseColor: const Color(0xFFE3B58F).withOpacity(0.3),
+          highlightColor: const Color(0xFFF4F1EA),
+          child: Container(
+            margin: const EdgeInsets.only(bottom: 16),
+            height: 124,
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(16),
+            ),
+          ),
+        );
+      },
     );
   }
 }

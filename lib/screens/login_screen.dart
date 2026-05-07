@@ -1,15 +1,14 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:go_router/go_router.dart';
 import '../services/auth_service.dart';
-import 'package:mipyme/client_app_shell.dart';
-import 'package:mipyme/pyme_app_shell.dart';
-import 'package:mipyme/admin_app_shell.dart';
-import 'package:mipyme/screens/register_screen.dart';
-import 'package:mipyme/screens/subscription_blocker_screen.dart';
-import 'package:mipyme/screens/guest_foundations_screen.dart';
 import 'package:mipyme/models/vitrina_data.dart';
 import 'package:mipyme/models/user_profile.dart';
+import '../design_system/colors.dart';
+import '../design_system/typography.dart';
+import '../design_system/widgets/soy_plus_button.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -39,31 +38,45 @@ class _LoginScreenState extends State<LoginScreen> {
       setState(() => _isLoading = false);
 
       if (userProfile != null) {
-        Widget destination;
+        debugPrint('[DEBUG] Login exitoso. Rol detectado: ${userProfile.role}');
         switch (userProfile.role) {
           case UserRole.client:
             // Always allow clients to enter, checks will be done contextually
-            destination = const ClientAppShell();
+            context.go('/client/home');
             break;
           case UserRole.pyme:
             VitrinaData.isFoundationUser = false;
             VitrinaData.setCategory('Comercio/retail');
-            destination = const PymeAppShell();
+            context.go('/pyme/home');
             break;
           case UserRole.foundation:
             VitrinaData.isFoundationUser = true;
             VitrinaData.setCategory('Educación y cultura');
-            destination = const PymeAppShell();
+            context.go('/pyme/home');
             break;
           case UserRole.admin:
-            destination = const AdminAppShell();
+            context.go('/admin/home');
+            break;
+          case UserRole.empresa:
+            context.go('/empresa/home');
+            break;
+          case UserRole.storeManager:
+            // Reutiliza la UI de Pyme, cargará datos de su tienda asignada
+            context.go('/pyme/home');
             break;
         }
-
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => destination),
-        );
+      } else {
+        // Login retornó null: las credenciales son válidas en Auth pero no hay documento en Firestore
+        debugPrint('[DEBUG] Login null: no se encontró documento de usuario en Firestore para este UID');
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Tu cuenta existe pero no tiene datos. Contacta al administrador o recrea los usuarios de prueba.'),
+              backgroundColor: Color(0xFFD32F2F),
+              duration: Duration(seconds: 6),
+            ),
+          );
+        }
       }
     } on FirebaseAuthException catch (e) {
       if (!mounted) return;
@@ -128,7 +141,7 @@ class _LoginScreenState extends State<LoginScreen> {
     } catch (e) {
       if (!mounted) return;
       setState(() => _isLoading = false);
-      print('Login generic error: $e');
+      debugPrint('Login generic error: $e');
 
       ScaffoldMessenger.of(context).showSnackBar(
          SnackBar(
@@ -241,36 +254,10 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
               ),
               const SizedBox(height: 24),
-              SizedBox(
-                width: double.infinity,
-                height: 50,
-                child: ElevatedButton(
-                  onPressed: _isLoading ? null : _login,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF6F8F5E),
-                    foregroundColor: const Color(0xFFF4F1EA),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    elevation: 2,
-                  ),
-                  child: _isLoading
-                      ? const SizedBox(
-                          width: 24,
-                          height: 24,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            color: Color(0xFFF4F1EA),
-                          ),
-                        )
-                      : Text(
-                          'Iniciar Sesión',
-                          style: GoogleFonts.poppins(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                ),
+              SoyPlusButton(
+                text: 'Iniciar Sesión',
+                onPressed: _login,
+                isLoading: _isLoading,
               ),
               const SizedBox(height: 24),
               Row(
@@ -278,20 +265,14 @@ class _LoginScreenState extends State<LoginScreen> {
                 children: [
                   Text(
                     '¿No tienes cuenta? ',
-                    style: GoogleFonts.poppins(color: const Color(0xFF2F3F2A)),
+                    style: SoyPlusTypography.textTheme.bodyMedium?.copyWith(color: SoyPlusColors.primary),
                   ),
                   TextButton(
-                    onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                            builder: (context) => const RegisterScreen()),
-                      );
-                    },
+                    onPressed: () => context.go('/register'),
                     child: Text(
                       'Regístrate',
-                      style: GoogleFonts.poppins(
-                        color: const Color(0xFF6F8F5E),
+                      style: SoyPlusTypography.textTheme.labelLarge?.copyWith(
+                        color: SoyPlusColors.accentGreen,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
@@ -299,24 +280,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 ],
               ),
               const SizedBox(height: 16),
-              TextButton.icon(
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => const GuestFoundationsScreen(),
-                    ),
-                  );
-                },
-                icon: const Icon(Icons.volunteer_activism, color: Color(0xFF8B5A3C)),
-                label: Text(
-                  'Donar como Invitado',
-                  style: GoogleFonts.poppins(
-                    color: const Color(0xFF8B5A3C),
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
+
             ],
           ),
         ),

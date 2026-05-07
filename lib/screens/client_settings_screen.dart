@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:go_router/go_router.dart';
+import 'package:provider/provider.dart';
 import '../services/client_service.dart';
-import '../services/auth_service.dart';
+import '../providers/theme_provider.dart';
+
 import 'terms_of_use_screen.dart';
-import 'login_screen.dart';
 
 class ClientSettingsScreen extends StatefulWidget {
   const ClientSettingsScreen({super.key});
@@ -154,6 +156,21 @@ class _ClientSettingsScreenState extends State<ClientSettingsScreen> {
                 notifications, 
                 (val) => _clientService.updateSetting('notifications', val)
               ),
+
+              // Dark Mode Toggle
+              Consumer<ThemeProvider>(
+                builder: (context, themeProvider, _) => SwitchListTile(
+                  value: themeProvider.isDarkMode,
+                  onChanged: (_) => themeProvider.toggleTheme(),
+                  title: Text('Modo Oscuro', style: GoogleFonts.poppins(fontWeight: FontWeight.w500)),
+                  subtitle: Text('Cambia entre tema claro y oscuro', style: GoogleFonts.poppins(fontSize: 12)),
+                  secondary: Icon(
+                    themeProvider.isDarkMode ? Icons.dark_mode : Icons.light_mode,
+                    color: const Color(0xFF6F8F5E),
+                  ),
+                  activeColor: const Color(0xFF6F8F5E),
+                ),
+              ),
               
               const SizedBox(height: 24),
               _buildSectionTitle('Cuenta'),
@@ -187,12 +204,35 @@ class _ClientSettingsScreenState extends State<ClientSettingsScreen> {
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
-                  onPressed: () {
-                     Navigator.pushAndRemoveUntil(
-                      context,
-                      MaterialPageRoute(builder: (context) => const LoginScreen()),
-                      (route) => false,
+                  onPressed: () async {
+                    final confirm = await showDialog<bool>(
+                      context: context,
+                      builder: (context) => AlertDialog(
+                        title: const Text('¿Cerrar Sesión?'),
+                        content: const Text('¿Estás seguro de que deseas cerrar tu sesión en la aplicación?'),
+                        actions: [
+                          TextButton(
+                            onPressed: () => Navigator.pop(context, false),
+                            child: const Text('Cancelar'),
+                          ),
+                          ElevatedButton(
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: const Color(0xFF2F3F2A),
+                              foregroundColor: Colors.white,
+                            ),
+                            onPressed: () => Navigator.pop(context, true),
+                            child: const Text('Sí, salir'),
+                          ),
+                        ],
+                      ),
                     );
+
+                    if (confirm == true) {
+                      await FirebaseAuth.instance.signOut();
+                      if (context.mounted) {
+                        context.go('/login');
+                      }
+                    }
                   },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFFFFFFFF),

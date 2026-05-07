@@ -5,6 +5,7 @@ import 'package:image_picker/image_picker.dart';
 import '../services/storage_service.dart';
 import '../models/product.dart';
 import '../services/product_service.dart';
+import '../services/pyme_service.dart';
 
 class PymeAddEventScreen extends StatefulWidget {
   final Product? event;
@@ -26,6 +27,7 @@ class _PymeAddEventScreenState extends State<PymeAddEventScreen> {
   late TextEditingController _descriptionController;
   late TextEditingController _locationController;
   late TextEditingController _priceController;
+  late TextEditingController _capacityController;
   
   DateTime? _selectedDate;
   TimeOfDay? _selectedTime;
@@ -33,6 +35,7 @@ class _PymeAddEventScreenState extends State<PymeAddEventScreen> {
   bool _isLoading = false;
 
   final ProductService _productService = ProductService();
+  final PymeService _pymeService = PymeService();
   final StorageService _storageService = StorageService();
 
   @override
@@ -42,6 +45,7 @@ class _PymeAddEventScreenState extends State<PymeAddEventScreen> {
     _descriptionController = TextEditingController(text: widget.event?.description ?? '');
     _imageUrl = widget.event?.imageUrl;
     _priceController = TextEditingController(text: widget.event?.price.toStringAsFixed(0) ?? '0');
+    _capacityController = TextEditingController(text: (widget.event?.stock ?? 100).toString());
     
     // Parse location and date/time from customAttributes if editing
     _locationController = TextEditingController(
@@ -73,6 +77,7 @@ class _PymeAddEventScreenState extends State<PymeAddEventScreen> {
     _descriptionController.dispose();
     _locationController.dispose();
     _priceController.dispose();
+    _capacityController.dispose();
     super.dispose();
   }
 
@@ -134,7 +139,7 @@ class _PymeAddEventScreenState extends State<PymeAddEventScreen> {
     }
   }
 
-  void _saveEvent() {
+  Future<void> _saveEvent() async {
     if (_formKey.currentState!.validate() && _selectedDate != null && _selectedTime != null && _imageUrl != null) {
       setState(() => _isLoading = true);
       final user = FirebaseAuth.instance.currentUser;
@@ -147,6 +152,9 @@ class _PymeAddEventScreenState extends State<PymeAddEventScreen> {
       }
 
       final isEditing = widget.event != null;
+      final ownerProfile = await _pymeService.getPymeById(targetPymeId);
+      final eventCategory = ownerProfile?.category ?? widget.event?.category ?? 'Educacion y cultura';
+      final capacity = int.tryParse(_capacityController.text) ?? widget.event?.stock ?? 0;
 
       final eventData = Product(
         id: isEditing ? widget.event!.id : '', // Keep ID if editing (service handles new ID if empty string but usually creates one)
@@ -156,24 +164,27 @@ class _PymeAddEventScreenState extends State<PymeAddEventScreen> {
         price: double.tryParse(_priceController.text) ?? 0, 
         imageUrl: _imageUrl!,
         code: isEditing ? widget.event!.code : 'EVT-${DateTime.now().millisecondsSinceEpoch}',
-        stock: 100, // Unlimited or high stock for events unless ticketed?
-        category: 'Educación y cultura', // Default for now or make selectable?
+        stock: capacity,
+        category: eventCategory,
         isService: true, // Events are services technically in this model
         customAttributes: {
           'is_event': 'true',
+          'require_registration': 'true',
           'event_date': '${_selectedDate!.day}/${_selectedDate!.month}/${_selectedDate!.year}',
           'event_time': '${_selectedTime!.hour}:${_selectedTime!.minute.toString().padLeft(2, '0')}',
           'event_location': _locationController.text,
+          'event_capacity': capacity.toString(),
         },
+        registeredCount: widget.event?.registeredCount ?? 0,
       );
 
       if (isEditing) {
-        _productService.updateProduct(eventData);
+        await _productService.updateProduct(eventData);
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Evento actualizado exitosamente')),
         );
       } else {
-        _productService.addProduct(eventData);
+        await _productService.addProduct(eventData);
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Evento creado exitosamente')),
         );
@@ -233,6 +244,13 @@ class _PymeAddEventScreenState extends State<PymeAddEventScreen> {
                 controller: _priceController,
                 label: 'Precio Entrada (0 si es gratis)',
                 icon: Icons.attach_money,
+                isNumber: true,
+              ),
+              const SizedBox(height: 16),
+              _buildTextField(
+                controller: _capacityController,
+                label: 'Cupos disponibles',
+                icon: Icons.people_alt_outlined,
                 isNumber: true,
               ),
 

@@ -3,7 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:intl/intl.dart';
-import '../models/product.dart';
+
 
 class ClientEventsScreen extends StatelessWidget {
   const ClientEventsScreen({super.key});
@@ -28,7 +28,7 @@ class ClientEventsScreen extends StatelessWidget {
       ),
       body: StreamBuilder<QuerySnapshot>(
         stream: FirebaseFirestore.instance
-            .collection('users')
+            .collection('clients')
             .doc(user.uid)
             .collection('participations')
             .orderBy('eventDate', descending: true)
@@ -227,22 +227,24 @@ class ClientEventsScreen extends StatelessWidget {
       final eventId = participationDocId; 
 
       try {
-        // 1. Delete from user's participations
-        await FirebaseFirestore.instance
-            .collection('users')
-            .doc(user.uid)
-            .collection('participations')
-            .doc(participationDocId)
-            .delete();
+        final eventRef = FirebaseFirestore.instance.collection('products').doc(eventId);
+        await FirebaseFirestore.instance.runTransaction((transaction) async {
+          final eventSnapshot = await transaction.get(eventRef);
+          transaction.delete(FirebaseFirestore.instance
+              .collection('clients')
+              .doc(user.uid)
+              .collection('participations')
+              .doc(participationDocId));
+          transaction.delete(eventRef.collection('participants').doc(user.uid));
 
-        // 2. Delete from product's participants
-        // We must know which product/event it is. The docId is the eventId.
-        await FirebaseFirestore.instance
-            .collection('products')
-            .doc(eventId)
-            .collection('participants')
-            .doc(user.uid)
-            .delete();
+          final data = eventSnapshot.data();
+          final registeredCount = (data?['registeredCount'] as num?)?.toInt() ?? 0;
+          if (registeredCount > 0) {
+            transaction.update(eventRef, {
+              'registeredCount': FieldValue.increment(-1),
+            });
+          }
+        });
         
 
         if (context.mounted) {

@@ -1,7 +1,8 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:geocoding/geocoding.dart';
-import 'login_screen.dart';
+import 'package:go_router/go_router.dart'; // Added go_router import
 import 'package:mipyme/services/auth_service.dart';
 import 'package:mipyme/services/product_service.dart';
 import 'package:mipyme/models/user_profile.dart';
@@ -90,7 +91,32 @@ class _RegisterScreenState extends State<RegisterScreen> {
     }
 
     // Validaciones específicas por rol (Chile)
-    if (_selectedRole == UserRole.pyme) {
+    if (_selectedRole == UserRole.empresa) {
+      if (_rutController.text.isEmpty) {
+        _showError('Ingrese el RUT de la Empresa');
+        return;
+      }
+      if (_companyNameController.text.isEmpty) {
+        _showError('Ingrese la Razón Social');
+        return;
+      }
+      if (_nameController.text.isEmpty) {
+        _showError('Ingrese el Nombre del Representante Legal');
+        return;
+      }
+      if (_repRutController.text.isEmpty) {
+        _showError('Ingrese el RUT del Representante Legal');
+        return;
+      }
+      if (_addressController.text.isEmpty) {
+        _showError('Ingrese la Dirección Legal');
+        return;
+      }
+      if (_phoneController.text.isNotEmpty && !_isValidChileanPhone(_phoneController.text)) {
+        _showError('Teléfono inválido. Formato: 9XXXXXXXX (9 dígitos, comenzando con 9)');
+        return;
+      }
+    } else if (_selectedRole == UserRole.pyme) {
       if (_rutController.text.isEmpty) {
         _showError('Ingrese el RUT de la Empresa');
         return;
@@ -113,6 +139,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
       }
       if (_addressController.text.isEmpty) {
         _showError('Ingrese el Domicilio Tributario');
+        return;
+      }
+      if (_phoneController.text.isNotEmpty && !_isValidChileanPhone(_phoneController.text)) {
+        _showError('Teléfono inválido. Formato: 9XXXXXXXX (9 dígitos, comenzando con 9)');
         return;
       }
       if (_selectedCategory == null) {
@@ -147,6 +177,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
       }
       if (_addressController.text.isEmpty) {
         _showError('Ingrese la Dirección Legal');
+        return;
+      }
+      if (_phoneController.text.isNotEmpty && !_isValidChileanPhone(_phoneController.text)) {
+        _showError('Teléfono inválido. Formato: 9XXXXXXXX (9 dígitos, comenzando con 9)');
         return;
       }
       // Bank Validation
@@ -201,6 +235,15 @@ class _RegisterScreenState extends State<RegisterScreen> {
             ? _bankAccountHolderRutController.text 
             : _rutController.text,
       };
+    } else if (_selectedRole == UserRole.empresa) {
+      additionalData = {
+        'rut': _rutController.text,
+        'companyName': _companyNameController.text,
+        'repRut': _repRutController.text,
+        'address': _addressController.text,
+        'website': _websiteController.text,
+        'phone': _phoneController.text,
+      };
     } else {
       additionalData = {
         'run': _runController.text,
@@ -208,7 +251,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
     }
 
     // Intentar obtener coordenadas para Pymes y Fundaciones
-    if (_selectedRole == UserRole.pyme || _selectedRole == UserRole.foundation) {
+    if (_selectedRole == UserRole.pyme || _selectedRole == UserRole.foundation || _selectedRole == UserRole.empresa) {
       try {
         // Añadir "Chile" para mejorar la precisión si no está incluido
         String addressToSearch = _addressController.text;
@@ -222,7 +265,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
           additionalData['longitude'] = locations.first.longitude;
         }
       } catch (e) {
-        print('Error obteniendo coordenadas: $e');
+        debugPrint('Error obteniendo coordenadas: $e');
         // No bloqueamos el registro, pero no tendrá ubicación en el mapa
       }
     }
@@ -251,14 +294,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
       );
       
       // Navigate back to login
-      if (Navigator.canPop(context)) {
-        Navigator.pop(context);
-      } else {
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => const LoginScreen()),
-        );
-      }
+      _goToLogin();
     } else {
       _showError('Error en el registro');
     }
@@ -268,6 +304,16 @@ class _RegisterScreenState extends State<RegisterScreen> {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text(message), backgroundColor: const Color(0xFF8B5A3C)),
     );
+  }
+
+  bool _isValidChileanPhone(String phone) {
+    // Acepta: 9XXXXXXXX | +569XXXXXXXX | 569XXXXXXXX
+    final cleaned = phone.replaceAll(RegExp(r'[\s\-\(\)]'), '');
+    return RegExp(r'^(\+?56)?9\d{8}$').hasMatch(cleaned);
+  }
+
+  void _goToLogin() {
+    context.go('/login');
   }
 
   @override
@@ -281,14 +327,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Color(0xFF2F3F2A)),
           onPressed: () {
-            if (Navigator.canPop(context)) {
-              Navigator.pop(context);
-            } else {
-              Navigator.pushReplacement(
-                context,
-                MaterialPageRoute(builder: (context) => const LoginScreen()),
-              );
-            }
+            _goToLogin();
           },
         ),
       ),
@@ -316,30 +355,46 @@ class _RegisterScreenState extends State<RegisterScreen> {
               ),
               const SizedBox(height: 32),
               // Role Selection
-              Row(
+              Column(
                 children: [
-                  Expanded(
-                    child: _buildRoleOption(
-                      'Cliente',
-                      Icons.person,
-                      UserRole.client,
-                    ),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: _buildRoleOption(
+                          'Cliente',
+                          Icons.person,
+                          UserRole.client,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: _buildRoleOption(
+                          'Empresa',
+                          Icons.business,
+                          UserRole.empresa,
+                        ),
+                      ),
+                    ],
                   ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: _buildRoleOption(
-                      'Pyme',
-                      Icons.storefront,
-                      UserRole.pyme,
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: _buildRoleOption(
-                      'Fundación',
-                      Icons.volunteer_activism,
-                      UserRole.foundation,
-                    ),
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: _buildRoleOption(
+                          'Pyme',
+                          Icons.storefront,
+                          UserRole.pyme,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: _buildRoleOption(
+                          'Fundación',
+                          Icons.volunteer_activism,
+                          UserRole.foundation,
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),
@@ -504,6 +559,59 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 ),
               ],
 
+              if (_selectedRole == UserRole.empresa) ...[
+                _buildSectionTitle('Identificación (Empresa)'),
+                TextField(
+                  controller: _rutController,
+                  inputFormatters: [RutInputFormatter()],
+                  style: const TextStyle(color: Color(0xFF2F3F2A)),
+                  decoration: _inputDecoration('RUT Empresa *', Icons.badge),
+                ),
+                const SizedBox(height: 16),
+                TextField(
+                  controller: _companyNameController,
+                  style: const TextStyle(color: Color(0xFF2F3F2A)),
+                  decoration: _inputDecoration('Razón Social *', Icons.business),
+                ),
+                const SizedBox(height: 24),
+
+                _buildSectionTitle('Contacto'),
+                TextField(
+                  controller: _nameController,
+                  style: const TextStyle(color: Color(0xFF2F3F2A)),
+                  decoration: _inputDecoration('Nombre Representante Legal *', Icons.person),
+                ),
+                const SizedBox(height: 16),
+                TextField(
+                  controller: _repRutController,
+                  inputFormatters: [RutInputFormatter()],
+                  style: const TextStyle(color: Color(0xFF2F3F2A)),
+                  decoration: _inputDecoration('RUT Representante Legal *', Icons.badge),
+                ),
+                const SizedBox(height: 16),
+                TextField(
+                  controller: _phoneController,
+                  style: const TextStyle(color: Color(0xFF2F3F2A)),
+                  decoration: _inputDecoration('Teléfono de Contacto *', Icons.phone),
+                ),
+                const SizedBox(height: 24),
+
+                _buildSectionTitle('Ubicación Central'),
+                TextField(
+                  controller: _addressController,
+                  style: const TextStyle(color: Color(0xFF2F3F2A)),
+                  decoration: _inputDecoration('Dirección Legal *', Icons.location_on),
+                ),
+                const SizedBox(height: 24),
+
+                _buildSectionTitle('Sitio Web'),
+                TextField(
+                  controller: _websiteController,
+                  style: const TextStyle(color: Color(0xFF2F3F2A)),
+                  decoration: _inputDecoration('Sitio Web / Red Social (Opcional)', Icons.language),
+                ),
+              ],
+
               if (_selectedRole == UserRole.pyme || _selectedRole == UserRole.foundation) ...[
                 const SizedBox(height: 24),
                 _buildSectionTitle(_selectedRole == UserRole.foundation 
@@ -624,11 +732,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
               const SizedBox(height: 16),
               Center(
                 child: TextButton(
-                  onPressed: () {
-                    Navigator.of(context).pushReplacement(
-                      MaterialPageRoute(builder: (_) => const LoginScreen()),
-                    );
-                  },
+                  onPressed: () => context.go('/login'),
                   child: RichText(
                     text: TextSpan(
                       text: '¿Ya tienes cuenta? ',

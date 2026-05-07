@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -16,6 +17,48 @@ class PymeOrdersScreen extends StatefulWidget {
 class _PymeOrdersScreenState extends State<PymeOrdersScreen> {
   final PymeService _pymeService = PymeService();
   final String _currentPymeId = FirebaseAuth.instance.currentUser?.uid ?? '';
+
+  final List<Map<String, dynamic>> _orders = [];
+  bool _isLoading = false;
+  bool _hasMore = true;
+  DocumentSnapshot? _lastDocument;
+  static const int _pageSize = 20;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadNextPage();
+  }
+
+  Future<void> _loadNextPage() async {
+    if (_isLoading || !_hasMore) return;
+    setState(() => _isLoading = true);
+
+    try {
+      final newOrders = await _pymeService.getOrdersForPymePaginated(
+        _currentPymeId,
+        lastDocument: _lastDocument,
+        pageSize: _pageSize,
+      );
+
+      if (newOrders.isNotEmpty) {
+        _lastDocument = newOrders.last['_snapshot'] as DocumentSnapshot?;
+      }
+
+      setState(() {
+        _orders.addAll(newOrders);
+        _hasMore = newOrders.length == _pageSize;
+        _isLoading = false;
+      });
+    } catch (e) {
+      setState(() => _isLoading = false);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error al cargar pedidos: $e')),
+        );
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -38,49 +81,61 @@ class _PymeOrdersScreenState extends State<PymeOrdersScreen> {
   }
 
   Widget _buildBody() {
-    return StreamBuilder<List<Map<String, dynamic>>>(
-        stream: _pymeService.getOrdersForPyme(_currentPymeId),
-        builder: (context, snapshot) {
-          // Robust error handling
-          if (snapshot.hasError) {
-             print('Error fetching orders: ${snapshot.error}');
-             // Don't show scary error to user, show empty state with retry or friendly message
-             // unless it's critical. For now, treat as empty/loading issue or just show friendly text
-             return Center(
-               child: Column(
-                 mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(Icons.error_outline, size: 48, color: const Color(0xFF8B5A3C).withOpacity(0.5)),
-                    const SizedBox(height: 16),
-                    Text('No se pudieron cargar los pedidos', style: GoogleFonts.poppins(color: const Color(0xFF2F3F2A))),
-                    Text('Intente nuevamente más tarde', style: GoogleFonts.poppins(fontSize: 12, color: const Color(0xFF2F3F2A).withOpacity(0.5))),
-                  ],
-               ),
-             );
-          }
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
-          }
-          final orders = snapshot.data ?? [];
-          if (orders.isEmpty) {
-            return Center(
-              child: Text(
-                'No hay pedidos pendientes',
-                style: GoogleFonts.poppins(color: Colors.grey[600]),
+    if (_orders.isEmpty && _isLoading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    if (_orders.isEmpty && !_isLoading) {
+      return Center(
+        child: Text(
+          'No hay pedidos aún',
+          style: GoogleFonts.poppins(color: Colors.grey[600]),
+        ),
+      );
+    }
+
+    return RefreshIndicator(
+      onRefresh: () async {
+        setState(() {
+          _orders.clear();
+          _lastDocument = null;
+          _hasMore = true;
+        });
+        await _loadNextPage();
+      },
+      child: ListView.builder(
+        itemCount: _orders.length + (_hasMore ? 1 : 0),
+        padding: const EdgeInsets.all(16),
+        itemBuilder: (context, index) {
+          if (index == _orders.length) {
+            // "Load more" button / auto-loader
+            return Padding(
+              padding: const EdgeInsets.symmetric(vertical: 16),
+              child: Center(
+                child: _isLoading
+                    ? const CircularProgressIndicator()
+                    : OutlinedButton.icon(
+                        onPressed: _loadNextPage,
+                        icon: const Icon(Icons.expand_more),
+                        label: Text(
+                          'Cargar más pedidos',
+                          style: GoogleFonts.poppins(),
+                        ),
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: const Color(0xFF2F3F2A),
+                          side: const BorderSide(color: Color(0xFF2F3F2A)),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        ),
+                      ),
               ),
             );
           }
-          return ListView.builder(
-            itemCount: orders.length,
-            padding: const EdgeInsets.all(16),
-            itemBuilder: (context, index) {
-              final order = orders[index];
-              return _buildOrderCard(order);
-            },
-          );
+          return _buildOrderCard(_orders[index]);
         },
-      );
+      ),
+    );
   }
+
 
   Widget _buildOrderCard(Map<String, dynamic> order) {
     final status = order['status'] ?? 'pending';
@@ -187,24 +242,41 @@ class _PymeOrdersScreenState extends State<PymeOrdersScreen> {
               ),
             ),
             const Divider(height: 24),
-            ...items.map((item) => Padding(
-                  padding: const EdgeInsets.only(bottom: 8),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Expanded(
-                        child: Text(
-                          '${item['quantity']}x ${item['productName']}',
-                          style: GoogleFonts.poppins(fontSize: 14),
-                        ),
+            ...items.map((item) {
+              final variantLabel = item['variantLabel'] as String?;
+              return Padding(
+                padding: const EdgeInsets.only(bottom: 8),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            '${item['quantity']}x ${item['productName']}',
+                            style: GoogleFonts.poppins(fontSize: 14),
+                          ),
+                          if (variantLabel != null && variantLabel.isNotEmpty)
+                            Text(
+                              variantLabel,
+                              style: GoogleFonts.poppins(
+                                fontSize: 12,
+                                color: const Color(0xFF6F8F5E),
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                        ],
                       ),
-                      Text(
-                        '\$${(item['total'] as num).toStringAsFixed(0)}',
-                        style: GoogleFonts.poppins(fontWeight: FontWeight.w500),
-                      ),
-                    ],
-                  ),
-                )),
+                    ),
+                    Text(
+                      '\$${(item['total'] as num).toStringAsFixed(0)}',
+                      style: GoogleFonts.poppins(fontWeight: FontWeight.w500),
+                    ),
+                  ],
+                ),
+              );
+            }),
             const Divider(height: 24),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,

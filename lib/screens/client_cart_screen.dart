@@ -8,6 +8,7 @@ import '../services/cart_service.dart';
 import '../models/cart_item.dart';
 import 'simple_scanner_screen.dart';
 import 'client_subscription_screen.dart' as import_cart;
+import '../services/client_service.dart';
 
 class ClientCartScreen extends StatefulWidget {
   const ClientCartScreen({super.key});
@@ -153,21 +154,10 @@ class _ClientCartScreenState extends State<ClientCartScreen> {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Container(
-                    padding: const EdgeInsets.all(24),
-                    decoration: BoxDecoration(
-                      color: theme.cardColor,
-                      shape: BoxShape.circle,
-                      boxShadow: [
-                        BoxShadow(
-                          color: const Color(0xFF2F3F2A).withValues(alpha: 0.1),
-                          blurRadius: 20,
-                          offset: const Offset(0, 10),
-                        ),
-                      ],
-                    ),
-                    child: Icon(Icons.shopping_cart_outlined,
-                        size: 64, color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.5)),
+                  Icon(
+                    Icons.shopping_cart_outlined,
+                    size: 150,
+                    color: const Color(0xFF2F3F2A).withValues(alpha: 0.3),
                   ),
                   const SizedBox(height: 24),
                   Text(
@@ -251,9 +241,20 @@ class _ClientCartScreenState extends State<ClientCartScreen> {
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                 ),
+                if (item.variantLabel.isNotEmpty)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 2),
+                    child: Text(
+                      item.variantLabel,
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: theme.colorScheme.primary,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ),
                 const SizedBox(height: 4),
                 Text(
-                  '\$${item.product.price.toStringAsFixed(0)}',
+                  '\$${item.unitPrice.toStringAsFixed(0)}',
                   style: theme.textTheme.bodyLarge?.copyWith(
                     color: theme.colorScheme.primary,
                     fontWeight: FontWeight.w600,
@@ -288,7 +289,7 @@ class _ClientCartScreenState extends State<ClientCartScreen> {
               children: [
                 _buildQuantityButton(
                   icon: Icons.remove,
-                  onTap: () => cartService.removeFromCart(item.product, scheduledTime: item.scheduledTime),
+                  onTap: () => cartService.removeFromCart(item.product, scheduledTime: item.scheduledTime, variant: item.selectedVariant),
                   theme: theme,
                 ),
                 Container(
@@ -304,7 +305,7 @@ class _ClientCartScreenState extends State<ClientCartScreen> {
                   icon: Icons.add,
                   onTap: () {
                     try {
-                      cartService.addToCart(item.product, scheduledTime: item.scheduledTime);
+                      cartService.addToCart(item.product, scheduledTime: item.scheduledTime, variant: item.selectedVariant);
                     } catch (e) {
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(content: Text(e.toString())),
@@ -421,182 +422,7 @@ class _ClientCartScreenState extends State<ClientCartScreen> {
                 Expanded(
                   flex: 2,
                   child: ElevatedButton(
-                    onPressed: () async {
-                      if (cartService.items.isEmpty) return;
-
-                       // Check Subscription Status
-                       try {
-                         // We need ClientService instance or stream
-                         // Since we don't have it direct, we assume user is logged in if cart has items
-                         // But we should verify. 
-                         // Better yet, just reuse the simple check if we had ClientService here.
-                         // But ClientCartScreen doesn't seem to have ClientService injected.
-                         // We can create one or fetch from provider if available.
-                         // For now, let's skip complex dependency injection if not needed, 
-                         // but given we are stricter now.
-                         // Let's rely on AuthService or user Role. 
-                         // Actually, checking Firestore is best.
-                         
-                         // BUT, cartService might know the user?
-                         // Let's use Firestore directly for quick check if ClientService not available
-                         final user = FirebaseAuth.instance.currentUser;
-                         if (user != null) {
-                            final doc = await FirebaseFirestore.instance.collection('users').doc(user.uid).get();
-                            final isSubscribed = doc.data()?['isSubscribed'] ?? false;
-                            
-                            if (!isSubscribed) {
-                              if (!context.mounted) return;
-                               showDialog(
-                                context: context,
-                                builder: (context) => AlertDialog(
-                                  title: const Text('Beneficio Exclusivo'),
-                                  content: const Text('Para realizar compras, necesitas ser Beneficiario Plus.'),
-                                  actions: [
-                                    TextButton(
-                                      child: const Text('Cancelar'), 
-                                      onPressed: () => Navigator.pop(context)
-                                    ),
-                                    ElevatedButton(
-                                      style: ElevatedButton.styleFrom(
-                                        backgroundColor: theme.colorScheme.primary,
-                                        foregroundColor: theme.colorScheme.onPrimary,
-                                      ),
-                                      child: const Text('Suscribirse (\$2.000)'),
-                                      onPressed: () {
-                                        Navigator.pop(context); // Close dialog
-                                        Navigator.push(
-                                          context, 
-                                          MaterialPageRoute(builder: (_) => const import_cart.ClientSubscriptionScreen())
-                                        );
-                                      },
-                                    ),
-                                  ],
-                                ),
-                              );
-                              return;
-                            }
-                         }
-                       } catch (e) {
-                          print('Error checking subscription in cart: $e');
-                       }
-                      
-                      // 1. Mostrar loader
-                      showDialog(
-                        context: context,
-                        barrierDismissible: false,
-                        builder: (context) => Center(child: CircularProgressIndicator(color: theme.colorScheme.primary)),
-                      );
-
-                      try {
-                        // 2. Integración Mercado Pago SEGURA
-                        final pymeId = cartService.currentPymeId;
-                        if (pymeId == null) throw 'No se pudo identificar la tienda.';
-
-                        // A. Crear Orden PENDIENTE en Firestore
-                        final String orderId = await cartService.createPendingOrder();
-
-                        // B. Crear preferencia vinculada a esa Orden
-                        final result = await PaymentService().createPreference(
-                            title: "Compra en Mipyme", 
-                            price: cartService.total, 
-                            pymeId: pymeId,
-                            quantity: 1, // Enviamos total como 1 item
-                            externalReference: orderId, // VINCULACIÓN CRÍTICA
-                        );
-
-                        final String? initPoint = result['init_point'];
-                        if (initPoint == null) throw 'Error al iniciar pago.';
-                        
-                        // Cerrar loader inicial
-                        if (context.mounted) Navigator.pop(context);
-
-                        // 3. Abrir Mercado Pago
-                        // Usamos platformDefault para mejor compatibilidad Web (evitar bloqueos estrictos)
-                        final Uri url = Uri.parse(initPoint);
-                        
-                        // Intentamos abrir directamente sin verificar canLaunchUrl en web para evitar retardos
-                        await launchUrl(url, mode: LaunchMode.platformDefault);
-
-                        if (!context.mounted) return;
-
-                        // 4. ESPERA ACTIVA DE CONFIRMACIÓN (Polling Seguro)
-                        // Mostramos un Dialog que NO se puede cancelar fácilmente
-                        
-                        showDialog(
-                          context: context,
-                          barrierDismissible: false,
-                          builder: (context) => PopScope(
-                            canPop: false,
-                            child: AlertDialog(
-                              title: const Text('Procesando Pago'),
-                              content: Column(
-                                mainAxisSize: MainAxisSize.min,
-                                children: const [
-                                  CircularProgressIndicator(),
-                                  SizedBox(height: 20),
-                                  Text(
-                                    'Estamos verificando tu pago de forma segura.\n'
-                                    'Por favor completa la transacción en el navegador.',
-                                    textAlign: TextAlign.center,
-                                  ),
-                                ],
-                              ),
-                              actions: [
-                                TextButton(
-                                  onPressed: () => Navigator.pop(context), // Escape hatch
-                                  child: const Text('Cancelar / Salir'),
-                                ),
-                              ],
-                            ),
-                          ),
-                        );
-
-                        // 5. Escuchar cambios en la Orden (Firestore)
-                        // El Webhook actualizará el status a 'paid' cuando Mercado Pago avise.
-                        FirebaseFirestore.instance
-                            .collection('orders')
-                            .doc(orderId)
-                            .snapshots()
-                            .listen((snapshot) {
-                               if (snapshot.exists && snapshot.data()?['status'] == 'paid') {
-                                  // ¡PAGO CONFIRMADO!
-                                  cartService.finalizeCart(); // Limpiar carrito
-                                  
-                                  if (context.mounted) {
-                                    Navigator.pop(context); // Cerrar Dialog Espera
-                                    
-                                    // Mensaje de Éxito
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      SnackBar(
-                                        content: Text('¡Pago exitoso! Tu compra ha sido confirmada.',
-                                            style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.onPrimary)),
-                                        backgroundColor: const Color(0xFF6F8F5E),
-                                      ),
-                                    );
-                                    
-                                    Navigator.pop(context); // Volver al Home / Pantalla anterior
-                                  }
-                               }
-                            });
-                        
-                        // Guardar subscripción en state si fuera posible para cancelarla, 
-                        // pero aqui dependemos de que al salir de pantalla el garbage collector actue 
-                        // o el usuario cancele manualmente.
-                        // Para producción estricta, usar StateFulWidget y dispose().
-                        // Como este es un callback asíncrono, si el usuario cierra, seguirá escuchando un rato.
-                        // Es aceptable para MVP.
-
-                      } catch (e) {
-                         if (context.mounted) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: Text('Error: $e'),
-                                backgroundColor: theme.colorScheme.error,
-                              ),
-                            );
-                         }
-                      }
-                    },
+                    onPressed: () => _handleCheckout(context, cartService, theme),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: theme.colorScheme.primary,
                       foregroundColor: theme.colorScheme.onPrimary,
@@ -621,6 +447,169 @@ class _ClientCartScreenState extends State<ClientCartScreen> {
         ),
       ),
     );
+  }
+
+  /// Handles the entire checkout flow with proper BuildContext guards.
+  Future<void> _handleCheckout(BuildContext context, CartService cartService, ThemeData theme) async {
+    if (cartService.items.isEmpty) return;
+
+    // Capture messenger and navigator BEFORE any await
+    final messenger = ScaffoldMessenger.of(context);
+    final navigator = Navigator.of(context);
+
+    // Check Subscription Status
+    try {
+      final user = FirebaseAuth.instance.currentUser;
+      if (user != null) {
+        final doc = await FirebaseFirestore.instance
+            .collection('clients')
+            .doc(user.uid)
+            .get();
+        final isSubscribed = doc.data()?['isSubscribed'] ?? false;
+        if (!isSubscribed) {
+          if (!context.mounted) return;
+          showDialog(
+            context: context,
+            builder: (ctx) => AlertDialog(
+              title: const Text('Beneficio Exclusivo'),
+              content: const Text('Para realizar compras, necesitas ser Beneficiario Plus.'),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(ctx),
+                  child: const Text('Cancelar'),
+                ),
+                ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: theme.colorScheme.primary,
+                    foregroundColor: theme.colorScheme.onPrimary,
+                  ),
+                  onPressed: () {
+                    Navigator.pop(ctx);
+                    Navigator.push(context,
+                        MaterialPageRoute(builder: (_) => const import_cart.ClientSubscriptionScreen()));
+                  },
+                  child: const Text('Suscribirse (\$2.000)'),
+                ),
+              ],
+            ),
+          );
+          return;
+        }
+      }
+    } catch (e) {
+      debugPrint('Error checking subscription in cart: \$e');
+    }
+
+    // Show loading dialog
+    if (!context.mounted) return;
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => Center(child: CircularProgressIndicator(color: theme.colorScheme.primary)),
+    );
+
+    try {
+      final pymeId = cartService.currentPymeId;
+      if (pymeId == null) throw 'No se pudo identificar la tienda.';
+
+      final String orderId = await cartService.createPendingOrder();
+
+      final result = await PaymentService().createPreference(
+        orderId: orderId,
+      );
+
+      final String? initPoint = result['init_point'];
+      if (initPoint == null) throw 'Error al iniciar pago.';
+
+      // Close loader
+      navigator.pop();
+
+      await launchUrl(Uri.parse(initPoint), mode: LaunchMode.platformDefault);
+
+      if (!context.mounted) return;
+
+      // Show payment polling dialog
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (ctx) => PopScope(
+          canPop: false,
+          child: AlertDialog(
+            title: const Text('Procesando Pago'),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: const [
+                CircularProgressIndicator(),
+                SizedBox(height: 20),
+                Text(
+                  'Estamos verificando tu pago de forma segura.\nPor favor completa la transacción en el navegador.',
+                  textAlign: TextAlign.center,
+                ),
+              ],
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(ctx),
+                child: const Text('Cancelar / Salir'),
+              ),
+            ],
+          ),
+        ),
+      );
+
+      // Capture navigator again after the dialog (still same context)
+      final nav2 = Navigator.of(context);
+
+      // Listen for payment confirmation
+      FirebaseFirestore.instance
+          .collection('orders')
+          .doc(orderId)
+          .snapshots()
+          .listen((snapshot) async {
+        if (snapshot.exists && snapshot.data()?['status'] == 'paid') {
+          try {
+            await ClientService().addPoints(cartService.total);
+          } catch (e) {
+            debugPrint('Error otorgando puntos: \$e');
+          }
+          cartService.finalizeCart();
+          if (!context.mounted) return;
+          nav2.pop(); // Close polling dialog
+          showDialog(
+            context: context,
+            builder: (ctx) => AlertDialog(
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(Icons.check_circle_outline, size: 120, color: Color(0xFF6F8F5E)),
+                  const SizedBox(height: 16),
+                  Text('¡Pago Exitoso!',
+                      style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
+                  const SizedBox(height: 8),
+                  Text('Tu compra ha sido confirmada.', style: theme.textTheme.bodyMedium),
+                  const SizedBox(height: 24),
+                  ElevatedButton(
+                    onPressed: () {
+                      Navigator.pop(ctx);
+                      nav2.pop();
+                    },
+                    child: const Text('Continuar'),
+                  ),
+                ],
+              ),
+            ),
+          );
+        }
+      });
+    } catch (e) {
+      // Close loader if still showing
+      if (context.mounted) navigator.pop();
+      messenger.showSnackBar(SnackBar(
+        content: Text('Error: \$e'),
+        backgroundColor: theme.colorScheme.error,
+      ));
+    }
   }
 
   Widget _buildSummaryRow(String label, double amount, ThemeData theme) {

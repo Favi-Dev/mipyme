@@ -188,7 +188,7 @@ class _AdminPymeManagementScreenState extends State<AdminPymeManagementScreen> {
                 : null,
           ),
           title: Text(
-            user['name'] ?? 'Usuario',
+            user['commercialName'] ?? user['companyName'] ?? user['name'] ?? 'Pyme',
             style: GoogleFonts.poppins(
               fontWeight: FontWeight.bold,
               color: const Color(0xFF2F3F2A),

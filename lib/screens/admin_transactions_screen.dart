@@ -163,7 +163,7 @@ class _AdminTransactionsScreenState extends State<AdminTransactionsScreen> with 
 
             // Fetch Pyme Data
             return FutureBuilder<DocumentSnapshot>(
-              future: _firestore.collection('users').doc(pymeId).get(),
+              future: _getBusinessProfile(pymeId),
               builder: (context, pymeSnapshot) {
                 if (!pymeSnapshot.hasData) return const SizedBox(); // Loading row
                 
@@ -175,6 +175,11 @@ class _AdminTransactionsScreenState extends State<AdminTransactionsScreen> with 
                 final accountType = pymeData?['bankAccountType'] ?? '';
                 final accountNumber = pymeData?['bankAccountNumber'] ?? '';
                 final holderRut = pymeData?['bankAccountHolderRut'] ?? '';
+
+                // Commission calculation
+                final double commissionRate = (pymeData?['commissionRate'] as num?)?.toDouble() ?? 0.10;
+                final double commissionAmount = totalAmount * commissionRate;
+                final double amountToTransfer = totalAmount - commissionAmount;
 
                 return Card(
                   elevation: 2,
@@ -189,7 +194,8 @@ class _AdminTransactionsScreenState extends State<AdminTransactionsScreen> with 
                       style: GoogleFonts.poppins(fontWeight: FontWeight.bold),
                     ),
                     subtitle: Text(
-                      'Total a transferir: ${NumberFormat.currency(locale: 'es_CL', symbol: '\$').format(totalAmount)}',
+                      'Total Recaudado: ${NumberFormat.currency(locale: 'es_CL', symbol: '\$').format(totalAmount)}\n'
+                      'A Transferir (${((1 - commissionRate) * 100).toInt()}%): ${NumberFormat.currency(locale: 'es_CL', symbol: '\$').format(amountToTransfer)}',
                       style: GoogleFonts.poppins(
                         fontWeight: FontWeight.w600,
                         color: const Color(0xFF2F3F2A),
@@ -201,6 +207,29 @@ class _AdminTransactionsScreenState extends State<AdminTransactionsScreen> with 
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.stretch,
                           children: [
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Expanded(child: Text('Recaudación Total:', style: GoogleFonts.poppins())),
+                                Text(NumberFormat.currency(locale: 'es_CL', symbol: '\$').format(totalAmount), style: GoogleFonts.poppins()),
+                              ],
+                            ),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Expanded(child: Text('Comisión SoyPlus (${(commissionRate * 100).toInt()}%):', style: GoogleFonts.poppins(color: Colors.red))),
+                                Text('- ${NumberFormat.currency(locale: 'es_CL', symbol: '\$').format(commissionAmount)}', style: GoogleFonts.poppins(color: Colors.red)),
+                              ],
+                            ),
+                            const Divider(),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Expanded(child: Text('A Transferir:', style: GoogleFonts.poppins(fontWeight: FontWeight.bold))),
+                                Text(NumberFormat.currency(locale: 'es_CL', symbol: '\$').format(amountToTransfer), style: GoogleFonts.poppins(fontWeight: FontWeight.bold, color: const Color(0xFF6F8F5E))),
+                              ],
+                            ),
+                            const SizedBox(height: 16),
                             const Divider(),
                             Text('Datos Bancarios para Transferencia:', style: GoogleFonts.poppins(fontWeight: FontWeight.bold)),
                             const SizedBox(height: 8),
@@ -248,6 +277,12 @@ class _AdminTransactionsScreenState extends State<AdminTransactionsScreen> with 
         ],
       ),
     );
+  }
+
+  Future<DocumentSnapshot> _getBusinessProfile(String pymeId) async {
+    final pymeDoc = await _firestore.collection('pymes').doc(pymeId).get();
+    if (pymeDoc.exists) return pymeDoc;
+    return _firestore.collection('foundations').doc(pymeId).get();
   }
 
   Widget _buildSummaryCard(double amount, String title) {

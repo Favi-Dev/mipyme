@@ -1,18 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
+import '../design_system/colors.dart';
+import '../design_system/typography.dart';
 
 class AppTheme {
-  // 1️⃣ Colores principales (identidad núcleo)
-  static const Color deepLeafGreen = Color(0xFF2F3F2A); // Verde Hoja Profundo (Fondo)
-  static const Color warmWhite = Color(0xFFF4F1EA); // Blanco Cálido (Texto)
-
-  // 2️⃣ Colores secundarios (humanidad y diversidad)
-  static const Color earthBrown = Color(0xFF8B5A3C); // Café Tierra
-  static const Color skinBeige = Color(0xFFE3B58F); // Beige Piel Claro
-
-  // 3️⃣ Colores de apoyo / acento
-  static const Color lightGreen = Color(0xFF6F8F5E); // Verde Claro Apoyo
-  static const Color organicGrey = Color(0xFF6E6E6A); // Gris Orgánico
+  // 4️⃣ Colores para Glassmorphism (Efecto Vidrio) - Manteniendo para compatibilidad temporal si es necesario
+  static Color get glassWhite => SoyPlusColors.onPrimary.withOpacity(0.85);
+  static Color get glassGreen => SoyPlusColors.primary.withOpacity(0.85);
 
   static ThemeData get lightTheme {
     return ThemeData(
@@ -20,89 +13,45 @@ class AppTheme {
       
       // Definición de colores base
       colorScheme: ColorScheme.fromSeed(
-        seedColor: deepLeafGreen,
-        primary: deepLeafGreen,
-        onPrimary: warmWhite, // Botones con texto blanco
-        secondary: lightGreen,
-        onSecondary: warmWhite,
-        surface: warmWhite, // Fondo claro
-        onSurface: deepLeafGreen, // Texto oscuro sobre fondo claro
-        tertiary: earthBrown,
-        error: earthBrown,
+        seedColor: SoyPlusColors.primary,
+        primary: SoyPlusColors.primary,
+        onPrimary: SoyPlusColors.onPrimary, // Botones con texto blanco
+        secondary: SoyPlusColors.accentGreen,
+        onSecondary: SoyPlusColors.onPrimary,
+        surface: SoyPlusColors.surfaceLight, // Fondo claro
+        onSurface: SoyPlusColors.textPrimaryLight, // Texto oscuro sobre fondo claro
+        tertiary: SoyPlusColors.accentBrown,
+        error: SoyPlusColors.error,
       ),
 
       // Fondo principal de la app
-      scaffoldBackgroundColor: warmWhite,
+      scaffoldBackgroundColor: SoyPlusColors.backgroundLight,
 
       // Configuración del AppBar
       appBarTheme: AppBarTheme(
-        backgroundColor: deepLeafGreen,
-        foregroundColor: warmWhite,
+        backgroundColor: SoyPlusColors.primary,
+        foregroundColor: SoyPlusColors.onPrimary,
         centerTitle: true,
-        titleTextStyle: GoogleFonts.poppins(
-          fontSize: 20,
-          fontWeight: FontWeight.w600,
-          color: warmWhite,
+        titleTextStyle: SoyPlusTypography.textTheme.titleLarge?.copyWith(
+          color: SoyPlusColors.onPrimary,
         ),
       ),
 
       // Configuración de textos
-      textTheme: GoogleFonts.interTextTheme().apply(
-        bodyColor: deepLeafGreen,
-        displayColor: deepLeafGreen,
-      ).copyWith(
-        // Títulos con Poppins
-        displayLarge: GoogleFonts.poppins(
-          color: deepLeafGreen,
-          fontWeight: FontWeight.bold,
-        ),
-        displayMedium: GoogleFonts.poppins(
-          color: deepLeafGreen,
-          fontWeight: FontWeight.bold,
-        ),
-        displaySmall: GoogleFonts.poppins(
-          color: deepLeafGreen,
-          fontWeight: FontWeight.w600,
-        ),
-        headlineLarge: GoogleFonts.poppins(
-          color: deepLeafGreen,
-          fontWeight: FontWeight.bold,
-        ),
-        headlineMedium: GoogleFonts.poppins(
-          color: deepLeafGreen,
-          fontWeight: FontWeight.w600,
-        ),
-        headlineSmall: GoogleFonts.poppins(
-          color: deepLeafGreen,
-          fontWeight: FontWeight.w500,
-        ),
-        
-        // Cuerpo con Inter
-        bodyLarge: GoogleFonts.inter(
-          color: deepLeafGreen,
-          fontSize: 16,
-        ),
-        bodyMedium: GoogleFonts.inter(
-          color: organicGrey, // Textos secundarios
-          fontSize: 14,
-        ),
-        bodySmall: GoogleFonts.inter(
-          color: organicGrey.withOpacity(0.8),
-          fontSize: 12,
-        ),
+      textTheme: SoyPlusTypography.textTheme.apply(
+        bodyColor: SoyPlusColors.textPrimaryLight,
+        displayColor: SoyPlusColors.textPrimaryLight,
       ),
 
       // Configuración de botones
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
-          backgroundColor: deepLeafGreen,
-          foregroundColor: warmWhite,
-          textStyle: GoogleFonts.inter(
-            fontWeight: FontWeight.w600,
-          ),
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+          backgroundColor: SoyPlusColors.primary,
+          foregroundColor: SoyPlusColors.onPrimary,
+          textStyle: SoyPlusTypography.textTheme.labelLarge,
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(8),
+            borderRadius: BorderRadius.circular(24),
           ),
         ),
       ),
@@ -110,31 +59,104 @@ class AppTheme {
       // Botones secundarios (Outlined o Text)
       outlinedButtonTheme: OutlinedButtonThemeData(
         style: OutlinedButton.styleFrom(
-          foregroundColor: deepLeafGreen,
-          side: const BorderSide(color: deepLeafGreen),
-          textStyle: GoogleFonts.inter(
-            fontWeight: FontWeight.w600,
+          foregroundColor: SoyPlusColors.primary,
+          side: const BorderSide(color: SoyPlusColors.primary),
+          textStyle: SoyPlusTypography.textTheme.labelLarge,
+        ),
+      ),
+
+  // Inputs y Formularios
+      inputDecorationTheme: InputDecorationTheme(
+        filled: true,
+        fillColor: SoyPlusColors.surfaceLight,
+        labelStyle: SoyPlusTypography.textTheme.bodyMedium?.copyWith(color: SoyPlusColors.primary),
+        hintStyle: SoyPlusTypography.textTheme.bodyMedium?.copyWith(color: SoyPlusColors.primary.withOpacity(0.7)),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(16),
+          borderSide: const BorderSide(color: SoyPlusColors.primary),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(16),
+          borderSide: BorderSide(color: Colors.grey.withOpacity(0.5)),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(16),
+          borderSide: const BorderSide(color: SoyPlusColors.primary, width: 2),
+        ),
+      ),
+    );
+  }
+
+  static ThemeData get darkTheme {
+    return ThemeData(
+      useMaterial3: true,
+      brightness: Brightness.dark,
+      
+      colorScheme: ColorScheme.fromSeed(
+        brightness: Brightness.dark,
+        seedColor: SoyPlusColors.accentGreen,
+        primary: SoyPlusColors.accentGreen,
+        onPrimary: SoyPlusColors.onPrimary,
+        secondary: SoyPlusColors.primary,
+        onSecondary: SoyPlusColors.onPrimary,
+        surface: SoyPlusColors.surfaceDark, // Fondo de tarjetas
+        onSurface: SoyPlusColors.textPrimaryDark,
+        tertiary: SoyPlusColors.accentBrown,
+        error: SoyPlusColors.error,
+      ),
+
+      scaffoldBackgroundColor: SoyPlusColors.backgroundDark,
+
+      appBarTheme: AppBarTheme(
+        backgroundColor: SoyPlusColors.surfaceDark,
+        foregroundColor: SoyPlusColors.textPrimaryDark,
+        centerTitle: true,
+        titleTextStyle: SoyPlusTypography.textTheme.titleLarge?.copyWith(
+          color: SoyPlusColors.textPrimaryDark,
+        ),
+      ),
+
+      textTheme: SoyPlusTypography.textTheme.apply(
+        bodyColor: SoyPlusColors.textPrimaryDark,
+        displayColor: SoyPlusColors.textPrimaryDark,
+      ),
+
+      elevatedButtonTheme: ElevatedButtonThemeData(
+        style: ElevatedButton.styleFrom(
+          backgroundColor: SoyPlusColors.accentGreen,
+          foregroundColor: SoyPlusColors.onPrimary,
+          textStyle: SoyPlusTypography.textTheme.labelLarge,
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(24),
           ),
         ),
       ),
 
-      // Inputs y Formularios
+      outlinedButtonTheme: OutlinedButtonThemeData(
+        style: OutlinedButton.styleFrom(
+          foregroundColor: SoyPlusColors.accentGreen,
+          side: const BorderSide(color: SoyPlusColors.accentGreen),
+          textStyle: SoyPlusTypography.textTheme.labelLarge,
+        ),
+      ),
+
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
-        fillColor: warmWhite,
-        labelStyle: GoogleFonts.inter(color: deepLeafGreen),
-        hintStyle: GoogleFonts.inter(color: deepLeafGreen.withOpacity(0.7)),
+        fillColor: SoyPlusColors.surfaceDark,
+        labelStyle: SoyPlusTypography.textTheme.bodyMedium?.copyWith(color: SoyPlusColors.textPrimaryDark.withOpacity(0.8)),
+        hintStyle: SoyPlusTypography.textTheme.bodyMedium?.copyWith(color: SoyPlusColors.textPrimaryDark.withOpacity(0.5)),
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(8),
-          borderSide: const BorderSide(color: deepLeafGreen),
+          borderRadius: BorderRadius.circular(16),
+          borderSide: BorderSide(color: SoyPlusColors.accentGreen.withOpacity(0.5)),
         ),
         enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(8),
-          borderSide: BorderSide(color: organicGrey.withOpacity(0.5)),
+          borderRadius: BorderRadius.circular(16),
+          borderSide: BorderSide(color: Colors.grey.withOpacity(0.5)),
         ),
         focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(8),
-          borderSide: const BorderSide(color: deepLeafGreen, width: 2),
+          borderRadius: BorderRadius.circular(16),
+          borderSide: const BorderSide(color: SoyPlusColors.accentGreen, width: 2),
         ),
       ),
     );

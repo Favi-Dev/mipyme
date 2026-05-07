@@ -4,10 +4,8 @@ import 'package:flutter/foundation.dart';
 // Top-level function for background handling
 @pragma('vm:entry-point')
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
-  // If you're going to use other Firebase services in the background, such as Firestore,
-  // make sure you call `Firebase.initializeApp()` before using other Firebase services.
   if (kDebugMode) {
-    print("Handling a background message: ${message.messageId}");
+    debugPrint("Handling a background message: ${message.messageId}");
   }
 }
 
@@ -20,7 +18,7 @@ class NotificationService {
 
   Future<void> initialize() async {
     // 1. Request Permission
-    NotificationSettings settings = await _messaging.requestPermission(
+    final settings = await _messaging.requestPermission(
       alert: true,
       announcement: false,
       badge: true,
@@ -31,39 +29,31 @@ class NotificationService {
     );
 
     if (kDebugMode) {
-      print('User granted permission: ${settings.authorizationStatus}');
+      debugPrint('FCM permission: ${settings.authorizationStatus}');
     }
 
     // 2. Set Background Handler
     FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
 
-    // 3. Listen to Foreground Messages
+    // 3. Listen to Foreground Messages — show in-app banner
     FirebaseMessaging.onMessage.listen((RemoteMessage message) {
       if (kDebugMode) {
-        print('Got a message whilst in the foreground!');
-        print('Message data: ${message.data}');
+        debugPrint('FCM Foreground: ${message.notification?.title}');
       }
-
-      if (message.notification != null) {
-        if (kDebugMode) {
-          print('Message also contained a notification: ${message.notification}');
-        }
-        // TODO: Show a local notification or update UI
-      }
+      // In-app notification is handled by the notifications bell icon
+      // (stored in Firestore by the Cloud Function). No local popup needed on web.
+      // On mobile, use flutter_local_notifications if added to pubspec.
     });
   }
 
   Future<String?> getToken() async {
     try {
-      String? token = await _messaging.getToken();
-      if (kDebugMode) {
-        print('FCM Token: $token');
-      }
+      // On web, vapidKey is required. Pass it here if configured.
+      final token = await _messaging.getToken();
+      if (kDebugMode) debugPrint('FCM Token: $token');
       return token;
     } catch (e) {
-      if (kDebugMode) {
-        print('Error getting FCM token: $e');
-      }
+      if (kDebugMode) debugPrint('Error getting FCM token: $e');
       return null;
     }
   }

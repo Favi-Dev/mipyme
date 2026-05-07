@@ -19,7 +19,7 @@ class StorageService {
       
       return await ref.getDownloadURL();
     } catch (e) {
-      print('Error uploading profile image: $e');
+      debugPrint('Error uploading profile image: $e');
       return null;
     }
   }
@@ -37,7 +37,7 @@ class StorageService {
       
       return await ref.getDownloadURL();
     } catch (e) {
-      print('Error uploading cover image: $e');
+      debugPrint('Error uploading cover image: $e');
       return null;
     }
   }
@@ -55,7 +55,7 @@ class StorageService {
       
       return await ref.getDownloadURL();
     } catch (e) {
-      print('Error uploading product image: $e');
+      debugPrint('Error uploading product image: $e');
       return null;
     }
   }

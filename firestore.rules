@@ -1,12 +1,226 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    match /offers/{offerId} {
-      allow read: if request.auth != null;
-      allow write: if request.auth != null; 
+    function isSignedIn() {
+      return request.auth != null;
     }
+
+    function isAdmin() {
+      return isSignedIn() &&
+        exists(/databases/$(database)/documents/admins/$(request.auth.uid));
+    }
+
+    function isClientSelf(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function isPymeOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId &&
+        exists(/databases/$(database)/documents/pymes/$(userId));
+    }
+
+    function isFoundationOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId &&
+        exists(/databases/$(database)/documents/foundations/$(userId));
+    }
+
+    function managesBusiness(businessId) {
+      return isAdmin() || isPymeOwner(businessId) || isFoundationOwner(businessId);
+    }
+
+    function updatesOnlyEventRegistrationCount(productId) {
+      return request.resource.data.diff(resource.data).changedKeys().hasOnly(['registeredCount']) &&
+        resource.data.customAttributes.is_event == 'true' &&
+        request.resource.data.registeredCount is int &&
+        request.resource.data.registeredCount >= 0 &&
+        request.resource.data.registeredCount <= resource.data.stock &&
+        (
+          (resource.data.registeredCount is int &&
+            (
+              (request.resource.data.registeredCount == resource.data.registeredCount + 1 &&
+                !exists(/databases/$(database)/documents/products/$(productId)/participants/$(request.auth.uid)) &&
+                existsAfter(/databases/$(database)/documents/products/$(productId)/participants/$(request.auth.uid))) ||
+              (request.resource.data.registeredCount == resource.data.registeredCount - 1 &&
+                exists(/databases/$(database)/documents/products/$(productId)/participants/$(request.auth.uid)) &&
+                !existsAfter(/databases/$(database)/documents/products/$(productId)/participants/$(request.auth.uid)))
+            )) ||
+          (!(resource.data.registeredCount is int) &&
+            request.resource.data.registeredCount == 1 &&
+            !exists(/databases/$(database)/documents/products/$(productId)/participants/$(request.auth.uid)) &&
+            existsAfter(/databases/$(database)/documents/products/$(productId)/participants/$(request.auth.uid)))
+        );
+    }
+
+    function registrationCountChangesBy(productId, delta) {
+      return get(/databases/$(database)/documents/products/$(productId)).data.customAttributes.is_event == 'true' &&
+        getAfter(/databases/$(database)/documents/products/$(productId)).data.registeredCount is int &&
+        (
+          (get(/databases/$(database)/documents/products/$(productId)).data.registeredCount is int &&
+            getAfter(/databases/$(database)/documents/products/$(productId)).data.registeredCount ==
+              get(/databases/$(database)/documents/products/$(productId)).data.registeredCount + delta) ||
+          (!(get(/databases/$(database)/documents/products/$(productId)).data.registeredCount is int) &&
+            delta == 1 &&
+            getAfter(/databases/$(database)/documents/products/$(productId)).data.registeredCount == 1)
+        );
+    }
+
+    match /clients/{userId} {
+      allow read, create, update, delete: if isClientSelf(userId) || isAdmin();
+
+      match /notifications/{notificationId} {
+        allow read, write: if isClientSelf(userId) || isAdmin();
+      }
+
+      match /addresses/{addressId} {
+        allow read, write: if isClientSelf(userId) || isAdmin();
+      }
+
+      match /payment_methods/{paymentMethodId} {
+        allow read, write: if isClientSelf(userId) || isAdmin();
+      }
+
+      match /following/{followingId} {
+        allow read, write: if isClientSelf(userId) || isAdmin();
+      }
+
+      match /participations/{participationId} {
+        allow read: if isClientSelf(userId) || isAdmin();
+        allow create, update, delete: if isClientSelf(userId) ||
+          isAdmin() ||
+          ((resource != null && resource.data.pymeId is string) &&
+            managesBusiness(resource.data.pymeId));
+      }
+    }
+
+    match /pymes/{pymeId} {
+      allow read: if isSignedIn();
+      allow create, update, delete: if isPymeOwner(pymeId) || isAdmin();
+
+      match /offers/{offerId} {
+        allow read: if isSignedIn();
+        allow write: if isPymeOwner(pymeId) || isAdmin();
+      }
+
+      match /events/{eventId} {
+        allow read: if isSignedIn();
+        allow write: if isPymeOwner(pymeId) || isAdmin();
+      }
+
+      match /reviews/{reviewId} {
+        allow read: if isSignedIn();
+        allow create: if isSignedIn();
+        allow update, delete: if isAdmin();
+      }
+    }
+
+    match /foundations/{foundationId} {
+      allow read: if isSignedIn();
+      allow create, update, delete: if isFoundationOwner(foundationId) || isAdmin();
+
+      match /offers/{offerId} {
+        allow read: if isSignedIn();
+        allow write: if isFoundationOwner(foundationId) || isAdmin();
+      }
+
+      match /events/{eventId} {
+        allow read: if isSignedIn();
+        allow write: if isFoundationOwner(foundationId) || isAdmin();
+      }
+
+      match /reviews/{reviewId} {
+        allow read: if isSignedIn();
+        allow create: if isSignedIn();
+        allow update, delete: if isAdmin();
+      }
+    }
+
+    match /admins/{adminId} {
+      allow read: if isSignedIn() && (request.auth.uid == adminId || isAdmin());
+      allow write: if isAdmin();
+    }
+
+    match /empresas/{empresaId} {
+      allow read, write: if isSignedIn() && (request.auth.uid == empresaId || isAdmin());
+    }
+
+    match /store_managers/{managerId} {
+      allow read, write: if isSignedIn() && (request.auth.uid == managerId || isAdmin());
+    }
+
+    match /products/{productId} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn() &&
+        request.resource.data.pymeId is string &&
+        managesBusiness(request.resource.data.pymeId);
+      allow update: if isSignedIn() &&
+        resource.data.pymeId is string &&
+        (managesBusiness(resource.data.pymeId) || updatesOnlyEventRegistrationCount(productId));
+      allow delete: if isSignedIn() &&
+        resource.data.pymeId is string &&
+        managesBusiness(resource.data.pymeId);
+
+      match /participants/{participantId} {
+        allow read: if isSignedIn();
+        allow create: if (isSignedIn() && request.auth.uid == participantId &&
+            registrationCountChangesBy(productId, 1)) ||
+          ((request.resource.data.pymeId is string) &&
+            managesBusiness(request.resource.data.pymeId));
+        allow delete: if (isSignedIn() && request.auth.uid == participantId &&
+            registrationCountChangesBy(productId, -1)) ||
+          ((resource != null && resource.data.pymeId is string) &&
+            managesBusiness(resource.data.pymeId));
+        allow update: if (isSignedIn() && request.auth.uid == participantId) ||
+          ((resource != null && resource.data.pymeId is string) &&
+            managesBusiness(resource.data.pymeId));
+      }
+    }
+
+    match /orders/{orderId} {
+      allow create: if isSignedIn() &&
+        request.resource.data.clientId == request.auth.uid;
+      allow read, update: if isSignedIn() && (
+        resource.data.clientId == request.auth.uid ||
+        managesBusiness(resource.data.pymeId)
+      );
+      allow delete: if isAdmin();
+    }
+
+    match /payments/{paymentId} {
+      allow read: if isSignedIn() && (
+        resource.data.userId == request.auth.uid ||
+        managesBusiness(resource.data.pymeId)
+      );
+      allow write: if false;
+    }
+
+    match /transactions/{transactionId} {
+      allow read: if isSignedIn() && (
+        resource.data.clientId == request.auth.uid ||
+        isAdmin()
+      );
+      allow write: if false;
+    }
+
+    match /tickets/{ticketId} {
+      allow create: if isSignedIn();
+      allow read: if isSignedIn() && (
+        resource.data.clientId == request.auth.uid ||
+        isAdmin()
+      );
+      allow update, delete: if isAdmin();
+    }
+
+    match /support_tickets/{ticketId} {
+      allow create: if isSignedIn();
+      allow read: if isSignedIn() && (
+        resource.data.userId == request.auth.uid ||
+        isAdmin()
+      );
+      allow update, delete: if isAdmin();
+    }
+
     match /{document=**} {
-      allow read, write: if request.auth != null;
+      allow read, write: if false;
     }
   }
 }

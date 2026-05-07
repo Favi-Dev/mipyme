@@ -40,6 +40,16 @@ class _PymeAddProductScreenState extends State<PymeAddProductScreen> {
   late String _currentCategory;
   bool _isLoading = false;
 
+  // Variant system — color + size selectors
+  bool _hasVariants = false;
+  List<ProductVariant> _variants = []; // auto-generated from colors × sizes
+
+  // Stock controllers keyed by variant id
+  List<Map<String, String>> _variantAxes = [];
+  final Map<String, TextEditingController> _axisNameControllers = {};
+  final Map<String, TextEditingController> _axisValuesControllers = {};
+
+
   @override
   void initState() {
     super.initState();
@@ -75,6 +85,19 @@ class _PymeAddProductScreenState extends State<PymeAddProductScreen> {
         _dynamicControllers[key]!.text = value.toString();
       }
     });
+
+    // Load variants — rebuild color/size chips from existing variantAxes
+    if (p.hasVariants) {
+      _hasVariants = true;
+      _variants = p.variants.map((v) => v.copyWith()).toList();
+      _variantAxes = p.variantAxes
+          .map((axis) => {
+                'name': axis['name'] ?? '',
+                'values': axis['values'] ?? '',
+              })
+          .toList();
+      _rebuildAxisControllers();
+    }
   }
 
   void _initializeDynamicControllers() {
@@ -178,11 +201,10 @@ class _PymeAddProductScreenState extends State<PymeAddProductScreen> {
     _codeController.dispose();
     _priceController.dispose();
     _stockController.dispose();
-    // _imageController.dispose(); // Removed
     _descController.dispose();
-    for (var controller in _dynamicControllers.values) {
-      controller.dispose();
-    }
+    for (var c in _dynamicControllers.values) c.dispose();
+    for (var c in _axisNameControllers.values) c.dispose();
+    for (var c in _axisValuesControllers.values) c.dispose();
     super.dispose();
   }
 
@@ -234,6 +256,23 @@ class _PymeAddProductScreenState extends State<PymeAddProductScreen> {
           attributes['allow_quote'] = 'true';
         }
 
+        final axes = _hasVariants
+            ? _variantAxes
+                .map((axis) => {
+                      'name': (axis['name'] ?? '').trim(),
+                      'values': (axis['values'] ?? '').trim(),
+                    })
+                .where((axis) => axis['name']!.isNotEmpty && axis['values']!.isNotEmpty)
+                .toList()
+            : <Map<String, String>>[];
+
+        if (_hasVariants && (axes.isEmpty || _variants.isEmpty)) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Genera las combinaciones de variantes antes de guardar')),
+          );
+          return;
+        }
+
         final newProduct = Product(
           id: widget.product?.id ?? DateTime.now().millisecondsSinceEpoch.toString(),
           pymeId: widget.pymeId ?? FirebaseAuth.instance.currentUser?.uid ?? '',
@@ -242,10 +281,12 @@ class _PymeAddProductScreenState extends State<PymeAddProductScreen> {
           price: double.tryParse(_priceController.text) ?? 0,
           imageUrl: _imageUrl!,
           code: _codeController.text,
-          stock: int.tryParse(_stockController.text) ?? 0,
+          stock: _hasVariants ? 0 : (int.tryParse(_stockController.text) ?? 0),
           category: _currentCategory,
           isService: widget.isService,
           customAttributes: attributes,
+          variantAxes: _hasVariants ? axes : [],
+          variants: _hasVariants ? _variants : [],
         );
 
         if (widget.product != null) {
@@ -352,9 +393,39 @@ class _PymeAddProductScreenState extends State<PymeAddProductScreen> {
                    _buildTextField(_codeController, 'Código Interno', Icons.qr_code, isRequired: false),
                 ],
 
-                const SizedBox(height: 16),
-                _buildTextField(_stockController, _isService ? 'Cupos Disponibles' : 'Stock Disponible', Icons.inventory_2_outlined, isNumber: true),
+                if (!_hasVariants) ...[
+                  const SizedBox(height: 16),
+                  _buildTextField(_stockController, _isService ? 'Cupos Disponibles' : 'Stock Disponible', Icons.inventory_2_outlined, isNumber: true),
+                ],
               ]),
+
+              // Variant Section (only for products, not services)
+              if (!_isService) ...[
+                const SizedBox(height: 24),
+                _buildSectionTitle('Variantes'),
+                _buildCard([
+                  SwitchListTile(
+                    title: Text('Este producto tiene variantes', style: GoogleFonts.poppins(fontWeight: FontWeight.w600)),
+                    subtitle: Text('Ej: diferentes colores, tallas, etc.', style: GoogleFonts.poppins(fontSize: 12)),
+                    value: _hasVariants,
+                    activeColor: const Color(0xFF6F8F5E),
+                    onChanged: (val) {
+                      setState(() {
+                        _hasVariants = val;
+                        if (!val) {
+                          _variantAxes.clear();
+                          _variants.clear();
+                          _axisNameControllers.values.forEach((c) => c.dispose());
+                          _axisValuesControllers.values.forEach((c) => c.dispose());
+                          _axisNameControllers.clear();
+                          _axisValuesControllers.clear();
+                        }
+                      });
+                    },
+                  ),
+                  if (_hasVariants) ..._buildVariantSection(),
+                ]),
+              ],
 
               const SizedBox(height: 24),
               _buildSectionTitle('Detalles Específicos'),
@@ -689,5 +760,299 @@ class _PymeAddProductScreenState extends State<PymeAddProductScreen> {
         fields = [Text('Categoría no configurada', style: GoogleFonts.poppins())];
     }
     return fields;
+  }
+
+  // ─── Variant Management Methods ───
+
+  List<Widget> _buildVariantSection() {
+    return [
+      const Divider(height: 24),
+      Wrap(
+        spacing: 8,
+        runSpacing: 8,
+        children: [
+          _buildVariantPresetChip('Color', 'Rojo, Azul, Negro, Blanco'),
+          _buildVariantPresetChip('Talla', 'S, M, L, XL'),
+          _buildVariantPresetChip('Material', 'Algodon, Lino, Cuero'),
+        ],
+      ),
+      const SizedBox(height: 12),
+      // Axis list
+      ..._variantAxes.asMap().entries.map((entry) {
+        final i = entry.key;
+        final key = 'axis_$i';
+        _axisNameControllers.putIfAbsent(key, () => TextEditingController(text: _variantAxes[i]['name'] ?? ''));
+        _axisValuesControllers.putIfAbsent(key, () => TextEditingController(text: _variantAxes[i]['values'] ?? ''));
+        return Padding(
+          padding: const EdgeInsets.only(bottom: 12),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              SizedBox(
+                width: 100,
+                child: TextFormField(
+                  controller: _axisNameControllers[key],
+                  style: GoogleFonts.poppins(fontSize: 14),
+                  decoration: InputDecoration(
+                    labelText: 'Eje ${i + 1}',
+                    labelStyle: GoogleFonts.poppins(fontSize: 12),
+                    hintText: 'Color',
+                    hintStyle: GoogleFonts.poppins(fontSize: 12, color: Colors.grey),
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+                  ),
+                  onChanged: (val) {
+                    _variantAxes[i]['name'] = val;
+                  },
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: TextFormField(
+                  controller: _axisValuesControllers[key],
+                  style: GoogleFonts.poppins(fontSize: 14),
+                  decoration: InputDecoration(
+                    labelText: 'Valores (separados por coma)',
+                    labelStyle: GoogleFonts.poppins(fontSize: 12),
+                    hintText: 'Rojo, Azul, Verde',
+                    hintStyle: GoogleFonts.poppins(fontSize: 12, color: Colors.grey),
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+                  ),
+                  onChanged: (val) {
+                    _variantAxes[i]['values'] = val;
+                  },
+                ),
+              ),
+              const SizedBox(width: 4),
+              IconButton(
+                icon: const Icon(Icons.remove_circle_outline, color: Colors.red, size: 22),
+                onPressed: () {
+                  setState(() {
+                    _variantAxes.removeAt(i);
+                    _axisNameControllers.remove(key)?.dispose();
+                    _axisValuesControllers.remove(key)?.dispose();
+                    // Re-key remaining controllers
+                    _rebuildAxisControllers();
+                  });
+                },
+              ),
+            ],
+          ),
+        );
+      }),
+
+      // Add axis button
+      if (_variantAxes.length < 3)
+        TextButton.icon(
+          onPressed: () {
+            setState(() {
+              _addVariantAxis('', '');
+            });
+          },
+          icon: const Icon(Icons.add, color: Color(0xFF6F8F5E)),
+          label: Text('Agregar eje de variante', style: GoogleFonts.poppins(color: const Color(0xFF6F8F5E))),
+        ),
+
+      const SizedBox(height: 12),
+
+      // Generate button
+      if (_variantAxes.isNotEmpty)
+        SizedBox(
+          width: double.infinity,
+          child: OutlinedButton.icon(
+            onPressed: _generateVariants,
+            icon: const Icon(Icons.auto_awesome, size: 18),
+            label: Text('Generar combinaciones', style: GoogleFonts.poppins()),
+            style: OutlinedButton.styleFrom(
+              foregroundColor: const Color(0xFF6F8F5E),
+              side: const BorderSide(color: Color(0xFF6F8F5E)),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              padding: const EdgeInsets.symmetric(vertical: 12),
+            ),
+          ),
+        ),
+
+      // Variant grid
+      if (_variants.isNotEmpty) ...[
+        const SizedBox(height: 16),
+        Container(
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: const Color(0xFF6F8F5E).withOpacity(0.05),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: const Color(0xFF6F8F5E).withOpacity(0.2)),
+          ),
+          child: Row(
+            children: [
+              const Icon(Icons.inventory, size: 18, color: Color(0xFF6F8F5E)),
+              const SizedBox(width: 8),
+              Text(
+                '${_variants.length} variantes · Stock total: ${_variants.fold<int>(0, (s, v) => s + v.stock)}',
+                style: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.w600, color: const Color(0xFF2F3F2A)),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 8),
+        ..._variants.asMap().entries.map((entry) {
+          final idx = entry.key;
+          final v = entry.value;
+          return Container(
+            margin: const EdgeInsets.only(bottom: 8),
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(color: const Color(0xFF2F3F2A).withOpacity(0.1)),
+            ),
+            child: Row(
+              children: [
+                Expanded(
+                  flex: 3,
+                  child: Text(
+                    v.label,
+                    style: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.w500),
+                  ),
+                ),
+                SizedBox(
+                  width: 70,
+                  child: TextFormField(
+                    initialValue: v.stock.toString(),
+                    keyboardType: TextInputType.number,
+                    style: GoogleFonts.poppins(fontSize: 13),
+                    decoration: InputDecoration(
+                      labelText: 'Stock',
+                      labelStyle: GoogleFonts.poppins(fontSize: 10),
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+                    ),
+                    onChanged: (val) {
+                      final current = _variants[idx];
+                      _variants[idx] = ProductVariant(
+                        id: current.id,
+                        attributes: current.attributes,
+                        stock: int.tryParse(val) ?? 0,
+                        priceOverride: current.priceOverride,
+                      );
+                    },
+                  ),
+                ),
+                const SizedBox(width: 8),
+                SizedBox(
+                  width: 80,
+                  child: TextFormField(
+                    initialValue: v.priceOverride?.toStringAsFixed(0) ?? '',
+                    keyboardType: TextInputType.number,
+                    style: GoogleFonts.poppins(fontSize: 13),
+                    decoration: InputDecoration(
+                      labelText: 'Precio',
+                      labelStyle: GoogleFonts.poppins(fontSize: 10),
+                      hintText: 'Base',
+                      hintStyle: GoogleFonts.poppins(fontSize: 11, color: Colors.grey),
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+                    ),
+                    onChanged: (val) {
+                      final current = _variants[idx];
+                      _variants[idx] = ProductVariant(
+                        id: current.id,
+                        attributes: current.attributes,
+                        stock: current.stock,
+                        priceOverride: val.trim().isEmpty ? null : double.tryParse(val),
+                      );
+                    },
+                  ),
+                ),
+              ],
+            ),
+          );
+        }),
+      ],
+    ];
+  }
+
+  Widget _buildVariantPresetChip(String name, String values) {
+    final exists = _variantAxes.any((axis) => (axis['name'] ?? '').toLowerCase() == name.toLowerCase());
+    return ActionChip(
+      avatar: Icon(exists ? Icons.check : Icons.add, size: 16),
+      label: Text(name, style: GoogleFonts.poppins(fontSize: 12)),
+      onPressed: exists
+          ? null
+          : () {
+              setState(() {
+                _addVariantAxis(name, values);
+              });
+            },
+    );
+  }
+
+  void _addVariantAxis(String name, String values) {
+    if (_variantAxes.length >= 3) return;
+    _variantAxes.add({'name': name, 'values': values});
+    _rebuildAxisControllers();
+  }
+
+  void _rebuildAxisControllers() {
+    final oldNames = Map<String, TextEditingController>.from(_axisNameControllers);
+    final oldValues = Map<String, TextEditingController>.from(_axisValuesControllers);
+    _axisNameControllers.clear();
+    _axisValuesControllers.clear();
+    for (int i = 0; i < _variantAxes.length; i++) {
+      final key = 'axis_$i';
+      _axisNameControllers[key] = TextEditingController(text: _variantAxes[i]['name'] ?? '');
+      _axisValuesControllers[key] = TextEditingController(text: _variantAxes[i]['values'] ?? '');
+    }
+    oldNames.values.forEach((c) => c.dispose());
+    oldValues.values.forEach((c) => c.dispose());
+  }
+
+  void _generateVariants() {
+    // Parse axes
+    final List<MapEntry<String, List<String>>> parsedAxes = [];
+    for (final axis in _variantAxes) {
+      final name = (axis['name'] ?? '').trim();
+      final values = (axis['values'] ?? '').split(',').map((v) => v.trim()).where((v) => v.isNotEmpty).toList();
+      if (name.isNotEmpty && values.isNotEmpty) {
+        parsedAxes.add(MapEntry(name, values));
+      }
+    }
+
+    if (parsedAxes.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Define al menos un eje con valores')),
+      );
+      return;
+    }
+
+    // Generate cartesian product
+    List<Map<String, String>> combos = [{}];
+    for (final axis in parsedAxes) {
+      final newCombos = <Map<String, String>>[];
+      for (final combo in combos) {
+        for (final value in axis.value) {
+          newCombos.add({...combo, axis.key: value});
+        }
+      }
+      combos = newCombos;
+    }
+
+    // Preserve existing stock/price for matching variants
+    final oldVariantsMap = {for (var v in _variants) v.id: v};
+
+    setState(() {
+      _variants = combos.map((attrs) {
+        final id = attrs.entries
+            .map((entry) => '${entry.key}_${entry.value}'.toLowerCase().replaceAll(' ', '_'))
+            .join('_');
+        final existing = oldVariantsMap[id];
+        return ProductVariant(
+          id: id,
+          attributes: attrs,
+          stock: existing?.stock ?? 0,
+          priceOverride: existing?.priceOverride,
+        );
+      }).toList();
+    });
   }
 }

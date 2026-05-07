@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../services/admin_service.dart';
-import 'login_screen.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:go_router/go_router.dart';
 
 class AdminSupportScreen extends StatelessWidget {
   const AdminSupportScreen({super.key});
@@ -91,10 +91,7 @@ class AdminSupportScreen extends StatelessWidget {
             onPressed: () async {
                await FirebaseAuth.instance.signOut();
                if (context.mounted) {
-                  Navigator.of(context).pushAndRemoveUntil(
-                    MaterialPageRoute(builder: (context) => const LoginScreen()),
-                    (route) => false,
-                  );
+                  context.go('/login');
                }
             },
             child: const Text('Salir'),

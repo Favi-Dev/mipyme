@@ -18,99 +18,88 @@ class ClientSubscriptionScreen extends StatefulWidget {
 class _ClientSubscriptionScreenState extends State<ClientSubscriptionScreen> {
   bool _isLoading = false;
 
+  Future<void> _waitForSubscriptionConfirmation(String externalReference) async {
+    final query = FirebaseFirestore.instance
+        .collection('payments')
+        .where('externalReference', isEqualTo: externalReference)
+        .limit(1);
+
+    await for (final snapshot in query.snapshots()) {
+      if (snapshot.docs.isNotEmpty) {
+        break;
+      }
+    }
+  }
+
   Future<void> _processSubscription() async {
     setState(() => _isLoading = true);
-
-    // Simulate Payment Delay
-    // await Future.delayed(const Duration(seconds: 2));
+    bool waitingDialogOpen = false;
 
     try {
       final user = FirebaseAuth.instance.currentUser;
-      if (user != null && user.email != null) {
-        
-        // 1. Solicitar link de suscripción al backend
-        // Asegúrate de que tu PaymentService apunte a la URL correcta de Cloud Functions
-        final result = await PaymentService().createSubscription(
-          title: "Suscripción SoyPlus",
-          price: 99.0, // Define el precio real aquí
-          payerEmail: user.email!,
-        );
+      if (user == null || user.email == null) {
+        throw 'Debes iniciar sesion para suscribirte.';
+      }
 
-        final String? initPoint = result['init_point'];
+      final result = await PaymentService().createSubscription(
+        payerEmail: user.email!,
+      );
 
-        if (initPoint != null) {
-          final Uri url = Uri.parse(initPoint);
-          if (await canLaunchUrl(url)) {
-            await launchUrl(url, mode: LaunchMode.externalApplication);
-          } else {
-            throw 'No se pudo abrir el link de pago';
-          }
-        }
+      final String? initPoint = result['sandbox_init_point'] ?? result['init_point'];
+      final String? externalReference = result['external_reference'];
 
-        // NOTA IMPORTANTE:
-        // En un flujo real de producción, NO debes actualizar la base de datos aquí inmediatamente.
-        // Debes esperar a que Mercado Pago notifique a tu backend (Webhook) que el pago fue exitoso.
-        // Sin embargo, para este MVP/Prueba, le pediremos confirmación al usuario o asumiremos éxito
-        // si regresa a la app. Aquí mostramos un diálogo para que el usuario confirme manual.
+      if (initPoint == null || externalReference == null) {
+        throw 'No se pudo iniciar la suscripcion.';
+      }
 
-        if (!mounted) return;
-        
-        final bool? confirmed = await showDialog<bool>(
-          context: context,
-          barrierDismissible: false,
-          builder: (context) => AlertDialog(
-            title: const Text('Completar Suscripción'),
-            content: const Text(
-              'Se ha abierto Mercado Pago en tu navegador. Por favor completa el proceso de suscripción.\n\nCuando termines, regresa aquí y confirma.'
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(context, false),
-                child: const Text('Cancelar'),
-              ),
-              ElevatedButton(
-                onPressed: () => Navigator.pop(context, true),
-                child: const Text('¡Ya me suscribí!'),
-              ),
-            ],
-          ),
-        );
-
-        if (confirmed != true) {
-           throw 'Suscripción cancelada o no confirmada por el usuario.';
-        }
-
-        // Si el usuario confirma, procedemos a actualizar Firestore (Inseguro para prod, OK para MVP)
-        await FirebaseFirestore.instance.collection('users').doc(user.uid).update({
-          'isSubscribed': true,
-          'subscriptionDate': DateTime.now(),
-          'monthlyCouponRedeemed': false, 
-        });
-
-        await FirebaseFirestore.instance.collection('payments').add({
-          'userId': user.uid,
-          'amount': 2000,
-          'type': 'mandatory_subscription',
-          'date': DateTime.now(),
-          'mp_preference_id': result['id'] ?? 'unknown',
-        });
+      final Uri url = Uri.parse(initPoint);
+      if (await canLaunchUrl(url)) {
+        await launchUrl(url, mode: LaunchMode.externalApplication);
+      } else {
+        throw 'No se pudo abrir el link de pago';
       }
 
       if (!mounted) return;
 
-      // Success & Navigate
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) => const AlertDialog(
+          title: Text('Procesando suscripcion'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              CircularProgressIndicator(),
+              SizedBox(height: 20),
+              Text(
+                'Estamos esperando la confirmacion segura de Mercado Pago. Cuando el pago sea aprobado activaremos tu suscripcion automaticamente.',
+              ),
+            ],
+          ),
+        ),
+      );
+      waitingDialogOpen = true;
+
+      await _waitForSubscriptionConfirmation(externalReference);
+
+      if (!mounted) return;
+      if (waitingDialogOpen) {
+        Navigator.of(context, rootNavigator: true).pop();
+        waitingDialogOpen = false;
+      }
+
       await showDialog(
         context: context,
         barrierDismissible: false,
         builder: (context) => AlertDialog(
-          title: const Text('¡Suscripción Activada!'),
+          title: const Text('Suscripcion activada'),
           content: const Text(
-            'Tu suscripción ha sido procesada. Recuerda que tu primer QR de descuento estará disponible un mes después de la fecha de suscripción (sistema desfasado).'
+            'Tu suscripcion fue confirmada por el backend. El QR mensual quedara disponible segun el ciclo configurado en tu cuenta.',
           ),
           actions: [
             TextButton(
               onPressed: () {
-                Navigator.pop(context); // Close dialog
+                Navigator.pop(context);
               },
               child: const Text('Continuar'),
             ),
@@ -125,11 +114,13 @@ class _ClientSubscriptionScreenState extends State<ClientSubscriptionScreen> {
         MaterialPageRoute(builder: (context) => const ClientAppShell()),
         (route) => false,
       );
-
     } catch (e) {
       if (!mounted) return;
+      if (waitingDialogOpen && Navigator.of(context, rootNavigator: true).canPop()) {
+        Navigator.of(context, rootNavigator: true).pop();
+      }
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error al procesar suscripción: $e')),
+        SnackBar(content: Text('Error al procesar suscripcion: $e')),
       );
     } finally {
       if (mounted) setState(() => _isLoading = false);
@@ -138,23 +129,23 @@ class _ClientSubscriptionScreenState extends State<ClientSubscriptionScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final bottomPadding = MediaQuery.of(context).padding.bottom;
     return Scaffold(
       backgroundColor: const Color(0xFFFDF1D9),
       body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(24.0),
+        child: SingleChildScrollView(
+          padding: EdgeInsets.fromLTRB(24.0, 24.0, 24.0, 24.0 + bottomPadding + 80),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               const Icon(
-                Icons.card_membership, 
-                size: 80, 
-                color: Color(0xFF6F8F5E)
+                Icons.card_membership,
+                size: 80,
+                color: Color(0xFF6F8F5E),
               ),
               const SizedBox(height: 32),
-              
               Text(
-                'Suscripción Mensual SoyPlus',
+                'Suscripcion mensual SoyPlus',
                 style: GoogleFonts.poppins(
                   fontSize: 24,
                   fontWeight: FontWeight.bold,
@@ -162,21 +153,16 @@ class _ClientSubscriptionScreenState extends State<ClientSubscriptionScreen> {
                 ),
                 textAlign: TextAlign.center,
               ),
-              
               const SizedBox(height: 16),
-              
               Text(
-                'Para completar tu registro y obtener tu QR mensual de descuentos, es necesario activar tu suscripción.',
+                'Para completar tu registro y obtener tu QR mensual de descuentos, es necesario activar tu suscripcion.',
                 style: GoogleFonts.poppins(
                   fontSize: 14,
                   color: const Color(0xFF2F3F2A).withOpacity(0.8),
                 ),
                 textAlign: TextAlign.center,
               ),
-
               const SizedBox(height: 48),
-
-              // Subscription Card
               Container(
                 padding: const EdgeInsets.all(24),
                 decoration: BoxDecoration(
@@ -193,7 +179,7 @@ class _ClientSubscriptionScreenState extends State<ClientSubscriptionScreen> {
                 child: Column(
                   children: [
                     Text(
-                      'Plan Cliente',
+                      'Plan cliente',
                       style: GoogleFonts.poppins(
                         fontSize: 16,
                         color: const Color(0xFF6F8F5E),
@@ -211,7 +197,7 @@ class _ClientSubscriptionScreenState extends State<ClientSubscriptionScreen> {
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      'Pago Mensual Obligatorio',
+                      'Pago mensual obligatorio',
                       style: GoogleFonts.poppins(
                         fontSize: 12,
                         color: Colors.grey,
@@ -220,45 +206,47 @@ class _ClientSubscriptionScreenState extends State<ClientSubscriptionScreen> {
                     const SizedBox(height: 24),
                     const Divider(),
                     const SizedBox(height: 16),
-                    _buildFeatureItem('Generación de QR de descuentos (Disponible al mes siguiente del pago)'),
-                    _buildFeatureItem('Acceso a red de Pymes asociadas'),
+                    _buildFeatureItem('Generacion de QR de descuentos disponible al mes siguiente del pago'),
+                    _buildFeatureItem('Acceso a red de pymes asociadas'),
                     _buildFeatureItem('Beneficios exclusivos mes a mes'),
                   ],
                 ),
               ),
-
-              const Spacer(),
-
-              SizedBox(
-                width: double.infinity,
-                height: 56,
-                child: ElevatedButton(
-                  onPressed: _isLoading ? null : _processSubscription,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF6F8F5E),
-                    foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    elevation: 2,
-                  ),
-                  child: _isLoading
-                    ? const SizedBox(
-                        width: 24, 
-                        height: 24, 
-                        child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2)
-                      )
-                    : Text(
-                        'Pagar Suscripción (\$2.000)',
-                        style: GoogleFonts.poppins(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                ),
-              ),
               const SizedBox(height: 16),
             ],
+          ),
+        ),
+      ),
+      bottomNavigationBar: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.all(24.0),
+          child: SizedBox(
+            width: double.infinity,
+            height: 56,
+            child: ElevatedButton(
+              onPressed: _isLoading ? null : _processSubscription,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF6F8F5E),
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                elevation: 2,
+              ),
+              child: _isLoading
+                  ? const SizedBox(
+                      width: 24,
+                      height: 24,
+                      child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                    )
+                  : Text(
+                      'Pagar suscripcion (\$2.000)',
+                      style: GoogleFonts.poppins(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+            ),
           ),
         ),
       ),

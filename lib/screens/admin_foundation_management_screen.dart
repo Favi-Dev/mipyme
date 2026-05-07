@@ -168,31 +168,15 @@ class _AdminFoundationManagementScreenState extends State<AdminFoundationManagem
               : null,
         ),
         title: Text(
-          foundation['name'] ?? 'Fundación',
+          foundation['companyName'] ?? foundation['name'] ?? 'Fundación',
           style: GoogleFonts.poppins(
             fontWeight: FontWeight.bold,
             color: const Color(0xFF2F3F2A),
           ),
         ),
-        subtitle: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              foundation['email'] ?? '',
-              style: GoogleFonts.poppins(fontSize: 12),
-            ),
-            if (foundation['location'] != null)
-              Row(
-                children: [
-                  const Icon(Icons.location_on, size: 12, color: Colors.grey),
-                  const SizedBox(width: 4),
-                  Text(
-                    foundation['location'],
-                    style: GoogleFonts.poppins(fontSize: 12, color: Colors.grey),
-                  ),
-                ],
-              ),
-          ],
+        subtitle: Text(
+          foundation['email'] ?? '',
+          style: GoogleFonts.poppins(fontSize: 12),
         ),
         trailing: Container(
           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),

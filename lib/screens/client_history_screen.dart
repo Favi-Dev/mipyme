@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../services/client_service.dart';
+import '../services/pyme_service.dart';
 import '../models/order_model.dart';
 
 class ClientHistoryScreen extends StatelessWidget {
@@ -9,6 +10,7 @@ class ClientHistoryScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final clientService = ClientService();
+    final pymeService = PymeService();
     final theme = Theme.of(context);
 
     return Scaffold(
@@ -56,24 +58,12 @@ class ClientHistoryScreen extends StatelessWidget {
             itemCount: orders.length,
             itemBuilder: (context, index) {
               final order = orders[index];
-              final items = order.items;
-              final firstItem = items.isNotEmpty ? items.first : null;
-              final productName = firstItem?.productName ?? 'Producto desconocido';
-              final itemCount = items.length;
-              final displayProduct = itemCount > 1 ? '$productName + ${itemCount - 1} más' : productName;
-              
-              final date = DateFormat('dd MMM yyyy').format(order.createdAt);
-              
-              final total = order.total;
-              final status = order.status == 'pending' ? 'Pendiente' : 'Completado';
-
-              return _buildHistoryItem(
-                context,
-                'Orden #${order.id.substring(0, 6)}', // Or Pyme Name if available
-                date,
-                displayProduct,
-                total.toInt(),
-                status,
+              return FutureBuilder(
+                future: pymeService.getPymeById(order.pymeId),
+                builder: (context, pymeSnap) {
+                  final pymeName = pymeSnap.data?.name ?? 'Cargando...';
+                  return _buildHistoryItem(context, order, pymeName, theme);
+                },
               );
             },
           );
@@ -82,78 +72,122 @@ class ClientHistoryScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildHistoryItem(BuildContext context, String store, String date, String product, int price, String status) {
-    final theme = Theme.of(context);
+  // Map all order statuses to human-readable labels and colors
+  (String label, Color color) _statusInfo(String status, ThemeData theme) {
+    return switch (status) {
+      'pending_payment' => ('Esperando Pago', Colors.orange.shade300),
+      'paid'            => ('Pagado', Colors.blue),
+      'pending'         => ('Nuevo Pedido', Colors.orange),
+      'preparing'       => ('En Preparación', Colors.blue),
+      'ready'           => ('Listo para Retiro', Colors.green),
+      'completed'       => ('Completado', const Color(0xFF6F8F5E)),
+      'cancelled'       => ('Cancelado', Colors.red),
+      'quote_requested' => ('Cotización Enviada', Colors.purple),
+      _                 => (status, Colors.grey),
+    };
+  }
+
+  Widget _buildHistoryItem(BuildContext context, OrderModel order, String pymeName, ThemeData theme) {
+    final items = order.items;
+    final firstItem = items.isNotEmpty ? items.first : null;
+    final productName = firstItem?.productName ?? 'Producto';
+    final variantLabel = firstItem?.variantLabel;
+    final itemCount = items.length;
+    final displayProduct = itemCount > 1
+        ? '$productName + ${itemCount - 1} más'
+        : (variantLabel != null && variantLabel.isNotEmpty
+            ? '$productName — $variantLabel'
+            : productName);
+
+    final date = DateFormat('dd MMM yyyy').format(order.createdAt);
+    final (statusLabel, statusColor) = _statusInfo(order.status, theme);
+
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: const Color(0xFFF4F1EA),
-        borderRadius: BorderRadius.circular(12),
+        color: theme.cardColor,
+        borderRadius: BorderRadius.circular(14),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF2F3F2A).withOpacity(0.1),
+            color: const Color(0xFF2F3F2A).withOpacity(0.08),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
         ],
       ),
-      child: Row(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: theme.colorScheme.surface,
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Icon(Icons.shopping_bag_outlined, color: theme.colorScheme.primary),
-          ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  store,
-                  style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
-                ),
-                Text(
-                  product,
-                  style: theme.textTheme.bodyMedium,
-                ),
-                Text(
-                  date,
-                  style: theme.textTheme.bodySmall,
-                ),
-              ],
-            ),
-          ),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.end,
+          // Header: Store name + date
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: theme.colorScheme.primaryContainer,
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Icon(Icons.storefront_outlined, color: theme.colorScheme.primary, size: 18),
+                  ),
+                  const SizedBox(width: 10),
+                  Text(
+                    pymeName,
+                    style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold),
+                  ),
+                ],
+              ),
               Text(
-                '\$${price.toString()}',
+                date,
+                style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+              ),
+            ],
+          ),
+          const Divider(height: 20),
+          // Product info
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Expanded(
+                child: Text(
+                  displayProduct,
+                  style: theme.textTheme.bodyMedium,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+              const SizedBox(width: 16),
+              Text(
+                '\$${order.total.toStringAsFixed(0)}',
                 style: theme.textTheme.titleMedium?.copyWith(
                   fontWeight: FontWeight.bold,
                   color: theme.colorScheme.primary,
                 ),
               ),
-              const SizedBox(height: 4),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                decoration: BoxDecoration(
-                  color: theme.colorScheme.secondary.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(4),
-                ),
-                child: Text(
-                  status,
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: theme.colorScheme.secondary,
-                    fontWeight: FontWeight.bold,
-                  ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          // Status badge
+          Align(
+            alignment: Alignment.centerLeft,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+              decoration: BoxDecoration(
+                color: statusColor.withOpacity(0.12),
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(color: statusColor.withOpacity(0.4)),
+              ),
+              child: Text(
+                statusLabel,
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: statusColor,
+                  fontWeight: FontWeight.bold,
                 ),
               ),
-            ],
+            ),
           ),
         ],
       ),

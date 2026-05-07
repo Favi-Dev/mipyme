@@ -3,6 +3,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 class OrderItem {
   final String productId;
   final String productName;
+  final String? variantId;
+  final String? variantLabel;
   final int quantity;
   final double price;
   final double total;
@@ -11,6 +13,8 @@ class OrderItem {
   OrderItem({
     required this.productId,
     required this.productName,
+    this.variantId,
+    this.variantLabel,
     required this.quantity,
     required this.price,
     required this.total,
@@ -21,6 +25,8 @@ class OrderItem {
     return OrderItem(
       productId: map['productId'] ?? '',
       productName: map['productName'] ?? '',
+      variantId: map['variantId'],
+      variantLabel: map['variantLabel'],
       quantity: map['quantity'] ?? 0,
       price: (map['price'] ?? 0).toDouble(),
       total: (map['total'] ?? 0).toDouble(),
@@ -34,6 +40,8 @@ class OrderItem {
     return {
       'productId': productId,
       'productName': productName,
+      if (variantId != null) 'variantId': variantId,
+      if (variantLabel != null) 'variantLabel': variantLabel,
       'quantity': quantity,
       'price': price,
       'total': total,

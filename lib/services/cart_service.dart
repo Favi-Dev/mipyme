@@ -31,15 +31,17 @@ class CartService extends ChangeNotifier {
     return _items.first.product.pymeId;
   }
 
-  Future<void> addToCart(Product product, {DateTime? scheduledTime}) async {
+  Future<void> addToCart(Product product, {DateTime? scheduledTime, ProductVariant? variant}) async {
     // Check if product is from the same store
     if (_items.isNotEmpty && _items.first.product.pymeId != product.pymeId) {
       throw Exception('Solo puedes agregar productos de una misma tienda.');
     }
 
-    // Find item with same product ID AND same scheduled time (if any)
+    // Find item with same product ID, same variant, AND same scheduled time
     final index = _items.indexWhere((item) => 
-      item.product.id == product.id && item.scheduledTime == scheduledTime
+      item.product.id == product.id && 
+      item.scheduledTime == scheduledTime &&
+      item.selectedVariant?.id == variant?.id
     );
 
     if (index != -1) {
@@ -57,14 +59,16 @@ class CartService extends ChangeNotifier {
           rethrow; // Propagate error (e.g. "Slot taken")
         }
       }
-      _items.add(CartItem(product: product, scheduledTime: scheduledTime));
+      _items.add(CartItem(product: product, selectedVariant: variant, scheduledTime: scheduledTime));
     }
     notifyListeners();
   }
 
-  Future<void> removeFromCart(Product product, {DateTime? scheduledTime}) async {
+  Future<void> removeFromCart(Product product, {DateTime? scheduledTime, ProductVariant? variant}) async {
     final index = _items.indexWhere((item) => 
-      item.product.id == product.id && item.scheduledTime == scheduledTime
+      item.product.id == product.id && 
+      item.scheduledTime == scheduledTime &&
+      item.selectedVariant?.id == variant?.id
     );
     if (index != -1) {
       if (_items[index].quantity > 1) {
@@ -110,8 +114,10 @@ class CartService extends ChangeNotifier {
       items: _items.map((item) => OrderItem(
         productId: item.product.id,
         productName: item.product.name,
+        variantId: item.selectedVariant?.id,
+        variantLabel: item.variantLabel.isNotEmpty ? item.variantLabel : null,
         quantity: item.quantity,
-        price: item.product.price,
+        price: item.unitPrice,
         total: item.total,
         scheduledTime: item.scheduledTime,
       )).toList(),

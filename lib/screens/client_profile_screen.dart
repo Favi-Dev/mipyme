@@ -1,14 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import '../services/storage_service.dart';
 import '../services/client_service.dart';
 import '../services/auth_service.dart';
 import '../services/pyme_service.dart';
+import 'package:provider/provider.dart';
+import '../providers/pyme_provider.dart';
 import '../models/user_profile.dart';
 import 'client_pyme_detail_screen.dart';
 import 'login_screen.dart';
-import 'client_payment_methods_screen.dart';
+// import 'client_payment_methods_screen.dart';
 import 'client_payments_subscriptions_screen.dart';
 import 'client_qr_screen.dart';
 import 'client_history_screen.dart';
@@ -16,6 +19,7 @@ import 'client_settings_screen.dart';
 import 'client_support_screen.dart';
 import 'client_addresses_screen.dart';
 import 'client_events_screen.dart';
+import 'package:go_router/go_router.dart';
 
 class ClientProfileScreen extends StatefulWidget {
   const ClientProfileScreen({super.key});
@@ -85,8 +89,23 @@ class _ClientProfileScreenState extends State<ClientProfileScreen> {
     final user = FirebaseAuth.instance.currentUser;
     final pymeService = PymeService();
 
+    return StreamBuilder<DocumentSnapshot>(
+      stream: FirebaseFirestore.instance.collection('clients').doc(user?.uid).snapshots(),
+      builder: (context, firestoreSnap) {
+        final firestoreData = firestoreSnap.hasData && firestoreSnap.data!.data() != null
+            ? firestoreSnap.data!.data() as Map<String, dynamic>
+            : <String, dynamic>{};
+
+        final String? photoUrl = firestoreData['logoUrl'] as String? ?? firestoreData['photoUrl'] as String? ?? firestoreData['photoURL'] as String?;
+        final String displayName = firestoreData['name'] as String?
+            ?? user?.displayName
+            ?? user?.email
+            ?? 'Usuario';
+        final int points = firestoreData['points'] as int? ?? 0;
+
     return Scaffold(
       body: SingleChildScrollView(
+        padding: EdgeInsets.only(bottom: MediaQuery.of(context).padding.bottom + 80),
         child: Column(
           children: [
             const SizedBox(height: 60),
@@ -102,16 +121,24 @@ class _ClientProfileScreenState extends State<ClientProfileScreen> {
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
                           border: Border.all(color: theme.colorScheme.primary, width: 3),
-                          image: DecorationImage(
-                            image: (user?.photoURL != null && user!.photoURL!.isNotEmpty)
-                                ? NetworkImage(user.photoURL!)
-                                : const NetworkImage('https://i.pravatar.cc/300'),
-                            fit: BoxFit.cover,
-                          ),
                         ),
-                        child: _isUploading
-                            ? const Center(child: CircularProgressIndicator())
-                            : null,
+                        child: ClipOval(
+                          child: _isUploading
+                              ? const Center(child: CircularProgressIndicator())
+                              : (photoUrl != null && photoUrl.isNotEmpty)
+                                  ? Image.network(
+                                      photoUrl,
+                                      fit: BoxFit.cover,
+                                      errorBuilder: (_, __, ___) => Image.asset(
+                                        'assets/images/LOGOSOYPLUS.png',
+                                        fit: BoxFit.cover,
+                                      ),
+                                    )
+                                  : Image.asset(
+                                      'assets/images/LOGOSOYPLUS.png',
+                                      fit: BoxFit.cover,
+                                    ),
+                        ),
                       ),
                       Positioned(
                         bottom: 0,
@@ -136,52 +163,103 @@ class _ClientProfileScreenState extends State<ClientProfileScreen> {
                     ],
                   ),
                   const SizedBox(height: 15),
-                  InkWell(
-                    onTap: () => _updateName(context),
-                    borderRadius: BorderRadius.circular(12),
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Flexible(
-                            child: Text(
-                              user?.displayName ?? 'Usuario',
-                              style: theme.textTheme.headlineMedium,
-                              overflow: TextOverflow.ellipsis,
-                            ),
+                  // Name and Points from Firestore
+                  Column(
+                    children: [
+                      InkWell(
+                        onTap: () => _updateName(context),
+                        borderRadius: BorderRadius.circular(12),
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                          child: Column(
+                            children: [
+                              Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Flexible(
+                                    child: Text(
+                                      displayName,
+                                      style: theme.textTheme.headlineMedium?.copyWith(
+                                        color: const Color(0xFF2F3F2A),
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 24,
+                                      ),
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Icon(Icons.edit, size: 20, color: theme.colorScheme.onSurfaceVariant),
+                                ],
+                              ),
+                              if (user?.email != null)
+                                Padding(
+                                  padding: const EdgeInsets.only(top: 4),
+                                  child: Text(
+                                    user!.email!,
+                                    style: theme.textTheme.bodyMedium?.copyWith(
+                                      color: Colors.grey.shade600,
+                                      fontSize: 14,
+                                    ),
+                                  ),
+                                ),
+                            ],
                           ),
-                          const SizedBox(width: 8),
-                          Icon(Icons.edit, size: 20, color: theme.colorScheme.onSurfaceVariant),
-                        ],
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 5),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: theme.colorScheme.primary,
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: RichText(
-                      text: TextSpan(
-                        style: theme.textTheme.labelMedium?.copyWith(
-                          color: theme.colorScheme.onPrimary,
                         ),
-                        children: const [
-                          TextSpan(text: 'Beneficiario '),
-                          TextSpan(
-                            text: 'Plus',
-                            style: TextStyle(fontWeight: FontWeight.bold),
+                      ),
+                      const SizedBox(height: 5),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                                decoration: BoxDecoration(
+                                  color: theme.colorScheme.primary,
+                                  borderRadius: BorderRadius.circular(20),
+                                ),
+                                child: RichText(
+                                  text: TextSpan(
+                                    style: theme.textTheme.labelMedium?.copyWith(
+                                      color: theme.colorScheme.onPrimary,
+                                    ),
+                                    children: const [
+                                      TextSpan(text: 'Beneficiario '),
+                                      TextSpan(
+                                        text: 'Plus',
+                                        style: TextStyle(fontWeight: FontWeight.bold),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 10),
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFFE3B58F).withOpacity(0.3),
+                                  borderRadius: BorderRadius.circular(20),
+                                  border: Border.all(color: const Color(0xFFE3B58F)),
+                                ),
+                                child: Row(
+                                  children: [
+                                    const Icon(Icons.stars, color: Color(0xFF8B5A3C), size: 16),
+                                    const SizedBox(width: 4),
+                                    Text(
+                                      '$points pts',
+                                      style: theme.textTheme.labelMedium?.copyWith(
+                                        color: const Color(0xFF8B5A3C),
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
                           ),
                         ],
                       ),
-                    ),
+                    ],
                   ),
-                ],
-              ),
-            ),
+                ),
             const SizedBox(height: 40),
             // Menu Options
             _buildProfileOption(
@@ -221,19 +299,19 @@ class _ClientProfileScreenState extends State<ClientProfileScreen> {
                 );
               },
             ),
-            _buildProfileOption(
-              context,
-              icon: Icons.payment,
-              title: 'Métodos de Pago',
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => const ClientPaymentMethodsScreen(),
-                  ),
-                );
-              },
-            ),
+            // _buildProfileOption(
+            //   context,
+            //   icon: Icons.payment,
+            //   title: 'Métodos de Pago',
+            //   onTap: () {
+            //     Navigator.push(
+            //       context,
+            //       MaterialPageRoute(
+            //         builder: (context) => const ClientPaymentMethodsScreen(),
+            //       ),
+            //     );
+            //   },
+            // ),
             _buildProfileOption(
               context,
               icon: Icons.receipt_long,
@@ -298,60 +376,53 @@ class _ClientProfileScreenState extends State<ClientProfileScreen> {
                   }
                   final followedIds = snapshotIds.data!.toSet();
 
-                  return StreamBuilder<List<UserProfile>>(
-                    stream: pymeService.getAllPublicProfiles(),
-                    builder: (context, snapshotPymes) {
-                      if (!snapshotPymes.hasData) return const SizedBox.shrink();
-                      
-                      final allPymes = snapshotPymes.data!;
-                      final followedPymes = allPymes.where((p) => followedIds.contains(p.id)).toList();
-                      
-                      final foundations = followedPymes.where((p) => p.role == UserRole.foundation).toList();
-                      final pymes = followedPymes.where((p) => p.role == UserRole.pyme).toList();
+                  final allPymes = context.watch<PymeProvider>().allPublicProfiles;
+                  final followedPymes = allPymes.where((p) => followedIds.contains(p.id)).toList();
+                  
+                  final foundations = followedPymes.where((p) => p.role == UserRole.foundation).toList();
+                  final pymes = followedPymes.where((p) => p.role == UserRole.pyme).toList();
 
-                      return Column(
-                        children: [
-                          if (foundations.isNotEmpty) ...[
-                            Padding(
-                              padding: const EdgeInsets.symmetric(horizontal: 24.0),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    'Fundaciones que apoyas',
-                                    style: theme.textTheme.titleLarge?.copyWith(
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 16),
-                                  ...foundations.map((f) => _buildSupportedCard(context, f, isFoundation: true)),
-                                ],
+                  return Column(
+                    children: [
+                      if (foundations.isNotEmpty) ...[
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Fundaciones que apoyas',
+                                style: theme.textTheme.titleLarge?.copyWith(
+                                  fontWeight: FontWeight.bold,
+                                ),
                               ),
-                            ),
-                            const SizedBox(height: 24),
-                          ],
-                          if (pymes.isNotEmpty) ...[
-                            Padding(
-                              padding: const EdgeInsets.symmetric(horizontal: 24.0),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    'Pymes que apoyas',
-                                    style: theme.textTheme.titleLarge?.copyWith(
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 16),
-                                  ...pymes.map((p) => _buildSupportedCard(context, p, isFoundation: false)),
-                                ],
+                              const SizedBox(height: 16),
+                              ...foundations.map((f) => _buildSupportedCard(context, f, isFoundation: true)),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: 24),
+                      ],
+                      if (pymes.isNotEmpty) ...[
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Pymes que apoyas',
+                                style: theme.textTheme.titleLarge?.copyWith(
+                                  fontWeight: FontWeight.bold,
+                                ),
                               ),
-                            ),
-                            const SizedBox(height: 24),
-                          ],
-                        ],
-                      );
-                    },
+                              const SizedBox(height: 16),
+                              ...pymes.map((p) => _buildSupportedCard(context, p, isFoundation: false)),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: 24),
+                      ],
+                    ],
                   );
                 },
               ),
@@ -361,11 +432,35 @@ class _ClientProfileScreenState extends State<ClientProfileScreen> {
               icon: Icons.logout,
               title: 'Cerrar Sesión',
               color: theme.colorScheme.error,
-              onTap: () {
-                Navigator.of(context).pushAndRemoveUntil(
-                  MaterialPageRoute(builder: (context) => const LoginScreen()),
-                  (route) => false,
+              onTap: () async {
+                final confirm = await showDialog<bool>(
+                  context: context,
+                  builder: (context) => AlertDialog(
+                    title: const Text('¿Cerrar Sesión?'),
+                    content: const Text('¿Estás seguro de que deseas cerrar tu sesión en la aplicación?'),
+                    actions: [
+                      TextButton(
+                        onPressed: () => Navigator.pop(context, false),
+                        child: const Text('Cancelar'),
+                      ),
+                      ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: theme.colorScheme.error,
+                          foregroundColor: Colors.white,
+                        ),
+                        onPressed: () => Navigator.pop(context, true),
+                        child: const Text('Sí, salir'),
+                      ),
+                    ],
+                  ),
                 );
+
+                if (confirm == true) {
+                  await FirebaseAuth.instance.signOut();
+                  if (context.mounted) {
+                    context.go('/login');
+                  }
+                }
               },
             ),
             const SizedBox(height: 30),
@@ -373,6 +468,8 @@ class _ClientProfileScreenState extends State<ClientProfileScreen> {
         ),
       ),
     );
+      }, // end of StreamBuilder builder
+    ); // end of StreamBuilder
   }
 
   Future<void> _updateName(BuildContext context) async {
@@ -522,7 +619,9 @@ class _ClientProfileScreenState extends State<ClientProfileScreen> {
       margin: const EdgeInsets.only(bottom: 12),
       child: ListTile(
         leading: CircleAvatar(
-          backgroundImage: NetworkImage(data.logoUrl ?? 'https://via.placeholder.com/150'),
+          backgroundImage: (data.logoUrl != null && data.logoUrl!.startsWith('http'))
+              ? NetworkImage(data.logoUrl!)
+              : const AssetImage('assets/images/LOGOSOYPLUS.png') as ImageProvider,
         ),
         title: Text(data.name),
         subtitle: Text(data.category ?? (isFoundation ? 'Fundación' : 'Comercio')),

@@ -1,12 +1,18 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_map/flutter_map.dart';
-import 'package:latlong2/latlong.dart';
-import 'package:geolocator/geolocator.dart';
-import 'package:permission_handler/permission_handler.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:provider/provider.dart';
+import '../providers/pyme_provider.dart';
 import 'client_pyme_detail_screen.dart';
 import '../services/pyme_service.dart';
 import '../models/user_profile.dart';
 import 'dart:math';
+
+// Imports condicionales para web vs nativo
+import 'client_map_screen_location_stub.dart'
+    if (dart.library.html) 'client_map_screen_location_web.dart'
+    if (dart.library.io) 'client_map_screen_location_native.dart'
+    as location_helper;
 
 class ClientMapScreen extends StatefulWidget {
   const ClientMapScreen({super.key});
@@ -17,7 +23,7 @@ class ClientMapScreen extends StatefulWidget {
 
 class _ClientMapScreenState extends State<ClientMapScreen> {
   final PymeService _pymeService = PymeService();
-  final MapController _mapController = MapController();
+  GoogleMapController? _mapController;
   LatLng _currentLocation = const LatLng(
     -33.4489,
     -70.6693,
@@ -27,28 +33,23 @@ class _ClientMapScreenState extends State<ClientMapScreen> {
   @override
   void initState() {
     super.initState();
-    _checkLocationPermission();
+    _getUserLocation();
   }
 
-  Future<void> _checkLocationPermission() async {
-    var status = await Permission.location.status;
-    if (!status.isGranted) {
-      status = await Permission.location.request();
-    }
-
-    if (status.isGranted) {
-      try {
-        Position position = await Geolocator.getCurrentPosition(
-          desiredAccuracy: LocationAccuracy.high,
-        );
+  Future<void> _getUserLocation() async {
+    try {
+      final coords = await location_helper.getCurrentLocation();
+      if (coords != null) {
         setState(() {
-          _currentLocation = LatLng(position.latitude, position.longitude);
+          _currentLocation = LatLng(coords['lat']!, coords['lng']!);
           _hasLocation = true;
         });
-        _mapController.move(_currentLocation, 15.0);
-      } catch (e) {
-        debugPrint('Error getting location: $e');
+        _mapController?.animateCamera(
+          CameraUpdate.newLatLngZoom(_currentLocation, 15.0),
+        );
       }
+    } catch (e) {
+      debugPrint('Error getting location: $e');
     }
   }
 
@@ -101,122 +102,53 @@ class _ClientMapScreenState extends State<ClientMapScreen> {
       body: Stack(
         children: [
           // 1. Map Widget
-          StreamBuilder<List<UserProfile>>(
-            stream: _pymeService.getAllPublicProfiles(),
-            builder: (context, snapshot) {
-              final pymes = snapshot.data ?? [];
+          Positioned.fill(
+            child: Builder(
+              builder: (context) {
+                final pymes = context.watch<PymeProvider>().allPublicProfiles;
 
-              return FlutterMap(
-                mapController: _mapController,
-                options: MapOptions(
-                  initialCenter: _currentLocation,
-                  initialZoom: 15.0,
+                return GoogleMap(
+                initialCameraPosition: CameraPosition(
+                  target: _currentLocation,
+                  zoom: 15.0,
                 ),
-                children: [
-                  TileLayer(
-                    urlTemplate:
-                        'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-                    userAgentPackageName: 'com.example.mipyme',
-                  ),
-                  MarkerLayer(
-                    markers: [
-                      // User Location Marker
-                      if (_hasLocation)
-                        Marker(
-                          point: _currentLocation,
-                          width: 60,
-                          height: 60,
-                          child: Container(
-                            decoration: BoxDecoration(
-                              color: theme.colorScheme.primary.withOpacity(0.2),
-                              shape: BoxShape.circle,
-                              border: Border.all(
-                                color: theme.colorScheme.primary,
-                                width: 2,
-                              ),
-                            ),
-                            child: Icon(
-                              Icons.my_location,
-                              color: theme.colorScheme.primary,
-                              size: 30,
-                            ),
-                          ),
-                        ),
+                onMapCreated: (controller) => _mapController = controller,
+                myLocationEnabled: true,
+                myLocationButtonEnabled: false,
+                zoomControlsEnabled: false,
+                mapToolbarEnabled: false,
+                markers: pymes.map((pyme) {
+                  LatLng pos;
+                  if (pyme.latitude != null && pyme.longitude != null) {
+                    pos = LatLng(pyme.latitude!, pyme.longitude!);
+                  } else {
+                    pos = _getPosition(pyme.id);
+                  }
 
-                      // Pyme Markers
-                      ...pymes.map((pyme) {
-                        LatLng pos;
-                        // Use stored lat/lng or generate deterministic position if missing
-                        if (pyme.latitude != null && pyme.longitude != null) {
-                          pos = LatLng(pyme.latitude!, pyme.longitude!);
-                        } else {
-                          pos = _getPosition(pyme.id);
-                        }
+                  Map<String, dynamic> style;
+                  if (pyme.role == UserRole.foundation) {
+                      style = {'icon': Icons.volunteer_activism, 'color': const Color(0xFFE63946)};
+                  } else {
+                      style = _getStyleForCategory(pyme.category);
+                  }
 
-                        // Determine style based on Role and Category
-                        Map<String, dynamic> style;
-                        if (pyme.role == UserRole.foundation) {
-                            style = {'icon': Icons.volunteer_activism, 'color': const Color(0xFFE63946)};
-                        } else {
-                            style = _getStyleForCategory(pyme.category);
-                        }
-
-                        return Marker(
-                          point: pos,
-                          width: 50,
-                          height: 50,
-                          child: GestureDetector(
-                            onTap: () => _showPymePreview(context, pyme, style),
-                            child: Container(
-                              decoration: BoxDecoration(
-                                color: style['color'],
-                                shape: BoxShape.circle,
-                                border: Border.all(
-                                  color: Colors.white,
-                                  width: 2,
-                                ),
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: Colors.black.withOpacity(0.3),
-                                    blurRadius: 6,
-                                    offset: const Offset(0, 3),
-                                  ),
-                                ],
-                              ),
-                              child:
-                                  (pyme.logoUrl != null &&
-                                      pyme.logoUrl!.isNotEmpty)
-                                  ? ClipOval(
-                                      child: Image.network(
-                                        pyme.logoUrl!,
-                                        fit: BoxFit.cover,
-                                        width: double.infinity,
-                                        height: double.infinity,
-                                        errorBuilder:
-                                            (context, error, stackTrace) {
-                                              return Icon(
-                                                style['icon'],
-                                                color: Colors.white,
-                                                size: 24,
-                                              );
-                                            },
-                                      ),
-                                    )
-                                  : Icon(
-                                      style['icon'],
-                                      color: Colors.white,
-                                      size: 24,
-                                    ),
-                            ),
-                          ),
-                        );
-                      }),
-                    ],
-                  ),
-                ],
+                  return Marker(
+                    markerId: MarkerId(pyme.id),
+                    position: pos,
+                    infoWindow: InfoWindow(title: pyme.name),
+                    icon: BitmapDescriptor.defaultMarkerWithHue(
+                      pyme.role == UserRole.foundation 
+                        ? BitmapDescriptor.hueRed 
+                        : BitmapDescriptor.hueGreen
+                    ),
+                    onTap: () => _showPymePreview(context, pyme, style),
+                  );
+                }).toSet(),
               );
             },
           ),
+        ),
+        // 2. Map Toggle Overlay
 
           // 2. Search Bar Overlay
           Positioned(
@@ -256,9 +188,11 @@ class _ClientMapScreenState extends State<ClientMapScreen> {
       floatingActionButton: FloatingActionButton(
         onPressed: () {
           if (_hasLocation) {
-            _mapController.move(_currentLocation, 15.0);
+            _mapController?.animateCamera(
+              CameraUpdate.newLatLngZoom(_currentLocation, 15.0)
+            );
           } else {
-            _checkLocationPermission();
+            _getUserLocation();
           }
         },
         backgroundColor: theme.colorScheme.surface,

@@ -87,6 +87,8 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                     'foundations': 0,
                     'transactions': 0,
                     'reports': 0,
+                    'totalIncome': 0,
+                    'totalRevenue': 0,
                   };
                   
                   return Column(
@@ -147,10 +149,22 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                         width: double.infinity,
                         child: _buildStatCard(
                           context,
-                          'Finanzas y Liquidaciones',
-                          stats['transactions'].toString(),
-                          Icons.attach_money,
-                          const Color(0xFF6F8F5E), // Green color for finance
+                          'Ingresos por Comisiones (Tus Ganancias)',
+                          '\$${stats['totalRevenue']}',
+                          Icons.account_balance_wallet,
+                          const Color(0xFF6F8F5E), // Green
+                          () => _navigateTo(const AdminTransactionsScreen()),
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      SizedBox(
+                        width: double.infinity,
+                        child: _buildStatCard(
+                          context,
+                          'Volumen Total Transado',
+                          '\$${stats['totalIncome']} (${stats['transactions']} Tx)',
+                          Icons.sync_alt,
+                          Colors.blueGrey,
                           () => _navigateTo(const AdminTransactionsScreen()),
                         ),
                       ),

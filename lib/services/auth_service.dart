@@ -1,5 +1,6 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/foundation.dart';
 import '../models/user_profile.dart';
 import 'notification_service.dart';
 
@@ -9,6 +10,78 @@ class AuthService {
 
   // Get current user
   User? get currentUser => _auth.currentUser;
+
+  String _getCollectionPath(UserRole role) {
+    switch (role) {
+      case UserRole.client: return 'clients';
+      case UserRole.pyme: return 'pymes';
+      case UserRole.foundation: return 'foundations';
+      case UserRole.admin: return 'admins';
+      case UserRole.empresa: return 'empresas';
+      case UserRole.storeManager: return 'store_managers';
+    }
+  }
+
+  Future<DocumentSnapshot?> _findUserDocument(String uid) async {
+    final clientDoc = await _firestore.collection('clients').doc(uid).get();
+    if (clientDoc.exists) return clientDoc;
+
+    final pymeDoc = await _firestore.collection('pymes').doc(uid).get();
+    if (pymeDoc.exists) return pymeDoc;
+
+    final foundationDoc = await _firestore.collection('foundations').doc(uid).get();
+    if (foundationDoc.exists) return foundationDoc;
+
+    final adminDoc = await _firestore.collection('admins').doc(uid).get();
+    if (adminDoc.exists) return adminDoc;
+
+    final empresaDoc = await _firestore.collection('empresas').doc(uid).get();
+    if (empresaDoc.exists) return empresaDoc;
+
+    final storeManagerDoc = await _firestore.collection('store_managers').doc(uid).get();
+    if (storeManagerDoc.exists) return storeManagerDoc;
+
+    return null;
+  }
+
+  // --- TEST DATA GENERATOR ---
+  Future<void> generateTestUsers() async {
+    final testUsers = [
+      {'email': 'admin@soyplus.cl', 'pass': '123456', 'role': UserRole.admin, 'name': 'Admin Principal'},
+      {'email': 'cliente@soyplus.cl', 'pass': '123456', 'role': UserRole.client, 'name': 'Cliente Plus'},
+      {'email': 'pyme@soyplus.cl', 'pass': '123456', 'role': UserRole.pyme, 'name': 'Pyme Ejemplo', 'category': 'Comercio', 'commissionRate': 0.08},
+      {'email': 'fundacion@soyplus.cl', 'pass': '123456', 'role': UserRole.foundation, 'name': 'Fundación Activa', 'donationGoal': 5000000.0}
+    ];
+
+    for (var u in testUsers) {
+      try {
+        UserCredential result = await _auth.createUserWithEmailAndPassword(
+          email: u['email'] as String,
+          password: u['pass'] as String,
+        );
+        User? user = result.user;
+        if (user != null) {
+          final profile = UserProfile(
+            id: user.uid,
+            name: u['name'] as String,
+            email: u['email'] as String,
+            role: u['role'] as UserRole,
+            createdAt: DateTime.now(),
+            category: u['category'] as String?,
+            donationGoal: u['donationGoal'] as double?,
+            commissionRate: u['commissionRate'] as double?,
+          );
+          await _firestore.collection(_getCollectionPath(u['role'] as UserRole)).doc(user.uid).set(profile.toMap());
+        }
+      } catch (e) {
+        // Ignorar si el usuario ya existe
+      }
+    }
+    // Forzar cierre de sesión si se inició automáticamente
+    if (_auth.currentUser != null) {
+      await _auth.signOut();
+    }
+  }
 
   // Resend Verification Email
   Future<void> resendVerificationEmail(String email, String password) async {
@@ -41,17 +114,9 @@ class AuthService {
       
       User? user = result.user;
       if (user != null) {
-        // Bypass verification for test accounts - REMOVE BEFORE PRODUCTION
-        final testAccounts = [
-          'admin@ejemplo.cl',
-          'cliente@ejemplo.cl',
-          'pyme@ejemplo.cl', 
-          'fundacion@ejemplo.cl'
-        ];
-
-        if (testAccounts.contains(email)) {
-          // Allow login without verification
-        } else if (!user.emailVerified) {
+        // In production all users must verify their email.
+        // In debug mode we allow unverified logins to ease development.
+        if (!kDebugMode && !user.emailVerified) {
           throw FirebaseAuthException(
             code: 'email-not-verified',
             message: 'Por favor verifica tu correo electrónico para continuar.',
@@ -59,12 +124,12 @@ class AuthService {
         }
 
         // Fetch user role from Firestore
-      // Update FCM Token and other logic...
-        DocumentSnapshot userDoc = await _firestore.collection('users').doc(user.uid).get();
-        if (userDoc.exists) {
+        // Fetch user role from Firestore
+        DocumentSnapshot? userDoc = await _findUserDocument(user.uid);
+        if (userDoc != null && userDoc.exists) {
             String? token = await NotificationService().getToken();
             if (token != null) {
-                await _firestore.collection('users').doc(user.uid).update({
+                await userDoc.reference.update({
                 'fcmToken': token,
                 });
             }
@@ -75,12 +140,10 @@ class AuthService {
     } on FirebaseAuthException catch (e) {
       if (e.code == 'email-not-verified') {
         await _auth.signOut();
-        rethrow;
       }
-      print(e.toString());
-      return null;
+      rethrow;
     } catch (e) {
-      print(e.toString());
+      debugPrint(e.toString());
       return null;
     }
   }
@@ -95,11 +158,14 @@ class AuthService {
       }
       
       // Update Firestore Profile
-      await _firestore.collection('users').doc(uid).update({
-        'name': newName,
-      });
+      DocumentSnapshot? userDoc = await _findUserDocument(uid);
+      if (userDoc != null && userDoc.exists) {
+        await userDoc.reference.update({
+          'name': newName,
+        });
+      }
     } catch (e) {
-      print('Error updating user name: $e');
+      debugPrint('Error updating user name: $e');
       throw e;
     }
   }
@@ -111,11 +177,13 @@ class AuthService {
       if (user == null) throw Exception('No user signed in');
 
       // Recommended: Mark as deleted in Firestore instead of hard delete immediately
-      // This allows for the "30 days" recovery logic if backend supports it.
-      await _firestore.collection('users').doc(user.uid).update({
-        'deletedAt': FieldValue.serverTimestamp(),
-        'status': 'scheduled_for_deletion',
-      });
+      DocumentSnapshot? userDoc = await _findUserDocument(user.uid);
+      if (userDoc != null && userDoc.exists) {
+        await userDoc.reference.update({
+          'deletedAt': FieldValue.serverTimestamp(),
+          'status': 'scheduled_for_deletion',
+        });
+      }
 
       // Sign out
       await _auth.signOut();
@@ -125,7 +193,7 @@ class AuthService {
       // If we want to fully delete the Auth user:
       // await user.delete(); 
     } catch (e) {
-      print('Error deleting account: $e');
+      debugPrint('Error deleting account: $e');
       throw e;
     }
   }
@@ -179,12 +247,13 @@ class AuthService {
           bankAccountHolderRut: additionalData?['bankAccountHolderRut'],
         );
 
-        await _firestore.collection('users').doc(user.uid).set(userProfile.toMap());
+        String collectionPath = _getCollectionPath(role);
+        await _firestore.collection(collectionPath).doc(user.uid).set(userProfile.toMap());
 
         // Save FCM Token
         String? token = await NotificationService().getToken();
         if (token != null) {
-          await _firestore.collection('users').doc(user.uid).update({
+          await _firestore.collection(collectionPath).doc(user.uid).update({
             'fcmToken': token,
           });
         }
@@ -196,13 +265,9 @@ class AuthService {
       }
       return false;
     } catch (e) {
-      print(e.toString());
+      debugPrint(e.toString());
       return false;
     }
   }
-
-  // Sign out
-  Future<void> signOut() async {
-    await _auth.signOut();
-  }
 }
+

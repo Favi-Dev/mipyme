@@ -1,12 +1,15 @@
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:shimmer/shimmer.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../models/user_profile.dart';
 import '../models/product.dart';
 import '../services/product_service.dart';
 import '../services/pyme_service.dart';
 import '../services/client_service.dart';
-import 'client_pyme_detail_screen.dart';
-import 'donation_screen.dart';
+import 'package:go_router/go_router.dart';
+import 'package:provider/provider.dart';
+import '../providers/pyme_provider.dart';
 
 class ClientHomeScreen extends StatefulWidget {
   final bool showFoundationsOnly;
@@ -22,31 +25,10 @@ class ClientHomeScreen extends StatefulWidget {
 
 class _ClientHomeScreenState extends State<ClientHomeScreen> {
   final TextEditingController _searchController = TextEditingController();
-  late Stream<List<UserProfile>> _pymeStream;
   String _searchQuery = '';
   // final Set<String> _followedPymes = {};
   final Set<String> _selectedTags = {};
   String? _selectedCategory;
-
-  @override
-  void initState() {
-    super.initState();
-    _pymeStream = widget.showFoundationsOnly 
-        ? PymeService().getFoundations()
-        : PymeService().getPymes();
-  }
-
-  @override
-  void didUpdateWidget(ClientHomeScreen oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    if (widget.showFoundationsOnly != oldWidget.showFoundationsOnly) {
-      setState(() {
-         _pymeStream = widget.showFoundationsOnly 
-            ? PymeService().getFoundations()
-            : PymeService().getPymes();
-      });
-    }
-  }
 
   void _showNotifications() {
     final theme = Theme.of(context);
@@ -71,7 +53,21 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
                 return const Text('Error al cargar notificaciones');
               }
               
-              final notifications = snapshot.data ?? [];
+              final allNotifications = snapshot.data ?? [];
+
+              // Auto-ocultar notificaciones leídas hace más de 24 horas
+              final nowTs = DateTime.now();
+              final notifications = allNotifications.where((notif) {
+                final isRead = notif['read'] ?? false;
+                if (!isRead) return true;
+                final ts = notif['createdAt'];
+                if (ts == null) return false;
+                DateTime? notifDate;
+                if (ts is Timestamp) notifDate = ts.toDate();
+                if (notifDate == null) return false;
+                return nowTs.difference(notifDate).inHours < 24;
+              }).toList();
+
               if (notifications.isEmpty) {
                 return const Padding(
                   padding: EdgeInsets.all(16.0),
@@ -85,8 +81,20 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
                 itemBuilder: (context, index) {
                   final notif = notifications[index];
                   final isRead = notif['read'] ?? false;
-                  // Handle Timestamp or fallback
-                  // final timestamp = notif['createdAt'] ... 
+
+                  // Formatear fecha/hora del recordatorio
+                  String dateLabel = '';
+                  final ts = notif['createdAt'];
+                  if (ts != null) {
+                    DateTime? notifDate;
+                    if (ts is Timestamp) notifDate = ts.toDate();
+                    if (notifDate != null) {
+                      const months = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+                      final hour = notifDate.hour.toString().padLeft(2, '0');
+                      final min  = notifDate.minute.toString().padLeft(2, '0');
+                      dateLabel = '${notifDate.day} ${months[notifDate.month - 1]} ${notifDate.year} – $hour:$min';
+                    }
+                  }
 
                   return ListTile(
                     leading: Icon(
@@ -99,10 +107,25 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
                         fontWeight: isRead ? FontWeight.normal : FontWeight.bold,
                       ),
                     ),
-                    subtitle: Text(notif['body'] ?? ''),
+                    subtitle: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(notif['body'] ?? ''),
+                        if (dateLabel.isNotEmpty) ...[  
+                          const SizedBox(height: 2),
+                          Text(
+                            dateLabel,
+                            style: theme.textTheme.bodySmall?.copyWith(
+                              color: theme.colorScheme.onSurfaceVariant,
+                              fontSize: 11,
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
+                    isThreeLine: dateLabel.isNotEmpty,
                     onTap: () {
                       clientService.markNotificationAsRead(notif['id']);
-                      // Optional: Navigate if notification has 'route' or 'data'
                     },
                   );
                 },
@@ -215,7 +238,7 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
         toolbarHeight: 70,
         title: StreamBuilder<UserProfile?>(
           stream: FirebaseAuth.instance.currentUser != null
-              ? PymeService().getUserProfileStream(FirebaseAuth.instance.currentUser!.uid)
+              ? FirebaseFirestore.instance.collection('clients').doc(FirebaseAuth.instance.currentUser!.uid).snapshots().map((doc) => doc.exists ? UserProfile.fromMap(doc.data() as Map<String, dynamic>, doc.id) : null)
               : Stream.value(null),
           builder: (context, userSnapshot) {
             final userProfile = userSnapshot.data;
@@ -227,7 +250,7 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
                   radius: 22,
                   backgroundImage: (userProfile?.logoUrl != null && userProfile!.logoUrl!.startsWith('http')) 
                       ? NetworkImage(userProfile.logoUrl!)
-                      : const NetworkImage('https://i.pravatar.cc/150?img=11'),
+                      : const AssetImage('assets/images/LOGOSOYPLUS.png') as ImageProvider,
                   backgroundColor: const Color(0x3DF4F1EA),
                 ),
                 const SizedBox(width: 12),
@@ -284,10 +307,7 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
             child: IconButton(
               icon: const Icon(Icons.volunteer_activism, color: Color(0xFFF4F1EA)),
               onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => const DonationScreen()),
-                );
+                context.go('/client/home/donation');
               },
               tooltip: 'Realizar Donación',
             ),
@@ -312,17 +332,15 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
         builder: (context, followedSnapshot) {
           final followedIds = (followedSnapshot.data ?? []).toSet();
 
-          return StreamBuilder<List<UserProfile>>(
-            stream: _pymeStream,
-            builder: (context, snapshot) {
-              if (snapshot.hasError) {
-                return Center(child: Text('Error: ${snapshot.error}'));
-              }
-              if (snapshot.connectionState == ConnectionState.waiting) {
-                return const Center(child: CircularProgressIndicator());
-              }
+          final pymeProvider = context.watch<PymeProvider>();
+          
+          if (pymeProvider.isLoadingProfiles) {
+            return _buildScreenSkeleton(context);
+          }
 
-              final pymes = snapshot.data ?? [];
+          final pymes = widget.showFoundationsOnly 
+              ? pymeProvider.foundations 
+              : pymeProvider.pymes;
               
               // Sort Pymes: Followed first
               pymes.sort((a, b) {
@@ -335,22 +353,26 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
               
               // Filter logic
               final filteredPymes = pymes.where((pyme) {
-            final name = pyme.name;
-            final category = pyme.category ?? '';
-            
-            final matchesSearch = name.toLowerCase().contains(_searchQuery.toLowerCase()) ||
-                category.toLowerCase().contains(_searchQuery.toLowerCase());
-            
-            // Filter by tags if any are selected
-            final tags = pyme.tags ?? [];
-            final matchesTags = _selectedTags.isEmpty || 
-                tags.any((tag) => _selectedTags.contains(tag));
+              final name = pyme.name;
+              final category = pyme.category ?? '';
+              final description = pyme.description ?? '';
+              final tags = pyme.tags ?? [];
+              final query = _searchQuery.toLowerCase();
 
-            final matchesCategory = _selectedCategory == null || 
-                _selectedCategory == 'Todo' || 
-                category == _selectedCategory;
+              final matchesSearch = name.toLowerCase().contains(query) ||
+                  category.toLowerCase().contains(query) ||
+                  description.toLowerCase().contains(query) ||
+                  tags.any((tag) => tag.toLowerCase().contains(query));
+              
+              // Filter by tags if any are selected
+              final matchesTags = _selectedTags.isEmpty || 
+                  tags.any((tag) => _selectedTags.contains(tag));
 
-            return matchesSearch && matchesTags && matchesCategory;
+              final matchesCategory = _selectedCategory == null || 
+                  _selectedCategory == 'Todo' || 
+                  category == _selectedCategory;
+
+              return matchesSearch && matchesTags && matchesCategory;
           }).toList();
 
           return SingleChildScrollView(
@@ -429,40 +451,13 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
                   const SizedBox(height: 16),
                   SizedBox(
                     height: 170,
-                    child: StreamBuilder<List<Map<String, dynamic>>>(
-                      stream: PymeService().getSpecialOffersGlobal(),
-                      builder: (context, offersSnapshot) {
-                        if (offersSnapshot.hasError) {
-                          // Likely missing index for collectionGroup query.
-                          final error = offersSnapshot.error.toString();
-                          debugPrint("Error fetching offers: $error");
-                          
-                          // Convert error to user friendly message or show link for dev
-                          return Center(
-                            child: Padding(
-                              padding: const EdgeInsets.all(16.0),
-                              child: Column(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Icon(Icons.error_outline, color: theme.colorScheme.error),
-                                  const SizedBox(height: 8),
-                                  Text(
-                                    error.contains('failed-precondition') 
-                                      ? 'Falta índice en Firebase. Revisa la consola.' 
-                                      : 'No se pudieron cargar las ofertas.',
-                                    style: TextStyle(color: theme.colorScheme.error, fontSize: 12),
-                                    textAlign: TextAlign.center,
-                                  ),
-                                ],
-                              ),
-                            ),
-                          );
-                        }
-                        if (offersSnapshot.connectionState == ConnectionState.waiting) {
-                          return const Center(child: CircularProgressIndicator());
+                    child: Builder(
+                      builder: (context) {
+                        if (pymeProvider.isLoadingOffers) {
+                          return _buildOffersSkeleton(context);
                         }
                         
-                        final allOffers = offersSnapshot.data ?? [];
+                        final allOffers = pymeProvider.specialOffers;
                         
                         // Filter offers to only show those from the currently loaded pymes list
                         final validOffers = allOffers.where((offer) {
@@ -499,15 +494,10 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
                             return GestureDetector(
                               onTap: () {
                                 // Navigate to Pyme Detail or Offer Detail
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) => ClientPymeDetailScreen(
-                                      pymeId: pyme.id,
-                                      pymeData: pyme,
-                                    ),
-                                  ),
-                                );
+                                context.go('/client/home/pyme_detail', extra: {
+                                  'pymeId': pyme.id,
+                                  'pymeData': pyme,
+                                });
                               },
                               child: Container(
                                 width: 280,
@@ -688,7 +678,7 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
                       stream: ProductService().getProducts(),
                       builder: (context, snapshot) {
                         if (snapshot.connectionState == ConnectionState.waiting) {
-                          return const Center(child: CircularProgressIndicator());
+                          return _buildOffersSkeleton(context);
                         }
                         
                         final allProducts = snapshot.data ?? [];
@@ -744,10 +734,8 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
                 _buildPymesList(filteredPymes),
               ],
             ),
-            );
-            }
           );
-        }
+        },
       ),
     );
   }
@@ -923,15 +911,10 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
 
     return GestureDetector(
       onTap: () {
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => ClientPymeDetailScreen(
-              pymeId: pyme.id,
-              pymeData: pyme,
-            ),
-          ),
-        );
+        context.go('/client/home/pyme_detail', extra: {
+          'pymeId': pyme.id,
+          'pymeData': pyme,
+        });
       },
       child: Container(
         width: 260,
@@ -1071,15 +1054,10 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
 
     return GestureDetector(
       onTap: () {
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => ClientPymeDetailScreen(
-              pymeId: pyme.id,
-              pymeData: pyme,
-            ),
-          ),
-        );
+        context.go('/client/home/pyme_detail', extra: {
+          'pymeId': pyme.id,
+          'pymeData': pyme,
+        });
       },
       child: Container(
         margin: const EdgeInsets.only(bottom: 20),
@@ -1100,24 +1078,27 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
               children: [
                 ClipRRect(
                   borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-                  child: (imageUrl != null && imageUrl.startsWith('http'))
-                      ? Image.network(
-                          imageUrl,
-                          height: 150,
-                          width: double.infinity,
-                          fit: BoxFit.cover,
-                          errorBuilder: (context, error, stackTrace) => Container(
+                  child: Hero(
+                    tag: 'pyme_cover_${pyme.id}',
+                    child: (imageUrl != null && imageUrl.startsWith('http'))
+                        ? Image.network(
+                            imageUrl,
                             height: 150,
-                            color: Colors.grey[300],
+                            width: double.infinity,
+                            fit: BoxFit.cover,
+                            errorBuilder: (context, error, stackTrace) => Container(
+                              height: 150,
+                              color: Colors.grey[300],
+                              child: const Icon(Icons.store, size: 50, color: Colors.grey),
+                            ),
+                          )
+                        : Container(
+                            height: 150,
+                            width: double.infinity,
+                            color: const Color(0xFF2F3F2A).withOpacity(0.1),
                             child: const Icon(Icons.store, size: 50, color: Colors.grey),
                           ),
-                        )
-                      : Container(
-                          height: 150,
-                          width: double.infinity,
-                          color: const Color(0xFF2F3F2A).withOpacity(0.1),
-                          child: const Icon(Icons.store, size: 50, color: Colors.grey),
-                        ),
+                  ),
                 ),
                 Positioned(
                   top: 12,
@@ -1202,7 +1183,7 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
                           fontWeight: FontWeight.bold,
                         ),
                       ),
-                      /* if (showRating)
+                      if (pyme.averageRating != null && pyme.averageRating! > 0)
                       Container(
                         padding: const EdgeInsets.symmetric(
                             horizontal: 8, vertical: 4),
@@ -1216,7 +1197,7 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
                                 color: Color(0xFF8B5A3C), size: 14),
                             const SizedBox(width: 4),
                             Text(
-                              '5.0',
+                              pyme.averageRating!.toStringAsFixed(1),
                               style: const TextStyle(
                                 color: Color(0xFF8B5A3C),
                                 fontSize: 12,
@@ -1225,7 +1206,7 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
                             ),
                           ],
                         ),
-                      ), */
+                        ),
                     ],
                   ),
                   const SizedBox(height: 8),
@@ -1303,6 +1284,60 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
           color: tagColor,
           fontSize: 11,
           fontWeight: FontWeight.w600,
+        ),
+      ),
+    );
+  }
+  Widget _buildOffersSkeleton(BuildContext context) {
+    return ListView.builder(
+      scrollDirection: Axis.horizontal,
+      itemCount: 3,
+      itemBuilder: (context, index) {
+        return Shimmer.fromColors(
+          baseColor: const Color(0xFFE3B58F).withOpacity(0.3),
+          highlightColor: const Color(0xFFF4F1EA),
+          child: Container(
+            width: 260,
+            margin: const EdgeInsets.only(right: 16),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(20),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildScreenSkeleton(BuildContext context) {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(16.0),
+      child: Shimmer.fromColors(
+        baseColor: const Color(0xFFE3B58F).withOpacity(0.3),
+        highlightColor: const Color(0xFFF4F1EA),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Fake Search Bar
+            Container(
+              height: 50,
+              decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16)),
+            ),
+            const SizedBox(height: 24),
+            // Fake Categories
+            Row(
+              children: List.generate(4, (index) => Container(
+                width: 60, height: 60,
+                margin: const EdgeInsets.only(right: 12),
+                decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(18)),
+              )),
+            ),
+            const SizedBox(height: 24),
+            // Fake Pymes
+            Container(height: 200, decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(20))),
+            const SizedBox(height: 20),
+            Container(height: 200, decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(20))),
+          ],
         ),
       ),
     );

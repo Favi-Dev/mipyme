@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../services/client_service.dart';
+import 'client_subscription_screen.dart';
 
 class ClientPaymentsSubscriptionsScreen extends StatefulWidget {
   const ClientPaymentsSubscriptionsScreen({super.key});
@@ -13,25 +14,15 @@ class _ClientPaymentsSubscriptionsScreenState extends State<ClientPaymentsSubscr
   bool _isLoading = false;
 
   Future<void> _handleSubscribe() async {
-    setState(() => _isLoading = true);
-    
-    // Simulate payment delay
-    await Future.delayed(const Duration(seconds: 2));
-    
-    await _clientService.subscribe();
-    
-    if (mounted) {
-      setState(() => _isLoading = false);
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('¡Suscripción activada exitosamente!')),
-      );
-    }
+    await Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => const ClientSubscriptionScreen()),
+    );
   }
 
   Future<void> _handleUnsubscribe() async {
     final theme = Theme.of(context);
-    
-    // Show confirmation dialog or bottom sheet
+
     showModalBottomSheet(
       context: context,
       builder: (context) => Padding(
@@ -40,10 +31,10 @@ class _ClientPaymentsSubscriptionsScreenState extends State<ClientPaymentsSubscr
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Administrar Suscripción', style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
+            Text('Administrar Suscripcion', style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
             const SizedBox(height: 16),
             Text(
-              '¿Estás seguro de que deseas cancelar tu suscripción? Perderás tus beneficios premium al finalizar el periodo actual.',
+              'Estas seguro de que deseas cancelar tu suscripcion? Perderas tus beneficios premium al finalizar el periodo actual.',
               style: theme.textTheme.bodyMedium,
             ),
             const SizedBox(height: 24),
@@ -51,17 +42,17 @@ class _ClientPaymentsSubscriptionsScreenState extends State<ClientPaymentsSubscr
               width: double.infinity,
               child: ElevatedButton(
                 onPressed: () async {
-                  Navigator.pop(context); // Close sheet
+                  Navigator.pop(context);
                   setState(() => _isLoading = true);
                   try {
                     await _clientService.cancelSubscription();
                     if (mounted) {
                       ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Suscripción cancelada')),
+                        const SnackBar(content: Text('Suscripcion cancelada')),
                       );
                     }
                   } catch (e) {
-                     if (mounted) {
+                    if (mounted) {
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(content: Text('Error: $e')),
                       );
@@ -75,7 +66,7 @@ class _ClientPaymentsSubscriptionsScreenState extends State<ClientPaymentsSubscr
                   foregroundColor: theme.colorScheme.onError,
                   padding: const EdgeInsets.symmetric(vertical: 16),
                 ),
-                child: const Text('Cancelar Suscripción'),
+                child: const Text('Cancelar Suscripcion'),
               ),
             ),
             const SizedBox(height: 12),
@@ -83,7 +74,7 @@ class _ClientPaymentsSubscriptionsScreenState extends State<ClientPaymentsSubscr
               width: double.infinity,
               child: TextButton(
                 onPressed: () => Navigator.pop(context),
-                child: const Text('Mantener Suscripción'),
+                child: const Text('Mantener Suscripcion'),
               ),
             ),
           ],
@@ -95,7 +86,7 @@ class _ClientPaymentsSubscriptionsScreenState extends State<ClientPaymentsSubscr
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    
+
     return DefaultTabController(
       length: 2,
       child: Scaffold(
@@ -136,19 +127,19 @@ class _ClientPaymentsSubscriptionsScreenState extends State<ClientPaymentsSubscr
 
   Widget _buildPaymentHistory(BuildContext context) {
     final theme = Theme.of(context);
-    
+
     return StreamBuilder<List<Map<String, dynamic>>>(
       stream: _clientService.getPaymentHistory(),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Center(child: CircularProgressIndicator());
         }
-        
+
         final payments = snapshot.data ?? [];
-        
+
         if (payments.isEmpty) {
           return Center(
-             child: Column(
+            child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Icon(
@@ -175,8 +166,8 @@ class _ClientPaymentsSubscriptionsScreenState extends State<ClientPaymentsSubscr
           itemBuilder: (context, index) {
             final payment = payments[index];
             final date = payment['date'] as DateTime?;
-            final dateStr = date != null 
-                ? '${date.day}/${date.month}/${date.year}' 
+            final dateStr = date != null
+                ? '${date.day}/${date.month}/${date.year}'
                 : 'Fecha desconocida';
             final amount = payment['amount'];
 
@@ -235,7 +226,7 @@ class _ClientPaymentsSubscriptionsScreenState extends State<ClientPaymentsSubscr
                       Text(
                         payment['status'] ?? 'Completado',
                         style: theme.textTheme.labelSmall?.copyWith(
-                          color: const Color(0xFF6F8F5E), // Keep green for success status
+                          color: const Color(0xFF6F8F5E),
                           fontWeight: FontWeight.w600,
                         ),
                       ),
@@ -261,23 +252,22 @@ class _ClientPaymentsSubscriptionsScreenState extends State<ClientPaymentsSubscr
           stream: _clientService.getSubscriptionDate(),
           builder: (context, dateSnapshot) {
             final subscriptionDate = dateSnapshot.data;
-            String nextBillingString = 'Sin suscripción activa';
-            
+            String nextBillingString = 'Sin suscripcion activa';
+
             if (isSubscribed && subscriptionDate != null) {
-               final now = DateTime.now();
-               DateTime nextDate = subscriptionDate;
-               
-               // Find next billing date (must be in the future)
-               while (!nextDate.isAfter(now)) {
-                  nextDate = DateTime(nextDate.year, nextDate.month + 1, nextDate.day);
-               }
-               
-               final months = [
-                 'Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 
-                 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'
-               ];
-               
-               nextBillingString = 'Próximo cobro: ${nextDate.day} ${months[nextDate.month - 1]} ${nextDate.year}';
+              final now = DateTime.now();
+              DateTime nextDate = subscriptionDate;
+
+              while (!nextDate.isAfter(now)) {
+                nextDate = DateTime(nextDate.year, nextDate.month + 1, nextDate.day);
+              }
+
+              final months = [
+                'Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun',
+                'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'
+              ];
+
+              nextBillingString = 'Proximo cobro: ${nextDate.day} ${months[nextDate.month - 1]} ${nextDate.year}';
             }
 
             return ListView(
@@ -285,7 +275,7 @@ class _ClientPaymentsSubscriptionsScreenState extends State<ClientPaymentsSubscr
               children: [
                 _buildSubscriptionCard(
                   context: context,
-                  title: 'Suscripción Usuario',
+                  title: 'Suscripcion Usuario',
                   price: '\$2.000/mes',
                   nextBilling: nextBillingString,
                   isActive: isSubscribed,
@@ -294,7 +284,6 @@ class _ClientPaymentsSubscriptionsScreenState extends State<ClientPaymentsSubscr
                   onSubscribe: _handleSubscribe,
                   onManage: _handleUnsubscribe,
                 ),
-                // Future implementation: List real recurring donations here
               ],
             );
           }
@@ -393,25 +382,25 @@ class _ClientPaymentsSubscriptionsScreenState extends State<ClientPaymentsSubscr
                 ),
               ),
               if (!isActive)
-                _isLoading 
-                  ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2))
-                  : TextButton(
-                      onPressed: onSubscribe,
-                      style: TextButton.styleFrom(
-                        padding: EdgeInsets.zero,
-                        minimumSize: const Size(0, 0),
-                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                      ),
-                      child: Text(
-                        'Suscribirse',
-                        style: theme.textTheme.labelLarge?.copyWith(
-                          color: theme.colorScheme.primary,
-                          fontWeight: FontWeight.w600,
+                _isLoading
+                    ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2))
+                    : TextButton(
+                        onPressed: onSubscribe,
+                        style: TextButton.styleFrom(
+                          padding: EdgeInsets.zero,
+                          minimumSize: const Size(0, 0),
+                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                        ),
+                        child: Text(
+                          'Suscribirse',
+                          style: theme.textTheme.labelLarge?.copyWith(
+                            color: theme.colorScheme.primary,
+                            fontWeight: FontWeight.w600,
+                          ),
                         ),
                       ),
-                    ),
               if (isActive)
-                 TextButton(
+                TextButton(
                   onPressed: onManage,
                   style: TextButton.styleFrom(
                     padding: EdgeInsets.zero,

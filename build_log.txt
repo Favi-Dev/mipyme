@@ -1,0 +1,182 @@
+﻿Compiling lib\main.dart for the Web...                          
+flutter : Wasm dry run 
+succeeded. Consider 
+building and testing your 
+application with the 
+`--wasm` flag. See docs 
+for more info: https://docs
+.flutter.dev/platform-integ
+ration/web/wasm
+En línea: 1 Carácter: 1
++ flutter build web 
+--release 2>&1 | Out-File 
+-FilePath .\build_log.txt 
+...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~
+    + CategoryInfo         
+     : NotSpecifi    ed: 
+(Wasm dry run     
+su...ration/web/wa    
+sm:String) [], Rem    
+oteException
+    + FullyQualifiedEr    
+rorId : NativeComm    
+andError
+ 
+Use --no-wasm-dry-run to 
+disable these warnings.
+This application cannot 
+tree shake icons fonts. It 
+has non-constant instances 
+of IconData at the 
+following locations:
+  - file:///C:/Users/Joaqu/
+Proyecto_pymes/mipyme/lib/s
+creens/pyme_profile_vitrina
+_screen.dart:224:39
+  - file:///C:/Users/Joaqu/
+Proyecto_pymes/mipyme/lib/m
+odels/offer_data.dart:23:13
+  - file:///C:/Users/Joaqu/
+Proyecto_pymes/mipyme/lib/s
+creens/pyme_offers_manageme
+nt_screen.dart:43:11
+  - file:///C:/Users/Joaqu/
+Proyecto_pymes/mipyme/lib/s
+creens/pyme_offers_manageme
+nt_screen.dart:267:30
+Target web_release_bundle 
+failed: Error: Avoid 
+non-constant invocations 
+of IconData or try to 
+build again with 
+--no-tree-shake-icons.
+#0      throwToolExit (pack
+age:flutter_tools/src/base/
+common.dart:34:3)
+#1      IconTreeShaker._fin
+dConstants (package:flutter
+_tools/src/build_system/tar
+gets/icon_tree_shaker.dart:
+327:7)
+<asynchronous suspension>
+#2      IconTreeShaker._get
+IconData (package:flutter_t
+ools/src/build_system/targe
+ts/icon_tree_shaker.dart:11
+3:45)
+<asynchronous suspension>
+#3      
+IconTreeShaker.subsetFont (
+package:flutter_tools/src/b
+uild_system/targets/icon_tr
+ee_shaker.dart:181:5)
+<asynchronous suspension>
+#4      
+copyAssets.<anonymous 
+closure> (package:flutter_t
+ools/src/build_system/targe
+ts/assets.dart:148:25)
+<asynchronous suspension>
+#5      
+Future.wait.<anonymous 
+closure> (dart:async/future
+.dart:525:21)
+<asynchronous suspension>
+#6      copyAssets (package
+:flutter_tools/src/build_sy
+stem/targets/assets.dart:10
+8:3)
+<asynchronous suspension>
+#7      
+WebReleaseBundle.build (pac
+kage:flutter_tools/src/buil
+d_system/targets/web.dart:5
+20:29)
+<asynchronous suspension>
+#8      _BuildInstance._inv
+okeInternal (package:flutte
+r_tools/src/build_system/bu
+ild_system.dart:873:9)
+<asynchronous suspension>
+#9      
+Future.wait.<anonymous 
+closure> (dart:async/future
+.dart:525:21)
+<asynchronous suspension>
+#10     _BuildInstance.invo
+keTarget (package:flutter_t
+ools/src/build_system/build
+_system.dart:811:32)
+<asynchronous suspension>
+#11     
+FlutterBuildSystem.build (p
+ackage:flutter_tools/src/bu
+ild_system/build_system.dar
+t:631:16)
+<asynchronous suspension>
+#12     
+WebBuilder.buildWeb (packag
+e:flutter_tools/src/web/com
+pile.dart:90:34)
+<asynchronous suspension>
+#13     
+BuildWebCommand.runCommand 
+(package:flutter_tools/src/
+commands/build_web.dart:282
+:5)
+<asynchronous suspension>
+#14     FlutterCommand.run.
+<anonymous closure> (packag
+e:flutter_tools/src/runner/
+flutter_command.dart:1581:2
+7)
+<asynchronous suspension>
+#15     
+AppContext.run.<anonymous 
+closure> (package:flutter_t
+ools/src/base/context.dart:
+154:19)
+<asynchronous suspension>
+#16     
+CommandRunner.runCommand (p
+ackage:args/command_runner.
+dart:212:13)
+<asynchronous suspension>
+#17     FlutterCommandRunne
+r.runCommand.<anonymous 
+closure> (package:flutter_t
+ools/src/runner/flutter_com
+mand_runner.dart:503:9)
+<asynchronous suspension>
+#18     
+AppContext.run.<anonymous 
+closure> (package:flutter_t
+ools/src/base/context.dart:
+154:19)
+<asynchronous suspension>
+#19     FlutterCommandRunne
+r.runCommand (package:flutt
+er_tools/src/runner/flutter
+_command_runner.dart:438:5)
+<asynchronous suspension>
+#20     run.<anonymous 
+closure>.<anonymous 
+closure> (package:flutter_t
+ools/runner.dart:98:11)
+<asynchronous suspension>
+#21     
+AppContext.run.<anonymous 
+closure> (package:flutter_t
+ools/src/base/context.dart:
+154:19)
+<asynchronous suspension>
+#22     main (package:flutt
+er_tools/executable.dart:10
+1:3)
+<asynchronous suspension>
+
+Compiling lib\main.dart for the Web...                            113,9s
+Error: Failed to compile 
+application for the Web.

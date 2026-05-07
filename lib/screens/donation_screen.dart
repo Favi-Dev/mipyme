@@ -9,13 +9,11 @@ import 'package:mipyme/client_app_shell.dart';
 import 'package:mipyme/widgets/donation_content.dart';
 
 class DonationScreen extends StatefulWidget {
-  final bool isGuest;
   final bool isInitialRegistration;
   final UserProfile? preSelectedFoundation;
 
   const DonationScreen({
     super.key,
-    this.isGuest = false,
     this.isInitialRegistration = false,
     this.preSelectedFoundation,
   });
@@ -62,8 +60,6 @@ class _DonationScreenState extends State<DonationScreen> {
       if (isMonthly) {
         // Opción 1: Crear Suscripción (Si está logueado o tiene email)
         result = await _paymentService.createSubscription(
-          title: title,
-          price: amount,
           payerEmail: payerEmail,
         );
       } else {
@@ -168,9 +164,8 @@ class _DonationScreenState extends State<DonationScreen> {
       barrierDismissible: false,
       builder: (context) => AlertDialog(
         title: const Text('¡Pago Confirmado!'),
-        content: Text(widget.isGuest 
-          ? 'Tu donación ha sido recibida y verificada. ¡Gracias!'
-          : 'Tu donación ha sido procesada exitosamente.'
+        content: const Text(
+          'Tu donación ha sido procesada exitosamente.'
         ),
         actions: [
           TextButton(
@@ -310,7 +305,6 @@ class _DonationScreenState extends State<DonationScreen> {
                    DonationContent(
                       pymeData: _selectedFoundation!,
                       amounts: const [1000, 3000, 5000, 10000, 20000],
-                      isGuest: widget.isGuest,
                       onDonate: _processDonation,
                    )
                 else
@@ -321,15 +315,7 @@ class _DonationScreenState extends State<DonationScreen> {
                      ),
                    ),
                 
-                if (widget.isGuest)
-                  const Padding(
-                    padding: EdgeInsets.all(16.0),
-                    child: Text(
-                      '* Al donar como invitado no acumularás puntos ni recibirás cupones de descuento.',
-                      style: TextStyle(color: Colors.grey, fontSize: 12),
-                      textAlign: TextAlign.center,
-                    ),
-                  )
+                
               ],
             ),
           );

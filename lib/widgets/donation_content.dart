@@ -6,14 +6,12 @@ import '../services/pyme_service.dart';
 class DonationContent extends StatefulWidget {
   final UserProfile pymeData;
   final List<int> amounts;
-  final bool isGuest;
   final Future<void> Function(double amount, bool isMonthly)? onDonate;
 
   const DonationContent({
     super.key,
     required this.pymeData,
     required this.amounts,
-    this.isGuest = false,
     this.onDonate,
   });
 
@@ -37,8 +35,8 @@ class _DonationContentState extends State<DonationContent> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     
-    return StreamBuilder<UserProfile?>(
-      stream: _pymeService.getUserProfileStream(widget.pymeData.id),
+    return FutureBuilder<UserProfile?>(
+      future: _pymeService.getUserProfile(widget.pymeData.id),
       initialData: widget.pymeData,
       builder: (context, snapshot) {
         final pyme = snapshot.data ?? widget.pymeData;
@@ -274,9 +272,7 @@ class _DonationContentState extends State<DonationContent> {
                     const SizedBox(width: 12),
                     Expanded(
                       child: Text(
-                        widget.isGuest
-                            ? 'Serás redirigido a una pasarela externa para ingresar tus datos de pago de forma segura.'
-                            : 'Se utilizará tu método de pago registrado para realizar el aporte.',
+                        'Serás redirigido a una pasarela externa para realizar tu aporte de forma segura.',
                         style: theme.textTheme.bodySmall?.copyWith(
                           color: theme.colorScheme.onPrimaryContainer,
                         ),
@@ -320,7 +316,10 @@ class _DonationContentState extends State<DonationContent> {
                       // Simulate backend update
                       // In a real app, this would be a Cloud Function triggered by payment success
                       // Here we update directly for demo purposes as requested
-                      final pymeRef = FirebaseFirestore.instance.collection('users').doc(pyme.id);
+                      final collection =
+                          pyme.role == UserRole.foundation ? 'foundations' : 'pymes';
+                      final pymeRef =
+                          FirebaseFirestore.instance.collection(collection).doc(pyme.id);
                       await pymeRef.update({
                         'currentDonations': FieldValue.increment(amount),
                         'supporterCount': FieldValue.increment(1),
